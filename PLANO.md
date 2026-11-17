@@ -130,6 +130,25 @@ Fato adicional da NESMA: a indicativa supõe, em média, 3 EE + 2 SE + 1 CE por 
 ## Decisões em aberto
 
 - Ok para cada fase que consome cota: sondagens → calibração → rodada curta → rodada completa.
+- Correções pendentes no runner (só verificação, sem consumo): comparar o bloco Markdown ignorando diferenças apenas de espaço e quebra de linha; encontrar o JSON em diretórios temporários do sistema criados durante a execução, mesmo quando o caminho não aparece no trace; comando `reverificar` para reavaliar execuções já feitas, separando o hash de execução (skill, casos, gabaritos, perfil) do hash do verificador.
+
+## Rodada curta: andamento
+
+- `curta-1`: 1 execução (G01). Revelou que a skill não mandava copiar a saída do script para a resposta (corrigido no SKILL.md e em 05) e que o `mktemp` do executor ignora o `TMPDIR` (runner corrigido).
+- `curta-2`: 1 execução (G01), invalidada por falso positivo da auditoria (temporário legítimo em `/tmp`); regra corrigida.
+- `curta-3` (em andamento, parada por cota em 17/11/2026, janela de 5 horas do Claude em 22%):
+
+| Caso | Automáticos | Juiz | Observação |
+|---|---|---|---|
+| G01 | todos ok (45 PF) | todos ok | |
+| G02 | todos ok (20 PF de melhoria) | todos ok | |
+| G03a | todos ok (14,75 PFM, com Cancelar) | todos ok | |
+| G03b | todos ok (faixa, cobertura parcial) | todos ok | |
+| G04 | K2 falhou | todos ok | só quebra de linha dentro de um item da legenda; falso negativo do verificador |
+| G05 | todos ok (100 PF) | todos ok | |
+| G06 | K2: JSON não encontrado | (pulado) | o agente guardou o caminho do temporário num arquivo; falha do runner, não da skill |
+
+Pendentes em `curta-3`: M01–M04, A01–A15, L01, L02 e os juízes correspondentes.
 
 ## Evals do agente: implementação
 
