@@ -274,6 +274,22 @@ Versão com D36 (`config_hash` `e9ae2ea398eb14c2`). Bloco completo: G04 e G07, 5
 - Auditoria retrospectiva, sem cota (`completa-4` e controles da `curta-3`, 14 execuções, cerca de 40 itens `sem-evidencia`): quase todos tinham pendência correspondente, só sem vínculo formal (escrito à mão, "ver P3"); 3 itens sem pendência equivalente, todos nas duas execuções reprovadas; 1 uso indevido da categoria (G03b, `curta-3`: algo que o pedido exclui expressamente).
 - D38 (proposta): esquema versão 2. Item `sem-evidencia` exige `pendencias`, lista não vazia de IDs existentes, sem repetição; uma pendência pode cobrir vários itens (O4). O `check` recusa sem isso. O script confere só os IDs; 05 §1 diz que as pendências apontadas precisam cobrir todos os assuntos do item, e o significado continua com o juiz (O1). O render acrescenta "(ver P1, P2)" em md, txt e xlsx. 03 §7: o que o pedido exclui expressamente não é `sem-evidencia` (O3). Verificador lê a versão do script. 94 testes (6 novos). Snapshots antigos não mudam. **Aprovado pelo usuário (17/11/2026), com o primeiro bloco da `completa-5` (G04, G07 e G08, 5× cada, mesma regra de parada); o resto pede novo ok.**
 
+## Rodada `completa-5` (17/11/2026): primeiro bloco, parado no S4 do G04
+
+Versão com D38 (`config_hash` `d26d7d0995350665`). 12 execuções e 12 juízes, nenhuma inválida; G07 r5 e G08 r5 não executadas. Consumo: Claude 5 h 53% → 45%; Codex 5 h 73% → 66%.
+
+- G04: r1–r3 ok em tudo; **r4 e r5 S4 ✗** (r4: cálculo e prestação de contas ausentes até de `nao_contados`; r5: só prestação de contas ausente; o cálculo veio numa pendência explícita). Pela regra, o bloco reprova.
+- G07: r1–r4 ok em tudo. G08: r1–r4 ok em tudo (15 ou 15–19 PF; os contrastes valeram).
+- K2 ok em todas: o sufixo "(ver P…)" foi copiado sem erro.
+- A D38 funcionou como vínculo (todos os itens `sem-evidencia` com pendência), mas a r4 mostra a rota de fuga prevista: o item simplesmente sai de `nao_contados`.
+- Tendência desde a D37: prestação de contas no G04 faltou em 4 de 9 execuções (antes, 9/9). Homologação no G07: 8/8 desde a D37 (antes, 7/9). As pendências com regra na skill (origem, alcance do verbo, pessoa, análise) saíram em todas as execuções das `completa-4` e `-5`.
+
+**Consulta 15 ao popper:**
+- Não fazer a D39 (ampliar a pendência da D37 para o ciclo do registro) agora. Ela acrescentaria exatamente os assuntos omitidos no G04: é ajuste legítimo, mas não demonstra correção geral, e a relação causal com a D37 é hipótese (O2).
+- O limite a declarar é de evidência e orçamento: esta versão não atende ao contrato atual do S4 no G04. Não está demonstrado que a skill seja incapaz de tratar pendências de domínio; os dados vêm de poucos pedidos, usados repetidamente no ajuste (O3).
+- Se o trabalho continuar, primeiro um diagnóstico de regressão reduzido nos outros casos, com a versão atual congelada (1 repetição; contagens, metamórficos e ao menos um caminho xlsx, porque a D38 mexeu no esquema e na renderização), antes de outro bloco no G04 (O4).
+- **Decisão do usuário (17/11/2026):** diagnóstico de regressão primeiro: rodada `diag-1` (curta, 1 repetição) com G01, G02, G03a, G03b, G05, G06, M01, M02, M03a, M03b, M04 e A03; 12 execuções e 9 juízes, mais `comparar`. Depois, ele decide entre encerrar com a limitação, desenho novo (checklist do ciclo) ou redefinir o escopo do S4.
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.

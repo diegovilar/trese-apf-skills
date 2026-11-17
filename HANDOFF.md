@@ -13,12 +13,13 @@ Para retomar o trabalho em outra sessão (humana ou de agente). Leia também o `
 - `completa-2`: primeiro bloco parado no S4 do G04 (pendência sobre os dados do servidor). Skill ajustada (D36).
 - `completa-3`: bloco reprovado no S4 do G07 (homologação, 3/5). Contrato do S4 mantido; D37, G08 e S4 pelo significado (ver `PLANO.md`).
 - `calib-3`: 4/4. `completa-4`: bloco parado no S4 do G04 (cálculo e prestação de contas só em `nao_contados`). D38: esquema versão 2, item `sem-evidencia` exige `pendencias`.
-- **Autorizado pelo usuário em 17/11/2026:** só o primeiro bloco da `completa-5` (G04, G07 e G08, r1 a r5, chamados pelo nome), com a mesma regra de parada. O resto da `completa-5` pede novo ok.
+- `completa-5`: bloco reprovado no S4 do G04 (prestação de contas). Consulta 15: sem D39 por ora; diagnóstico de regressão primeiro.
+- **Autorizado pelo usuário em 17/11/2026:** `diag-1` (`preparar diag-1 curta --casos G01,G02,G03a,G03b,G05,G06,M01,M02,M03a,M03b,M04,A03`), tarefa a tarefa com leitura de cota, e `comparar diag-1`. Depois, levar o quadro ao usuário (encerrar com limitação, checklist do ciclo ou redefinir o S4).
 - Popper desta sessão: `ses_e15628079ffehR54kQzwIQFPNZ` (consultas 9 em diante); numa sessão nova, abra outro e continue a numeração.
 
 ## Regras que valem (combinadas com o usuário)
 
-1. **Não executar nada que consuma cota sem o ok do usuário para a fase.** Fases: sondagens, calibração, rodada curta e fumaça (feitas); `completa-1` (parada no G04); `completa-2` (parada no S4 do G04); `completa-3` (bloco reprovado no S4 do G07); `calib-3` (feita); `completa-4` (parada no S4 do G04); `completa-5` (**só o primeiro bloco autorizado**: G04, G07 e G08 5×).
+1. **Não executar nada que consuma cota sem o ok do usuário para a fase.** Fases: sondagens, calibração, rodada curta e fumaça (feitas); `completa-1` (parada no G04); `completa-2` (parada no S4 do G04); `completa-3` (bloco reprovado no S4 do G07); `calib-3` (feita); `completa-4` (parada no S4 do G04); `completa-5` (bloco reprovado no S4 do G04); `diag-1` (**autorizado**).
 2. **Antes de cada tarefa que consome cota, ler a cota** (ferramenta de uso do OpenChamber, `providerId` `claude` para o executor e `codex` para o juiz). Se qualquer janela (5 h ou semanal) estiver **abaixo de 15%**, ou a leitura falhar, **parar** e avisar o usuário. Esta sessão de orquestração também consome a cota do Claude.
 3. **Uma tarefa por chamada** (`proxima` → ler cota → `executar`).
 4. Recomendações e decisões com consequência passam pelo **popper** (subagente de segunda opinião) antes de chegar ao usuário. A sessão anterior do popper (`ses_e166880bdffeQatE857gIDKXkq`, 8 consultas) só funciona a partir da sessão que a abriu: **abra um popper novo** (`/use-popper`, padrão com proposta) e, na abertura, mande o contexto: objetivo da skill, `PLANO.md` (decisões D1–D32 e as revisões das consultas 1 a 8) e este handoff. Numere as consultas a partir de 9, para manter a continuidade com o `PLANO.md`. O usuário prefere ver só a posição final, depois do retorno do popper, com o bloco "Revisão do popper" ao fim.
