@@ -301,6 +301,13 @@ Versão da `completa-5` (`config_hash` `d26d7d0995350665`), 1 repetição. Consu
 
 **Consulta 16 ao popper:** recomendar o encerramento do desenvolvimento **com requisito não atendido** (S4 do G04), condicionado ao aceite explícito do usuário de que a revisão humana das lacunas é obrigatória antes do uso. Isso não aprova a etapa 6. Aviso fixo no renderizador, que garante a presença em toda saída: "A lista de pendências não é exaustiva. Revise os requisitos e fluxos específicos do domínio antes de usar a estimativa na análise de viabilidade." (O3). Se o usuário não aceitar a condição, o caminho coerente é o desenho novo (checklist do ciclo). No relatório, não afirmar: "skill aprovada nos evals", "contagem estável", "pendências completas", "faixa cobre todo o projeto", "a D37 comprovadamente causou a regressão", "limite inevitável do modelo" (O1, O2).
 
+## Encerramento da iteração 1 (17/11/2026)
+
+- **Decisão do usuário:** encerrar o desenvolvimento desta versão como **versão inicial**, com o requisito S4 do G04 **não atendido**, aceitando a revisão humana obrigatória das lacunas antes do uso na análise de viabilidade. Não é aprovação da etapa 6. Outras soluções (desenho novo) ficam para uma iteração futura, com handoff próprio (`HANDOFF-iteracao-2.md`).
+- D39: aviso fixo no renderizador (md nos dois perfis, txt e xlsx), ao fim das pendências: "A lista de pendências não é exaustiva. Revise os requisitos e fluxos específicos do domínio antes de usar a estimativa na análise de viabilidade." 05 §3 diz que ele faz parte da saída. 95 testes.
+- Checagem do K2 com o aviso (rodada `k2-aviso`, G01 e G04, 1 execução cada, sem juiz), autorizada pelo usuário.
+- Consulta 17 (pergunta do usuário sobre o G04): o pedido vago é a origem da incerteza; uma entrevista guiada pelo ciclo do processo pode ajudar (perguntas abertas, respostas do demandante), mas não foi testada e mudaria a D15. Vai para o handoff da iteração 2 como variante, junto com o roteiro do ciclo nas pendências.
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.

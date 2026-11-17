@@ -379,6 +379,16 @@ class TestRender(unittest.TestCase):
         with zipfile.ZipFile(io.BytesIO(apf.gerar_xlsx(e, c))) as z:
             self.assertTrue(any("não mencionados (ver P1, P2)" in z.read(n).decode("utf-8") for n in z.namelist() if n.endswith(".xml")))
 
+    def test_aviso_de_pendencias_em_todos_os_formatos_e_perfis(self):
+        e = fx.g04()
+        c = apf.calcular(e)
+        for perfil in ("chat", "arquivo"):
+            self.assertIn("**Aviso:** " + apf.AVISO_PENDENCIAS, apf.render_md(e, c, perfil))
+        txt = " ".join(apf.render_txt(e, c).split())
+        self.assertIn("Aviso: " + apf.AVISO_PENDENCIAS, txt)
+        with zipfile.ZipFile(io.BytesIO(apf.gerar_xlsx(e, c))) as z:
+            self.assertTrue(any(apf.AVISO_PENDENCIAS in z.read(n).decode("utf-8") for n in z.namelist() if n.endswith(".xml")))
+
     def test_md_escapa_barra_vertical(self):
         e = fx.g01()
         e["funcoes"][0]["nome"] = "Curso | Turma"

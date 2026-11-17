@@ -66,6 +66,8 @@ FATORES_PERMITIDOS_DADOS = sorted({f for _, f in TABELA_DADOS} | {FATOR_DADOS_AC
 FATORES_PERMITIDOS_TRANSACOES = sorted({f for linha in TABELA_TRANSACOES for f in linha})
 
 ROTULO_HIBRIDO = "estimativa híbrida: pesos NESMA estimada + fatores EFPA"
+AVISO_PENDENCIAS = ("A lista de pendências não é exaustiva. Revise os requisitos e fluxos específicos do domínio "
+                    "antes de usar a estimativa na análise de viabilidade.")
 CATEGORIAS_NAO_CONTADOS = {
     "absorvido": "absorvido no processo elementar",
     "dado-de-codigo": "dado de código",
@@ -824,6 +826,8 @@ def render_md(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo"
             out.append(f"| {_md(item['item'])} | {CATEGORIAS_NAO_CONTADOS[item['categoria']]} | {_md(_just_nc(item))} |")
     out.append("")
     secao("Dúvidas de requisito e pendências", est.get("pendencias", []))
+    out.append(f"**Aviso:** {AVISO_PENDENCIAS}")
+    out.append("")
     out.append("## Legenda")
     out.append("")
     for termo, desc in legenda(est, calc, perfil):
@@ -940,6 +944,8 @@ def render_txt(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo
     for item in nao:
         out += _quebrar(f"- {_md(item['item'])} ({CATEGORIAS_NAO_CONTADOS[item['categoria']]}): {_md(_just_nc(item))}", recuo="  ")
     secao("DÚVIDAS DE REQUISITO E PENDÊNCIAS", est.get("pendencias", []))
+    out.append("")
+    out.extend(_quebrar(f"Aviso: {AVISO_PENDENCIAS}", recuo="  "))
     out += ["", "LEGENDA", ""]
     for termo, desc in legenda(est, calc, perfil):
         out += _quebrar(f"{termo}: {desc}", recuo="  ")
@@ -1119,6 +1125,7 @@ def gerar_xlsx(est: Dict[str, Any], calc: Dict[str, Any]) -> bytes:
         pp.add([_s(item["id"], 0), _s("Premissa assumida"), _s(item["descricao"])])
     for item in est.get("pendencias", []):
         pp.add([_s(item["id"], 0), _s("Dúvida / pendência"), _s(item["descricao"])])
+    pp.add([_s("—", 0), _s("Aviso"), _s(AVISO_PENDENCIAS)])
     for item in est.get("nao_contados", []):
         pp.add([_s("—", 0), _s("Não contado: " + CATEGORIAS_NAO_CONTADOS[item["categoria"]]),
                 _s(f"{item['item']}: {_just_nc(item)}")])

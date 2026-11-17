@@ -96,7 +96,7 @@ As três saídas têm as mesmas seções, nesta ordem:
 3. **Hipóteses e cenários:** cada hipótese com trecho, grupo e efeito; cenário mínimo e máximo, com as hipóteses de cada um.
 4. **Premissas assumidas.**
 5. **Itens não contados:** item, categoria e justificativa.
-6. **Dúvidas de requisito e pendências.**
+6. **Dúvidas de requisito e pendências.** O script fecha a seção com um aviso fixo de que a lista não é exaustiva; ele faz parte da saída e deve ser copiado.
 7. **Legenda:** tipos de função, operação, complexidade, pesos, base, cenários, unidades (PF, PF de melhoria, PFM) e fatores. No perfil `chat`, só os termos que aparecem no resultado; nos arquivos, completa.
 
 Particularidades:
