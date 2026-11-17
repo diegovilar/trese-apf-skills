@@ -49,6 +49,7 @@ Separe a **infraestrutura externa** das **funcionalidades requisitadas na aplica
 - **Usuários e perfis mantidos pela própria aplicação** (cadastro de usuários, atribuição de perfis ou permissões, mantidos pelo gestor do sistema): são dados de negócio. Identifique os arquivos pelas regras de agrupamento de 01 §2 (não há número fixo de ALIs: usuário, perfil e permissão podem ser um ou mais arquivos, conforme o pedido) e conte as transações pedidas.
 - **Controle de acesso** que só restringe o que cada perfil vê ou faz: é regra das funções existentes, não função nova [convenção da skill].
 - Se o pedido não diz como será a autenticação, registre pendência; não crie hipótese com PF.
+- **Registro vinculado a uma pessoa** [convenção da skill]: quando o pedido liga registros ou operações a uma pessoa ("minhas solicitações", "a própria reserva", documentos apresentados por alguém) e o subsídio não diz como essa pessoa é identificada nos dados de negócio nem de onde vêm os dados necessários a esse vínculo, registre a pendência explicitamente: "como <a pessoa> é identificada e de onde vêm os dados dela". Uma pendência genérica sobre integrações não basta. Não presuma cadastro, atributos nem integração, e não acrescente PF sem evidência ou hipótese sustentada pelo texto. Se o pedido já informa a origem (ex.: "os dados dos servidores vêm do RH"), não pergunte. Isso é identificação funcional, diferente da autenticação institucional.
 
 ## 5. Log, trilha de auditoria e histórico
 

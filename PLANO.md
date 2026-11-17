@@ -222,6 +222,29 @@ Autorizada pelo usuário com o plano da consulta 9, começando pelo G04. Parou d
 - D34: caso holdout **G07** (atestados médicos, "controlar", fora de qualquer exemplo, um só grupo de dados; O3), aprovado pelo usuário sem ajustes. G01, G05 e G06 servem de contraste (origem afirmada, sem alternativas artificiais).
 - D35: sem fumaça separada (O4). Nova rodada `completa-2` com a versão congelada (210 tarefas, com G07). Autorizado só o primeiro bloco: G04 e G07, 5 repetições cada (10 execuções e 10 juízes), com todos os K e S avaliados e a mesma regra de parada. As outras 190 tarefas precisam de novo ok.
 
+## Rodada `completa-2` (17/11/2026): primeiro bloco, parado no S4 do G04
+
+Versão com D33 e G07 (`config_hash` `5d2dfa2487945c76`). Executado o primeiro bloco autorizado, alternando G04 e G07, até a reprovação ficar inevitável. A G07 r5 e a G04 r6 não foram executadas. Consumo: Claude 5 h 72% → 66%; Codex 5 h 97% → 92%.
+
+| Execução | Mínimo–máximo | Juiz | Observação |
+|---|---|---|---|
+| G04 r1 | 9–23 | S4 ✗ | origem dos dados do servidor só indireta (P3 identidade, P5 integrações) |
+| G04 r2 | 9–23 | — | **inválida**: `echo $D > /tmp/apf_dir_path` (arquivo de nome fixo no `/tmp` compartilhado); repetida como r6 (comando novo `repetir`), não executada |
+| G04 r3 | 9–23 | todos ok | |
+| G04 r4 | 9–23 | todos ok | |
+| G04 r5 | 9–23 | S4 ✗ | só "Integrações necessárias (RH, …)" |
+| G07 r1–r4 | 9–28 (r3: 9–19) | todos ok | |
+
+- A correção D33 funcionou no que mirava: grupo de origem em todas as execuções de G04 (inclusive a inválida) e de G07; pendência sobre o alcance do verbo em todas.
+- Falha restante (S4 do G04, 2 de 4 válidas): pendência explícita sobre a origem dos dados do servidor, omitida de forma intermitente (genérica ou indireta nas reprovadas). Não há relação causal estabelecida com a hipótese do AIE de servidor: a G07 r3 não a criou (9–19) e registrou a pendência (O2 da consulta 11). O juiz foi coerente nas quatro.
+
+**Consulta 11 ao popper:**
+- D36: convenção nova em 03 §4, citada na etapa 2 do SKILL.md: registro ligado a uma pessoa ("minhas", "a própria", "apresentados por") sem dizer como ela é identificada nem de onde vêm os dados dela gera pendência explícita. Pendência genérica de integrações não basta. Sem presumir cadastro nem integração e sem PF. Não pergunta quando o pedido informa a origem. O gatilho é o vínculo funcional com a pessoa, não a simples menção de um papel (O1). Aprovado pelo usuário, com o primeiro bloco da `completa-3` (G04 e G07 5×; as demais tarefas exigem novo ok).
+- Rubrica mantida; a reprovação da r1 é de fronteira, mas defensável, e a parada fica valendo.
+- G04 e G07 orientaram a correção; repeti-los mede regressão e estabilidade, não generalização (O3). O G06 ("a própria reserva") não orientou esta correção e serve de verificação parcial fora deles, quando a rodada completa chegar a ele.
+- Resultados da `completa-2` ficam como diagnóstico e não entram no denominador da próxima rodada. As ~190 tarefas restantes não serão executadas.
+- Auditoria: a execução inválida é um caso legítimo do auditor (um arquivo de nome fixo no `/tmp` pode levar uma execução a ler o diretório de outra). O runner ganhou `repetir <rodada> <tarefa>`, que cria a repetição seguinte do mesmo caso e marca a inválida (fora dos hashes; 88 testes).
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.
