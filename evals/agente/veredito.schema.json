@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["K3", "S1", "S3", "S4", "S5", "observacoes"],
+  "properties": {
+    "K3": {"$ref": "#/$defs/criterio"},
+    "S1": {"$ref": "#/$defs/criterio"},
+    "S3": {"$ref": "#/$defs/criterio"},
+    "S4": {"$ref": "#/$defs/criterio"},
+    "S5": {"$ref": "#/$defs/criterio"},
+    "observacoes": {"type": "string"}
+  },
+  "$defs": {
+    "criterio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ok", "justificativa", "citacao"],
+      "properties": {
+        "ok": {"type": "boolean"},
+        "justificativa": {"type": "string"},
+        "citacao": {"type": "string"}
+      }
+    }
+  }
+}
