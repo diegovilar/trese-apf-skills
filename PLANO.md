@@ -290,6 +290,17 @@ Versão com D38 (`config_hash` `d26d7d0995350665`). 12 execuções e 12 juízes,
 - Se o trabalho continuar, primeiro um diagnóstico de regressão reduzido nos outros casos, com a versão atual congelada (1 repetição; contagens, metamórficos e ao menos um caminho xlsx, porque a D38 mexeu no esquema e na renderização), antes de outro bloco no G04 (O4).
 - **Decisão do usuário (17/11/2026):** diagnóstico de regressão primeiro: rodada `diag-1` (curta, 1 repetição) com G01, G02, G03a, G03b, G05, G06, M01, M02, M03a, M03b, M04 e A03; 12 execuções e 9 juízes, mais `comparar`. Depois, ele decide entre encerrar com a limitação, desenho novo (checklist do ciclo) ou redefinir o escopo do S4.
 
+## Diagnóstico de regressão `diag-1` (17/11/2026)
+
+Versão da `completa-5` (`config_hash` `d26d7d0995350665`), 1 repetição. Consumo: Claude 5 h 45% → 38%; Codex 5 h 64% → 60%.
+
+- 12 execuções (G01, G02, G03a, G03b, G05, G06, M01, M02, M03a, M03b, M04, A03), nenhuma inválida: **todas ok nos automáticos** (K1, K2, K4, S1 pré-filtro, S2, cobertura, configuração; exportações md, txt e xlsx).
+- 9 juízes: **todos ok em todos os critérios**.
+- Relações metamórficas M01–M05: **5/5 ok** (45 = 45; 45 = 45; md = txt; 47 = 47; 20 PF × 14,75 PFM).
+- Conclusão limitada: D33–D38 não quebraram nada detectável fora de G04/G07/G08, com uma execução por caso. Não é declaração de estabilidade.
+
+**Consulta 16 ao popper:** recomendar o encerramento do desenvolvimento **com requisito não atendido** (S4 do G04), condicionado ao aceite explícito do usuário de que a revisão humana das lacunas é obrigatória antes do uso. Isso não aprova a etapa 6. Aviso fixo no renderizador, que garante a presença em toda saída: "A lista de pendências não é exaustiva. Revise os requisitos e fluxos específicos do domínio antes de usar a estimativa na análise de viabilidade." (O3). Se o usuário não aceitar a condição, o caminho coerente é o desenho novo (checklist do ciclo). No relatório, não afirmar: "skill aprovada nos evals", "contagem estável", "pendências completas", "faixa cobre todo o projeto", "a D37 comprovadamente causou a regressão", "limite inevitável do modelo" (O1, O2).
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.
