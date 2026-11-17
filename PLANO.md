@@ -307,6 +307,9 @@ Versão da `completa-5` (`config_hash` `d26d7d0995350665`), 1 repetição. Consu
 - D39: aviso fixo no renderizador (md nos dois perfis, txt e xlsx), ao fim das pendências: "A lista de pendências não é exaustiva. Revise os requisitos e fluxos específicos do domínio antes de usar a estimativa na análise de viabilidade." 05 §3 diz que ele faz parte da saída. 95 testes.
 - Checagem do K2 com o aviso (rodada `k2-aviso`, G01 e G04, 1 execução cada, sem juiz), autorizada pelo usuário.
 - Consulta 17 (pergunta do usuário sobre o G04): o pedido vago é a origem da incerteza; uma entrevista guiada pelo ciclo do processo pode ajudar (perguntas abertas, respostas do demandante), mas não foi testada e mudaria a D15. Vai para o handoff da iteração 2 como variante, junto com o roteiro do ciclo nas pendências.
+- K2 com o aviso (`k2-aviso`): G01 e G04 ok; o aviso foi copiado sem alteração. xlsx da versão final relido com LibreOffice e openpyxl (Excel não reaberto). `/tmp/apf-fontes` removido (etapa 7); `/private/tmp/apf-evals` mantido para o usuário decidir.
+- Consulta 18 (revisão do relatório e dos handoffs): resultado do S4 atribuído à versão com D38, não à final; `HANDOFF.md` atualizado (nenhuma fase autorizada; popper a partir da consulta 19); URLs das fontes descritas como estão; critério do S4 para entrevista (aspecto resolvido e refletido, ou pendente); base técnica `38f562b`.
+- Entregues: `RELATORIO-iteracao-1.md` e `HANDOFF-iteracao-2.md`.
 
 ## Evals do agente: implementação
 
