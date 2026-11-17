@@ -201,6 +201,27 @@ Versão congelada da skill com D32 (`config_hash` `a84c3792ac7d6311`). 13 tarefa
 - Proposta ao usuário: rodada completa com a versão congelada, **começando pelas 5 repetições do G04** (exec e juiz de cada uma). Regra de parada definida antes: a rodada para quando a reprovação fica inevitável (qualquer K reprovado numa execução válida, ou o mesmo S reprovado 2 vezes no mesmo caso). Nenhum resultado desfavorável é descartado ou substituído (O2).
 - O "9 a 28" do G04 é referência de cálculo, não exigência numérica; a falha é omitir a alternativa de origem e admitir cenário vazio (O3).
 
+## Rodada completa `completa-1` (17/11/2026): parada no G04
+
+Autorizada pelo usuário com o plano da consulta 9, começando pelo G04. Parou depois de 3 repetições, quando a reprovação ficou inevitável: S1, S3 e S4 do G04 somaram 2 reprovações cada (o máximo tolerado em 5 é 1). Consumo: Claude 5 h 76% → 75%; Codex 5 h 100% → 99%. As outras 194 tarefas ficaram pendentes e não serão executadas com esta versão.
+
+| Execução | Mínimo–máximo | Grupo de origem | Pendência "gerenciar" | Juiz (S1, S3, S4) |
+|---|---|---|---|---|
+| `curta-3` r1 | 9–23 | sim | sim | ok, ok, ok |
+| `fumaca-1` r1 | 0–23 | não (só pendência) | não | ✗, ✗, ✗ |
+| `completa-1` r1 | 0–23 | não | sim | ✗, ✗, ok |
+| `completa-1` r2 | 9–23 | sim | não | ok, ok, ✗ |
+| `completa-1` r3 | 11–23 | não (ALI e registro como evidência) | não | ✗, ✗, ✗ |
+
+- Em G04, a versão atual acerta tudo em 1 de 5 execuções: o grupo de origem saiu em 2 de 5 e a pendência sobre "gerenciar" em 2 de 5. Todas as execuções leram SKILL.md e as cinco referências: o problema não é leitura, é aplicação da regra.
+- Na r3, o juiz citou também a falta do AIE de servidor no S3. A rubrica aceita sem ele (a `curta-3` foi aprovada com 9–23): é variação do juiz, não pesa na decisão.
+
+**Consulta 10 ao popper e decisão do usuário (17/11/2026):**
+- Diagnóstico: o gatilho da regra era implícito e ficava fora da etapa em que o agente decide os arquivos. Além disso, 01 §1 ("se não dá para decidir dentro/fora, pergunte") competia com o exemplo 3.
+- D33: reforço textual, sem mudança no script. SKILL.md, etapa 2: decidir quem mantém cada grupo pelo que o pedido afirma, não por palavra-chave (O1); origem não afirmada vira grupo de alternativas e também pendência; receber e gravar continua sendo ALI com EE. Política de incerteza e 03 §1: a pendência não substitui a hipótese; verbo amplo sem as operações listadas gera a pendência sobre o alcance dele. 01 §1: dúvida de fronteira ≠ dúvida de origem de um grupo (O2). 04: exemplo 4 diz por que a origem local está afirmada (O5); exemplo 3 formula a pendência sobre o verbo. Aprovado pelo usuário.
+- D34: caso holdout **G07** (atestados médicos, "controlar", fora de qualquer exemplo, um só grupo de dados; O3), aprovado pelo usuário sem ajustes. G01, G05 e G06 servem de contraste (origem afirmada, sem alternativas artificiais).
+- D35: sem fumaça separada (O4). Nova rodada `completa-2` com a versão congelada (210 tarefas, com G07). Autorizado só o primeiro bloco: G04 e G07, 5 repetições cada (10 execuções e 10 juízes), com todos os K e S avaliados e a mesma regra de parada. As outras 190 tarefas precisam de novo ok.
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.

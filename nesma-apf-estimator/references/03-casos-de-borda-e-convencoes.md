@@ -11,6 +11,8 @@ Regras práticas para situações que aparecem em quase todo pedido. O SISP 3.0 
 - **Pendência:** a função **não** é mencionada nem implicada, mas costuma existir em sistemas parecidos (ex.: lista de seleção, relatório de auditoria, notificação por e-mail). **Não conte** e não crie hipótese; se for relevante para a viabilidade, registre em `pendencias`.
 - Não conte funções por analogia com "o que todo sistema tem". Estimativa conservadora **não** é subcontar: tudo o que o pedido implica entra como hipótese com efeito visível, e não é descartado.
 - **Cada cenário precisa ser uma aplicação possível.** Um ALI exige algum processo que o mantenha e um AIE exige algum processo que o leia. Quando arquivo e transações dependem de hipóteses diferentes, ligue-as com `requer` (05 §1) ou ponha o arquivo e a transação mínima na mesma hipótese (exemplo 3 de 04). Quando duas interpretações se excluem ("mantido aqui" ou "lido de outro sistema"), use um grupo.
+- **Origem não afirmada** (SKILL.md, etapa 2): se o pedido nomeia um grupo de dados sem dizer quem o mantém, as duas origens entram como alternativas do mesmo grupo, cada uma com a transação mínima compatível, e a origem vai também para as pendências. Não fixe uma delas como evidência nem deixe as duas só na pendência: a pendência de confirmação não tira a hipótese dos cenários.
+- **Verbo amplo** ("gerenciar", "manter", "acompanhar", "controlar") sem as operações discriminadas: cada operação implicada é hipótese, e o alcance do verbo vai para as pendências ("quais operações '<verbo>' abrange"). Se o pedido lista as operações, elas são evidência e não há o que perguntar.
 
 ## 2. Mesma consulta em várias mídias e formatos (C2)
 

@@ -9,12 +9,13 @@ Para retomar o trabalho em outra sessão (humana ou de agente). Leia também o `
 - Evals do agente: **rodada curta `curta-3` concluída.**
 - A `curta-3` terminou (resultado no `PLANO.md`). Falha: erro de transcrição da legenda em 2 de 19 respostas. Mitigação aplicada (D32: perfil `chat` com legenda contextual).
 - Fumaça `fumaca-1` concluída em 17/11/2026: K2 7/7; juiz reprovou o G04 em S1, S3 e S4 (falta o grupo de origem; mínimo 0 PF). Resumo e consulta 9 no `PLANO.md`.
-- Próximo passo, **pendente de ok do usuário**: rodada completa (`preparar completa-1 completa`, 200 tarefas), começando pelas 5 repetições do G04 (`executar completa-1 exec-G04-rK`, depois `juiz-G04-rK`) e parando quando a reprovação ficar inevitável (qualquer K, ou o mesmo S 2 vezes no mesmo caso).
+- `completa-1` parada no G04 depois de 3 repetições (reprovação inevitável). Skill reforçada (D33), holdout G07 criado (D34). Ver `PLANO.md`.
+- **Autorizado pelo usuário em 17/11/2026:** só o primeiro bloco da `completa-2` (210 tarefas preparadas): `exec`/`juiz` de G04 e G07, r1 a r5, chamados pelo nome (`executar completa-2 exec-G04-r1` etc.), com parada quando a reprovação ficar inevitável (qualquer K, ou o mesmo S 2 vezes no mesmo caso). As outras 190 tarefas exigem novo ok.
 - Popper desta sessão: `ses_e15628079ffehR54kQzwIQFPNZ` (consultas 9 em diante); numa sessão nova, abra outro e continue a numeração.
 
 ## Regras que valem (combinadas com o usuário)
 
-1. **Não executar nada que consuma cota sem o ok do usuário para a fase.** Fases: sondagens, calibração, rodada curta e fumaça (feitas); rodada completa (pendente de ok).
+1. **Não executar nada que consuma cota sem o ok do usuário para a fase.** Fases: sondagens, calibração, rodada curta e fumaça (feitas); `completa-1` (parada no G04); `completa-2` (**só o primeiro bloco autorizado**: G04 e G07 5×).
 2. **Antes de cada tarefa que consome cota, ler a cota** (ferramenta de uso do OpenChamber, `providerId` `claude` para o executor e `codex` para o juiz). Se qualquer janela (5 h ou semanal) estiver **abaixo de 15%**, ou a leitura falhar, **parar** e avisar o usuário. Esta sessão de orquestração também consome a cota do Claude.
 3. **Uma tarefa por chamada** (`proxima` → ler cota → `executar`).
 4. Recomendações e decisões com consequência passam pelo **popper** (subagente de segunda opinião) antes de chegar ao usuário. A sessão anterior do popper (`ses_e166880bdffeQatE857gIDKXkq`, 8 consultas) só funciona a partir da sessão que a abriu: **abra um popper novo** (`/use-popper`, padrão com proposta) e, na abertura, mande o contexto: objetivo da skill, `PLANO.md` (decisões D1–D32 e as revisões das consultas 1 a 8) e este handoff. Numere as consultas a partir de 9, para manter a continuidade com o `PLANO.md`. O usuário prefere ver só a posição final, depois do retorno do popper, com o bloco "Revisão do popper" ao fim.

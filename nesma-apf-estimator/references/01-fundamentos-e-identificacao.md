@@ -12,7 +12,7 @@ Fontes: *Roteiro de Métricas de Software do SISP 3.0* (2026), que descreve o IF
   - **Melhoria:** funcionalidades incluídas, alteradas e excluídas numa aplicação existente, mais eventuais funções de conversão.
 - **Fronteira da aplicação** [normativa: SISP §5.1]: limite lógico entre a aplicação medida, seus usuários e as outras aplicações, definido pela **visão do usuário** e não pela implementação. Não se divide a fronteira por equipe, plataforma ou tecnologia. Fronteira mal posicionada duplica transações e arquivos ou conta transferências de dados de forma errada.
 - **Como delimitar** [normativa: SISP §5.1, dicas do CPM]: verifique quem mantém cada grupo de dados (o que é mantido por outra aplicação está fora); agrupe processos por área funcional; um diagrama de contexto ajuda.
-- **Registro obrigatório:** a fronteira adotada vai para `projeto.fronteira`. Se o pedido não permite decidir se algo está dentro ou fora, essa é uma lacuna que **impede** a contagem: pergunte (ver SKILL.md, política de incerteza).
+- **Registro obrigatório:** a fronteira adotada vai para `projeto.fronteira`. Se o pedido não permite decidir se algo está dentro ou fora, essa é uma lacuna que **impede** a contagem: pergunte (ver SKILL.md, política de incerteza). Isso vale para a fronteira da aplicação (o que é o sistema medido). Não saber quem mantém um grupo de dados nomeado no pedido **não** impede a contagem: as duas origens viram alternativas excludentes (03 §1; exemplo 3 de 04).
 
 ## 2. Funções de dados (ALI e AIE)
 

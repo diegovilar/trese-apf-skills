@@ -114,7 +114,7 @@ Leitura correta do resultado: estimativa híbrida, sem valor central, com **cobe
 - **Cenário mínimo:** 9 PF (H2 e a consulta que ela exige, H3).
 - **Cenário máximo:** 15 PF (H1 e H3).
 - **Cobertura:** parcial; o pedido não permite saber se há outras funções.
-- **Pendências:** de onde vêm os contratos; se o gestor também altera ou encerra contratos; se precisa de alertas de vencimento, relatórios ou indicadores; como "minha unidade" é determinada.
+- **Pendências:** de onde vêm os contratos; quais operações "acompanhar" abrange (só consultar, ou também alterar e encerrar contratos); se precisa de alertas de vencimento, relatórios ou indicadores; como "minha unidade" é determinada.
 
 Para a viabilidade, este resultado diz sobretudo que o pedido ainda não tem conteúdo suficiente: a resposta útil é a lista de pendências, e não o número.
 
@@ -126,7 +126,7 @@ Para a viabilidade, este resultado diz sobretudo que o pedido ainda não tem con
 
 > Sistema para a Seção de Estágio gerir os estagiários do tribunal: dados do estagiário, instituições de ensino conveniadas (com dados do convênio) e termos de compromisso. Cada estagiário pode ter vários termos ao longo do tempo, e os termos são guardados mesmo depois do desligamento. A unidade de lotação vem do sistema de estrutura organizacional e o supervisor é um servidor cujos dados vêm do RH. A situação do estágio é uma de: ativo, suspenso, desligado.
 
-**Raciocínio:** Estagiário e Instituição de ensino são dados de negócio mantidos (ALI). Termo de compromisso sobrevive ao desligamento e tem vida própria (ALI separado, 01 §2). Unidade e Servidor são lidos de outros sistemas (AIE). Situação do estágio é dado de código.
+**Raciocínio:** Estagiário e Instituição de ensino são dados de negócio mantidos (ALI): o pedido diz que a seção os gere e separa explicitamente o que vem de outros sistemas (unidade e servidor), o que afirma a origem local do resto. Termo de compromisso sobrevive ao desligamento e tem vida própria (ALI separado, 01 §2). Unidade e Servidor são lidos de outros sistemas (AIE). Situação do estágio é dado de código.
 
 | ID | Função identificada | Tipo | PF |
 |---|---|---|---:|

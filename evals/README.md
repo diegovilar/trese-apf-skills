@@ -8,7 +8,7 @@ Três camadas, separadas:
 | Interoperabilidade | o `.xlsx` abre e os valores lidos batem | manual + openpyxl/LibreOffice | ver `PLANO.md` (D28) |
 | Agente | a skill executada de verdade por um modelo, sobre os gabaritos aprovados | `evals/agente/` | runner abaixo |
 
-Gabaritos aprovados: `evals/gabaritos-iniciais.md` (revisão 3 no G04).
+Gabaritos aprovados: `evals/gabaritos-iniciais.md` (revisão 4 no G04; G07, holdout, aprovado em 17/11/2026).
 
 ## Estrutura do código (após a consulta 7 ao popper)
 

@@ -64,6 +64,7 @@ G03B = G02_PEDIDO.replace("Pedido: ", "No sistema de Diárias, já em produção
 
 G04 = "Como servidor, quero gerenciar minhas solicitações de diárias."
 
+G07 = "A Seção de Assistência à Saúde precisa controlar os atestados médicos apresentados pelos servidores."
 G05 = (
     "Sistema para o setor de patrimônio controlar os bens móveis do tribunal. O setor cadastra os bens (número de "
     "tombamento, descrição, valor, data de aquisição, estado de conservação, fornecedor, servidor responsável, unidade "
@@ -122,6 +123,8 @@ CASOS = {
     "G06": {"tipo": "contagem", "secao": "G06", "args": "tipo=desenvolvimento", "subsidio": G06,
             "tipos": _ms(("ALI", None, 2), ("EE", None, 5), ("CE", None, 2), ("SE", None, 1)),
             "totais": [(D(47), D(47))]},
+    "G07": {"tipo": "contagem", "secao": "G07", "args": "tipo=desenvolvimento", "subsidio": G07,
+            "tipos": None, "totais": None, "cobertura": "parcial"},
     # ---------------------------------------------------------------- metamórficos (variantes)
     "M01": {"tipo": "contagem", "secao": "G01", "args": "tipo=desenvolvimento", "subsidio": G01_PARAFRASE,
             "tipos": "G01", "totais": "G01", "nota_juiz": "Subsídio parafraseado do G01: o gabarito do G01 vale integralmente."},

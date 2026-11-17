@@ -225,11 +225,11 @@ class TestJuizECalibracao(unittest.TestCase):
             self.assertEqual(apf.validar(est), [], did)
 
     def test_dossie_autocontido(self):
-        for cid in ("G01", "G03a", "G03b", "G04", "M01"):
+        for cid in ("G01", "G03a", "G03b", "G04", "G07", "M01"):
             d = R.montar_dossie(cid, "/nesma-apf-estimator ...", C.CASOS[cid]["subsidio"], {"x": 1}, "resposta",
                                 C.CASOS[cid].get("nota_juiz", ""))
             self.assertIn("## Gabarito do caso", d)
-            self.assertIn("Total aceito" if cid not in ("G03b", "G04") else "rubrica", d)
+            self.assertIn("Total aceito" if cid not in ("G03b", "G04", "G07") else "rubrica", d)
             self.assertIn("C4. Transação alterada", d)
             self.assertIn(C.CASOS[cid]["subsidio"][:60], d)
 

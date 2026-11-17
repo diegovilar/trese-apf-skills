@@ -150,6 +150,21 @@ Argumentos: `tipo=desenvolvimento`
 - **Total aceito:** 47.
 - **Proibidas:** exportação PDF como função separada; menu; mensagem de confirmação como função; "recursos disponíveis" como ALI.
 
+## G07 · Origem não afirmada, fora dos exemplos (holdout, rubrica)
+
+Argumentos: `tipo=desenvolvimento`
+
+> A Seção de Assistência à Saúde precisa controlar os atestados médicos apresentados pelos servidores.
+
+Caso de transferência do G04 (consulta 10 ao popper), aprovado pelo usuário em 17/11/2026. Não tem exemplo correspondente em `references/`. Avaliado por rubrica, sem total fixo:
+
+- **Origem dos atestados** como alternativas excludentes: mantidos por este sistema (ALI, com ao menos a transação que os registra) ou lidos de outro sistema (AIE, com ao menos uma transação que os lê). Nenhuma das duas como evidência isolada, e nenhuma só como pendência.
+- Registrar, alterar, excluir e consultar só são aceitos como hipótese explícita, ligada a "controlar" ou a outra parte do texto (C1), com o efeito em PF. O AIE de servidor é opcional; se entrar, é hipótese ligada a uma transação que o lê.
+- Cenário mínimo e máximo **coerentes**, com mínimo acima de zero. Referência de cálculo (não é exigência numérica): 9 a 23 PF, ou 28 com o AIE de servidor.
+- Cobertura parcial.
+- **Proibidas** (como funções ou como hipóteses com PF): homologação ou perícia; lançamento do afastamento na frequência ou na folha; cálculo de dias de afastamento; notificações.
+- **Pendências obrigatórias:** quais operações "controlar" abrange; onde os atestados são registrados (origem); homologação ou perícia; origem dos dados do servidor.
+
 ---
 
 ## Casos de argumentos
