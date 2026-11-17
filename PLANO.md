@@ -178,6 +178,29 @@ Fato adicional da NESMA: a indicativa supõe, em média, 3 EE + 2 SE + 1 CE por 
 - Próximo passo, se o usuário autorizar: rodada de **fumaça** com M02, M03b, G03a, G03b, G04, G05 e G06 (7 execuções e 5 juízes), sem conclusão estatística (zero erros em 19 ainda seria compatível com taxa de até cerca de 15%). Se passar, pedir ok para a rodada completa com esta versão congelada, sem misturar resultados antigos.
 - 87 testes unitários passando.
 
+## Fumaça `fumaca-1` (17/11/2026)
+
+Versão congelada da skill com D32 (`config_hash` `a84c3792ac7d6311`). 13 tarefas (7 execuções e 6 juízes; o handoff contava 5 juízes), nenhuma inválida. Consumo: cerca de 3 pontos da janela de 5 h no Claude (81% → 78%) e no Codex (72% → 69%).
+
+| Caso | Automáticos | Juiz |
+|---|---|---|
+| M02 | todos ok (K2 ok) | todos ok |
+| M03b | todos ok (K2 ok) | — |
+| G03a | todos ok | todos ok |
+| G03b | todos ok | todos ok |
+| G04 | todos ok | **S1, S3 e S4 reprovados** (K3, S5 ok) |
+| G05 | todos ok | todos ok |
+| G06 | todos ok | todos ok |
+
+- **K2 (objetivo da fumaça):** 7/7, inclusive M02 e M03b. Sem conclusão estatística (consulta 8).
+- **G04, falha semântica nova:** o executor não pôs a origem das solicitações em grupo excludente (ALI mantido aqui × AIE lido de outro sistema). A origem externa ficou só como pendência, todas as hipóteses ficaram independentes, e o cenário mínimo saiu 0 PF (obtido 0–23; na `curta-3`, 9–23, aprovado). Faltou também a pendência sobre o que "gerenciar" abrange. O juiz está certo nos três critérios. A skill já instrui o grupo (SKILL.md, 03 §1, exemplo 3 de 04), e a D32 só mexe na renderização: é variância do executor.
+- **A fumaça não passou integralmente:** passou no K2 e revelou uma reprovação semântica.
+
+**Consulta 9 ao popper:**
+- Sem mudança na skill nem no script agora. O script calcula certo o JSON recebido (hipótese sem grupo é opcional) e não tem como saber que falta uma alternativa de origem; bloquear ou avisar o mínimo zero produziria falsos positivos (O4).
+- Proposta ao usuário: rodada completa com a versão congelada, **começando pelas 5 repetições do G04** (exec e juiz de cada uma). Regra de parada definida antes: a rodada para quando a reprovação fica inevitável (qualquer K reprovado numa execução válida, ou o mesmo S reprovado 2 vezes no mesmo caso). Nenhum resultado desfavorável é descartado ou substituído (O2).
+- O "9 a 28" do G04 é referência de cálculo, não exigência numérica; a falha é omitir a alternativa de origem e admitir cenário vazio (O3).
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.
