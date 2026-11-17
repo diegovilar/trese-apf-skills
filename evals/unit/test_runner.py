@@ -81,6 +81,21 @@ class TestAuditoria(Base):
         for r in ruins:
             self.assertTrue(R.auditar([r], self.ws), r)
 
+    def test_temporario_criado_na_execucao(self):
+        import tempfile, time
+        desde = time.time() - 1
+        novo = tempfile.mkdtemp(prefix="apf-work.", dir="/tmp")
+        try:
+            cmds = [{"nome": "Bash", "entrada": {"command": "D=$(mktemp -d /tmp/apf-work.XXXXXX)"}},
+                    {"nome": "Bash", "entrada": {"command": f"python3 x/apf.py check {novo}/e.json"}}]
+            self.assertEqual(R.auditar(cmds, self.ws, desde), [])
+            antigo = [{"nome": "Bash", "entrada": {"command": "cat /tmp/apf-fontes/sisp-3.0.txt"}}]
+            self.assertTrue(R.auditar(antigo, self.ws, desde))
+            outra_execucao = [{"nome": "Bash", "entrada": {"command": "ls /tmp/apf-evals/outra"}}]
+            self.assertTrue(R.auditar(outra_execucao, self.ws, desde))
+        finally:
+            os.rmdir(novo)
+
 
 class TestVerificacao(Base):
     def _json_e_md(self):

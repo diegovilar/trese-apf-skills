@@ -269,13 +269,37 @@ PERMITIDOS_ABS = ("/usr/bin/", "/bin/", "/usr/local/bin/", "/opt/homebrew/bin/",
 REDE = re.compile(r"\b(curl|wget|nc|ssh|scp|rsync|ftp)\b|https?://", re.I)
 
 
-def auditar(ferramentas: List[Dict[str, Any]], ws: Path) -> List[str]:
-    """Acessos observáveis fora do diretório da execução."""
+def raiz_temporaria(p: str) -> Optional[Path]:
+    """Primeiro nível de um caminho em /tmp ou no TMPDIR do sistema (/var/folders/.../T)."""
+    q = p.replace("/private/", "/", 1) if p.startswith("/private/") else p
+    m = re.match(r"^(/tmp/[^/]+|/var/folders/[^/]+/[^/]+/T/[^/]+)", q)
+    return Path(m.group(1)) if m else None
+
+
+def temp_da_execucao(p: str, desde: float) -> bool:
+    """Diretório temporário criado durante a execução (mktemp do próprio agente)."""
+    if not desde:
+        return False
+    r = raiz_temporaria(p)
+    if r is None:
+        return False
+    if "XXX" in r.name:  # modelo do mktemp, ainda não resolvido
+        return True
+    try:
+        st = r.stat()
+    except OSError:
+        return False
+    nasc = getattr(st, "st_birthtime", st.st_ctime)
+    return nasc >= desde and not str(r).startswith(str(BASE_WS))
+
+
+def auditar(ferramentas: List[Dict[str, Any]], ws: Path, desde: float = 0.0) -> List[str]:
+    """Acessos observáveis fora do diretório da execução (temporários criados por ela são permitidos)."""
     raizes = {str(ws), str(ws).replace("/private/tmp/", "/tmp/"), str(ws).replace("/tmp/", "/private/tmp/")}
     problemas = []
 
     def dentro(p: str) -> bool:
-        return any(p == r or p.startswith(r + "/") for r in raizes)
+        return any(p == r or p.startswith(r + "/") for r in raizes) or temp_da_execucao(p, desde)
 
     for f in ferramentas:
         nome, ent = f["nome"], f["entrada"]
@@ -324,10 +348,12 @@ def diretorios_temporarios(saidas: List[str], desde: float) -> List[Path]:
     achados = []
     for s in saidas:
         for m in TEMP_SISTEMA.finditer(s):
-            p = Path(m.group(1).rstrip("."))
-            alvo = p if p.is_dir() else p.parent
+            raiz = raiz_temporaria(m.group(1).rstrip("."))
+            if raiz is None or str(raiz).startswith(str(BASE_WS)):
+                continue
+            alvo = raiz
             try:
-                if alvo.is_dir() and alvo.stat().st_mtime >= desde and alvo not in achados and len(alvo.parts) > 4:
+                if alvo.is_dir() and alvo.stat().st_mtime >= desde and alvo not in achados:
                     achados.append(alvo)
             except OSError:
                 continue
@@ -395,13 +421,14 @@ def verificar(c: Dict[str, Any], ws: Path, tr: Dict[str, Any], hash_antes: str, 
     if sha_arvore(ws / ".claude" / "skills" / "nesma-apf-estimator") != hash_antes:
         v["invalido"] = "a cópia da skill foi modificada durante a execução"
         return v
-    acessos = auditar(tr["ferramentas"], ws)
+    acessos = auditar(tr["ferramentas"], ws, desde)
     if acessos:
         v["invalido"] = "contaminada: " + "; ".join(acessos[:5])
         return v
 
     texto = tr["texto_final"]
-    temporarios = diretorios_temporarios(tr.get("saidas", []), desde) if desde else []
+    comandos = [f["entrada"].get("command") or "" for f in tr["ferramentas"] if f["nome"] == "Bash"]
+    temporarios = diretorios_temporarios(tr.get("saidas", []) + comandos, desde) if desde else []
     criados = arquivos_criados(ws) + [str(f) for d in temporarios for f in sorted(d.rglob("*")) if f.is_file()]
     apf_cmds = chamadas_apf(tr["ferramentas"])
     t = c["tipo"]
