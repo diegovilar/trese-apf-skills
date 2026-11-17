@@ -294,7 +294,7 @@ def recuperar_json(snap: Path, tr: Dict[str, Any]) -> Tuple[Optional[Path], str]
             est = json.loads(p.read_text(encoding="utf-8"))
         except Exception:
             continue
-        if not isinstance(est, dict) or est.get("versao_esquema") != 1 or apf.validar(est):
+        if not isinstance(est, dict) or est.get("versao_esquema") != apf.VERSAO_ESQUEMA or apf.validar(est):
             continue
         calc = apf.calcular(est)
         if any(compacto(apf.render_md(est, calc, perfil)) in alvo for perfil in ("chat", "arquivo")):

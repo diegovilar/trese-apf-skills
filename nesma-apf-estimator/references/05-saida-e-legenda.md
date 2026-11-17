@@ -6,7 +6,7 @@ O agente **não** calcula pesos, fatores nem totais e **não** escreve a tabela 
 
 ```json
 {
-  "versao_esquema": 1,
+  "versao_esquema": 2,
   "metodo": "estimada | indicativa",
   "tipo_projeto": "desenvolvimento | melhoria",
   "regime_melhoria": "sem-fatores | nesma | null",
@@ -35,7 +35,7 @@ O agente **não** calcula pesos, fatores nem totais e **não** escreve a tabela 
   ],
   "premissas": [{"id": "PR1", "descricao": "..."}],
   "pendencias": [{"id": "P1", "descricao": "..."}],
-  "nao_contados": [{"item": "...", "categoria": "absorvido | dado-de-codigo | fora-do-escopo | sem-evidencia", "justificativa": "..."}]
+  "nao_contados": [{"item": "...", "categoria": "absorvido | dado-de-codigo | fora-do-escopo | sem-evidencia", "justificativa": "...", "pendencias": ["P1"]}]
 }
 ```
 
@@ -51,6 +51,7 @@ Regras que o script verifica (ele recusa o JSON e lista os erros):
 - **`cobertura`**: `parcial` quando o subsídio não permite identificar todas as funções afetadas (ex.: melhoria sem baseline, pelo exemplo 7 do EFPA; pedido vago). O motivo aparece no resumo e o total sai marcado como PARCIAL, mesmo que mínimo e máximo coincidam. Cobertura e faixa de fator são incertezas diferentes: registre as duas quando houver.
 - **`avisos`**: frases que o resumo executivo deve mostrar (ex.: "pedido só cosmético: no regime nesma valeria 0,25 × peso por transação"). O script acrescenta sozinho o aviso de total zero.
 - IDs únicos: `F1`/`F01`…, `H1`…, `PR1`…, `P1`…. As listas `funcoes`, `hipoteses`, `premissas`, `pendencias` e `nao_contados` são obrigatórias, mesmo vazias.
+- Item de `nao_contados` com categoria `sem-evidencia` exige `pendencias`: a lista (não vazia, sem repetição) dos IDs das pendências que o cobrem. Nas outras categorias o campo é opcional. Uma pendência pode cobrir vários itens. O script confere só os IDs: cabe a você garantir que as pendências apontadas tratem de **todos** os assuntos do item (ex.: um item "cálculo do valor e prestação de contas" precisa de pendências que perguntem pelos dois). O render acrescenta "(ver P1, P2)" à justificativa; não escreva isso à mão.
 - `funcoes` pode ficar vazia só se `nao_contados` explicar o porquê (ex.: pedido só cosmético no regime `sem-fatores`).
 
 ### Campo `efpa` (só em melhoria, regime `nesma`, operação `A`)
@@ -114,7 +115,7 @@ Particularidades:
 
 ```json
 {
-  "versao_esquema": 1,
+  "versao_esquema": 2,
   "metodo": "estimada",
   "tipo_projeto": "desenvolvimento",
   "regime_melhoria": null,

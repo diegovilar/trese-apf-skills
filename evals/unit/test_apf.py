@@ -113,6 +113,42 @@ class TestValidacao(unittest.TestCase):
         e["funcoes"].append(fx._f("F09", "EE", "Incluir bem"))
         self.assertTrue(any("só tem funções de dados" in x for x in self.erros(e)))
 
+    def _com_sem_evidencia(self, refs="ausente"):
+        e = fx.g01()
+        e["pendencias"] = [{"id": "P1", "descricao": "Há emissão de certificados?"}]
+        item = {"item": "Certificados", "categoria": "sem-evidencia", "justificativa": "não mencionados"}
+        if refs != "ausente":
+            item["pendencias"] = refs
+        e["nao_contados"].append(item)
+        return e
+
+    def test_sem_evidencia_exige_pendencias(self):
+        for refs in ("ausente", [], None):
+            erros = self.erros(self._com_sem_evidencia(refs))
+            self.assertTrue(any("nao_contados[1].pendencias" in x for x in erros), (refs, erros))
+
+    def test_sem_evidencia_referencia_inexistente_ou_repetida(self):
+        self.assertTrue(any("'P9' não existe" in x for x in self.erros(self._com_sem_evidencia(["P9"]))))
+        self.assertTrue(any("ID repetido" in x for x in self.erros(self._com_sem_evidencia(["P1", "P1"]))))
+        self.assertTrue(any("lista de IDs" in x for x in self.erros(self._com_sem_evidencia("P1"))))
+
+    def test_sem_evidencia_valida_e_pendencia_compartilhada(self):
+        e = self._com_sem_evidencia(["P1"])
+        e["nao_contados"].append({"item": "Frequência", "categoria": "sem-evidencia", "justificativa": "x", "pendencias": ["P1"]})
+        self.assertEqual(self.erros(e), [])
+
+    def test_pendencias_opcional_nas_outras_categorias(self):
+        e = fx.g01()
+        self.assertEqual(self.erros(e), [])
+        e["pendencias"] = [{"id": "P1", "descricao": "x"}]
+        e["nao_contados"][0]["pendencias"] = ["P2"]
+        self.assertTrue(any("'P2' não existe" in x for x in self.erros(e)))
+
+    def test_versao_antiga_recusada(self):
+        e = fx.g01()
+        e["versao_esquema"] = 1
+        self.assertTrue(any("versao_esquema" in x for x in self.erros(e)))
+
     def test_operacao_obrigatoria_em_melhoria(self):
         e = fx.g02()
         e["funcoes"][0]["operacao"] = None
@@ -329,6 +365,19 @@ class TestRender(unittest.TestCase):
         self.assertIn("**Total:** 45 PF", md)
         self.assertIn("## Legenda", md)
         self.assertIn("| F01 |", md)
+
+    def test_nao_contados_mostra_pendencias_nos_tres_formatos(self):
+        e = fx.g01()
+        e["pendencias"] = [{"id": "P1", "descricao": "Há certificados?"}, {"id": "P2", "descricao": "Há frequência?"}]
+        e["nao_contados"].append({"item": "Certificados e frequência", "categoria": "sem-evidencia",
+                                  "justificativa": "não mencionados", "pendencias": ["P1", "P2"]})
+        self.assertEqual(apf.validar(e), [])
+        c = apf.calcular(e)
+        self.assertIn("| Certificados e frequência | sem evidência no pedido | não mencionados (ver P1, P2) |", apf.render_md(e, c))
+        self.assertIn("não mencionados (ver P1, P2)", apf.render_txt(e, c))
+        self.assertIn("| Modalidade | dado de código | lista fixa de valores |", apf.render_md(e, c))  # sem refs, sem sufixo
+        with zipfile.ZipFile(io.BytesIO(apf.gerar_xlsx(e, c))) as z:
+            self.assertTrue(any("não mencionados (ver P1, P2)" in z.read(n).decode("utf-8") for n in z.namelist() if n.endswith(".xml")))
 
     def test_md_escapa_barra_vertical(self):
         e = fx.g01()

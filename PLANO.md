@@ -262,6 +262,18 @@ Versão com D36 (`config_hash` `e9ae2ea398eb14c2`). Bloco completo: G04 e G07, 5
 - Calibração delta do juiz (O3): dossiês P3 (G07 correto, homologação por paráfrase), E6 (G07 só com "validar" na lista de operações → S4), P4 (G08 correto) e E7 (G08 com pergunta indevida → S4). Quatro chamadas do Codex; as demais da calibração antiga não são repetidas.
 - **Aprovado pelo usuário (17/11/2026):** D37, G08, S4 e calibração delta (rodada `calib-3`, só P3, E6, P4 e E7). Se o juiz acertar os 4, está autorizado o primeiro bloco da `completa-4` (G04, G07 e G08, 5× cada, mesma regra de parada); se errar algum, parar e levar ao usuário. O resto da `completa-4` pede novo ok.
 
+## Calibração delta `calib-3` e rodada `completa-4` (17/11/2026)
+
+- `calib-3`: o juiz acertou os 4 dossiês (P3 e P4 aprovados; E6 e E7 reprovados só no S4).
+- `completa-4` (`config_hash` `7565bc28c0507676`, 220 tarefas): primeiro bloco parado depois de 8 execuções. G04 r1 ok, **r2 e r3 S4 ✗**; G07 r1 e r2 ok; G08 r1 e r2 ok (15 e 15–19 PF; sem grupo de origem e sem perguntar se existe análise, como pedem os contrastes). Consumo: Claude 5 h 58% → 55%; Codex 5 h 79% → 75%.
+- Falha do G04: cálculo do valor (r3) e prestação de contas (r2, r3) aparecem em `nao_contados` como `sem-evidencia`, com "(ver pendências)" na justificativa, mas sem pendência correspondente. Antes da D37 saíam 9/9, provavelmente numa pendência ampla ("há aprovação, cálculo, prestação de contas?") que a pendência específica da D37 passou a substituir. É uma regressão causada pela D37.
+- A regra já existia: 03 §7 manda registrar a pendência de todo item `sem-evidencia`. O executor a lê e não a aplica, e o próprio JSON mostra a inconsistência.
+
+**Consulta 14 ao popper:**
+- Alcance: das 6 reprovações do S4 desde a `completa-2`, só as 2 da `completa-4` tinham o item faltante em `nao_contados`. Dados do servidor (`completa-2`) e homologação (`completa-3`) não estavam lá. A mudança previne essa classe de inconsistência; não garante completude (O2).
+- Auditoria retrospectiva, sem cota (`completa-4` e controles da `curta-3`, 14 execuções, cerca de 40 itens `sem-evidencia`): quase todos tinham pendência correspondente, só sem vínculo formal (escrito à mão, "ver P3"); 3 itens sem pendência equivalente, todos nas duas execuções reprovadas; 1 uso indevido da categoria (G03b, `curta-3`: algo que o pedido exclui expressamente).
+- D38 (proposta): esquema versão 2. Item `sem-evidencia` exige `pendencias`, lista não vazia de IDs existentes, sem repetição; uma pendência pode cobrir vários itens (O4). O `check` recusa sem isso. O script confere só os IDs; 05 §1 diz que as pendências apontadas precisam cobrir todos os assuntos do item, e o significado continua com o juiz (O1). O render acrescenta "(ver P1, P2)" em md, txt e xlsx. 03 §7: o que o pedido exclui expressamente não é `sem-evidencia` (O3). Verificador lê a versão do script. 94 testes (6 novos). Snapshots antigos não mudam. **Aprovado pelo usuário (17/11/2026), com o primeiro bloco da `completa-5` (G04, G07 e G08, 5× cada, mesma regra de parada); o resto pede novo ok.**
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.

@@ -29,7 +29,7 @@ from decimal import Decimal
 from fractions import Fraction
 from typing import Any, Dict, List, Optional, Tuple
 
-VERSAO_ESQUEMA = 1
+VERSAO_ESQUEMA = 2
 
 TIPOS_DADOS = ("ALI", "AIE")
 TIPOS_TRANSACAO = ("EE", "SE", "CE")
@@ -70,7 +70,7 @@ CATEGORIAS_NAO_CONTADOS = {
     "absorvido": "absorvido no processo elementar",
     "dado-de-codigo": "dado de código",
     "fora-do-escopo": "fora do escopo da APF",
-    "sem-evidencia": "sem evidência no pedido (ver pendências)",
+    "sem-evidencia": "sem evidência no pedido",
 }
 
 
@@ -131,6 +131,12 @@ def _fator(valor: Any, onde: str, permitidos: List[Decimal], erros: List[str]) -
         erros.append(f"{onde}: fator {valor} fora dos valores do EFPA para este tipo ({lista})")
         return None
     return d
+
+
+def _just_nc(item: Dict[str, Any]) -> str:
+    """Justificativa de um item não contado, com as pendências que o cobrem."""
+    refs = item.get("pendencias") or []
+    return item["justificativa"] + (f" (ver {', '.join(refs)})" if refs else "")
 
 
 def _validar_estrutura(est: Any) -> List[str]:
@@ -226,8 +232,9 @@ def _validar_estrutura(est: Any) -> List[str]:
                 if r == h.get("id"):
                     erros.append(f"hipoteses[{h.get('id')}].requer: não pode exigir a si mesma")
 
+    ids_pend: List[str] = []
     for chave, prefixo in (("premissas", "PR"), ("pendencias", "P")):
-        vistos: List[str] = []
+        vistos: List[str] = ids_pend if chave == "pendencias" else []
         for i, item in enumerate(lista(chave, obrigatoria=True)):
             onde = f"{chave}[{i}]"
             if not isinstance(item, dict):
@@ -252,6 +259,18 @@ def _validar_estrutura(est: Any) -> List[str]:
         _texto(item, "justificativa", onde, erros)
         if not isinstance(item.get("categoria"), str) or item["categoria"] not in CATEGORIAS_NAO_CONTADOS:
             erros.append(f"{onde}.categoria: uma de {', '.join(CATEGORIAS_NAO_CONTADOS)}")
+        refs = item.get("pendencias")
+        if item.get("categoria") == "sem-evidencia" and (refs is None or refs == []):
+            erros.append(f"{onde}.pendencias: item sem evidência exige a lista das pendências que o cobrem (ex.: [\"P2\"])")
+        elif refs is not None:
+            if not isinstance(refs, list) or not all(isinstance(r, str) for r in refs):
+                erros.append(f"{onde}.pendencias: lista de IDs de pendências")
+            else:
+                if len(set(refs)) != len(refs):
+                    erros.append(f"{onde}.pendencias: ID repetido")
+                for r in refs:
+                    if r not in ids_pend:
+                        erros.append(f"{onde}.pendencias: '{r}' não existe em 'pendencias'")
 
     # Funções
     funcoes = lista("funcoes", obrigatoria=True)
@@ -802,7 +821,7 @@ def render_md(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo"
         out.append("| Item | Categoria | Justificativa |")
         out.append("|---|---|---|")
         for item in nao:
-            out.append(f"| {_md(item['item'])} | {CATEGORIAS_NAO_CONTADOS[item['categoria']]} | {_md(item['justificativa'])} |")
+            out.append(f"| {_md(item['item'])} | {CATEGORIAS_NAO_CONTADOS[item['categoria']]} | {_md(_just_nc(item))} |")
     out.append("")
     secao("Dúvidas de requisito e pendências", est.get("pendencias", []))
     out.append("## Legenda")
@@ -919,7 +938,7 @@ def render_txt(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo
     if not nao:
         out.append("  Nenhum.")
     for item in nao:
-        out += _quebrar(f"- {_md(item['item'])} ({CATEGORIAS_NAO_CONTADOS[item['categoria']]}): {_md(item['justificativa'])}", recuo="  ")
+        out += _quebrar(f"- {_md(item['item'])} ({CATEGORIAS_NAO_CONTADOS[item['categoria']]}): {_md(_just_nc(item))}", recuo="  ")
     secao("DÚVIDAS DE REQUISITO E PENDÊNCIAS", est.get("pendencias", []))
     out += ["", "LEGENDA", ""]
     for termo, desc in legenda(est, calc, perfil):
@@ -1102,7 +1121,7 @@ def gerar_xlsx(est: Dict[str, Any], calc: Dict[str, Any]) -> bytes:
         pp.add([_s(item["id"], 0), _s("Dúvida / pendência"), _s(item["descricao"])])
     for item in est.get("nao_contados", []):
         pp.add([_s("—", 0), _s("Não contado: " + CATEGORIAS_NAO_CONTADOS[item["categoria"]]),
-                _s(f"{item['item']}: {item['justificativa']}")])
+                _s(f"{item['item']}: {_just_nc(item)}")])
     planilhas.append(pp)
 
     # --- Legenda

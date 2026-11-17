@@ -86,7 +86,9 @@ Use `nao_contados` com uma destas categorias:
 | `absorvido` | mensagens de erro, confirmação e validação; validação de máscara e formato; abas e etapas de um mesmo processo; gravação de histórico | SISP §5.1, §8.2.3, §8.3 |
 | `dado-de-codigo` | UF, status, tipos fixos, listas de valores válidos e suas telas de manutenção | SISP §8.4.1 |
 | `fora-do-escopo` | menus e telas só de navegação; refatoração técnica sem mudança funcional; desempenho, segurança, usabilidade; log técnico; autenticação feita inteiramente pela infraestrutura institucional (§4) | SISP §5.1, §8.2.1; convenção para autenticação |
-| `sem-evidencia` | funções esperadas mas não mencionadas nem implicadas (ver C1); registre também a pendência | convenção C1 |
+| `sem-evidencia` | funções esperadas mas não mencionadas nem implicadas (ver C1); cada item aponta as pendências que cobrem todos os assuntos dele (campo `pendencias`, 05 §1) | convenção C1 |
+
+`sem-evidencia` é lacuna de requisito: o pedido não diz se a função existe. O que o pedido **exclui expressamente** (ex.: "as datas não são exibidas nem gravadas") não é lacuna e não gera pergunta: se o dado é usado dentro de outra função, é `absorvido`; senão, não registre.
 
 Em projeto de **melhoria**, alteração só cosmética (rótulo, cor, layout, texto de mensagem, título de relatório):
 
