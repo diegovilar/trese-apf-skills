@@ -46,7 +46,7 @@ def g04_correto():
         {"id": "H5", "descricao": "Solicitações nascem em outro sistema e são lidas", "trecho": "minhas solicitações", "grupo": "origem", "requer": ["H3"]},
         {"id": "H2", "descricao": "Gerenciar inclui alterar e cancelar", "trecho": "gerenciar", "requer": ["H1"]},
         {"id": "H3", "descricao": "Gerenciar inclui consultar", "trecho": "gerenciar"},
-        {"id": "H4", "descricao": "Dados do servidor lidos do RH", "trecho": None},
+        {"id": "H4", "descricao": "O registro lê os dados do servidor no RH", "trecho": None, "requer": ["H1"]},
     ]
     e["funcoes"] = [
         _f("F01", "ALI", "Solicitação de diária", "minhas solicitações de diárias", "mantida aqui sob H1", hip="H1"),

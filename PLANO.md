@@ -143,6 +143,7 @@ Fato adicional da NESMA: a indicativa supõe, em média, 3 EE + 2 SE + 1 CE por 
   - nenhum CLAUDE.md nem memória do usuário entra no contexto do executor;
   - juiz: `gpt-6.1-sol` no Codex 0.167.0 responde (esforço high); eventos `--json` no formato `item.completed` / `item.type`.
 - Custo das sondagens no executor: US$ 0,07 + 0,04 + 0,02 (estimativa do Claude Code; na assinatura, vale como medida relativa).
+- **Calibração do juiz (rodadas `calib-1` e `calib-2`): aprovada.** Em `calib-1`, o juiz acertou o critério-alvo nos 7 dossiês (P1, P2 aprovados; E1→S1, E2→S5, E3→K3, E4→S4, E5→S3). Também reprovou o S3 do E4 apontando um defeito real da **nossa** referência do G04: o AIE de servidor sem transação ligada que o lesse. No P2, com a mesma estrutura, deixou passar, o que mostra variação do juiz em casos de fronteira. Correção: a hipótese do servidor passou a exigir o registro (fixtures, calibração e gabarito G04, revisão 4). Em `calib-2`, P2 e E4 foram rodados de novo: P2 aprovado em tudo, E4 reprovado só no S4. As demais tarefas de `calib-2` ficaram pendentes de propósito (dossiês inalterados ou com alteração irrelevante para o alvo).
 - 76 testes unitários passando (inclui o runner com traces simulados).
 
 ## Evals do agente: escolhas do usuário

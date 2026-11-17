@@ -83,7 +83,7 @@ def g04():
         {"id": "H5", "descricao": "solicitações nascem em outro sistema e são lidas", "trecho": "minhas solicitações", "grupo": "origem", "requer": ["H3"]},
         {"id": "H2", "descricao": "gerenciar inclui alterar e cancelar", "trecho": "gerenciar", "requer": ["H1"]},
         {"id": "H3", "descricao": "gerenciar inclui consultar", "trecho": "gerenciar"},
-        {"id": "H4", "descricao": "dados do servidor vêm do RH"},
+        {"id": "H4", "descricao": "o registro lê os dados do servidor no RH", "requer": ["H1"]},
     ]
     e["funcoes"] = [
         _f("F01", "ALI", "Solicitação de diária", hip="H1"),
