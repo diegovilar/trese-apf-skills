@@ -135,7 +135,14 @@ Fato adicional da NESMA: a indicativa supõe, em média, 3 EE + 2 SE + 1 CE por 
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.
 - Runner em `evals/agente/` (`runner.py`, `casos.py`, `calibracao.py`, `veredito.schema.json`): uma tarefa por chamada, estado por fase, hash da configuração, auditoria de acesso, verificações automáticas fortes, dossiê autocontido do juiz. Rodada curta = 30 execuções do executor e 10 do juiz.
-- Perfil do executor a validar pela sondagem: `--restricted --strict-mcp-config`, ferramentas `Read, Write, Edit, Glob, Grep, Bash, Skill`, `--permission-prompts none`, `TMPDIR` dentro do diretório da execução.
+- **Sondagens (17/11/2026, rodadas `sondas-1` e `sondas-2`):**
+  - credencial da assinatura (`apiKeySource: none`), modelo `claude-sonnet-5-5`; o consumo cai na cota monitorada;
+  - `--restricted` **não** descobre `.claude/skills` do projeto (sondas-1: o executor improvisou uma contagem detalhada sem a skill);
+  - D30: perfil do executor fixado em `--setting-sources project --strict-mcp-config`, ferramentas `Read, Write, Edit, Glob, Grep, Bash, Skill` (`--tools` e `--allowedTools`), `--permission-prompts none`, `TMPDIR` dentro do diretório da execução; confinamento pela auditoria do trace (decisão da sessão, registrada; não é fallback automático);
+  - com esse perfil, a skill é descoberta e o caso `modo=detalhada` gerou exatamente o alerta especificado, sem ferramentas;
+  - nenhum CLAUDE.md nem memória do usuário entra no contexto do executor;
+  - juiz: `gpt-6.1-sol` no Codex 0.167.0 responde (esforço high); eventos `--json` no formato `item.completed` / `item.type`.
+- Custo das sondagens no executor: US$ 0,07 + 0,04 + 0,02 (estimativa do Claude Code; na assinatura, vale como medida relativa).
 - 76 testes unitários passando (inclui o runner com traces simulados).
 
 ## Evals do agente: escolhas do usuário

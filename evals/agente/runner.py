@@ -48,9 +48,10 @@ CONFIG = {
         "cmd": "claude",
         "modelo": "claude-sonnet-5-5",
         "esforco": "high",
-        # Perfil a validar pela sondagem. Se a sondagem mostrar que a skill não é descoberta em
-        # --restricted, o perfil muda por decisão registrada, não por fallback automático.
-        "perfil": ["--restricted", "--strict-mcp-config",
+        # Perfil validado por sondagem. A sondagem sondas-1 mostrou que --restricted não descobre
+        # .claude/skills do projeto; por decisão registrada (PLANO.md), o isolamento das configurações
+        # do usuário fica com --setting-sources project e o confinamento com a auditoria do trace.
+        "perfil": ["--setting-sources", "project", "--strict-mcp-config",
                    "--tools", "Read,Write,Edit,Glob,Grep,Bash,Skill",
                    "--allowedTools", "Read,Write,Edit,Glob,Grep,Bash,Skill",
                    "--permission-prompts", "none"],
