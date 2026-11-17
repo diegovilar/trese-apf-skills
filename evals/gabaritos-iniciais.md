@@ -165,6 +165,22 @@ Caso de transferência do G04 (consulta 10 ao popper), aprovado pelo usuário em
 - **Proibidas** (como funções ou como hipóteses com PF): homologação ou perícia; lançamento do afastamento na frequência ou na folha; cálculo de dias de afastamento; notificações.
 - **Pendências obrigatórias:** quais operações "controlar" abrange; onde os atestados são registrados (origem); homologação ou perícia; origem dos dados do servidor.
 
+## G08 · Origem e fluxo afirmados (holdout com contrastes, rubrica)
+
+Argumentos: `tipo=desenvolvimento`
+
+> A Seção de Protocolo precisa registrar os requerimentos que os servidores entregam no balcão. Cada requerimento é analisado pela chefia da seção, que registra no sistema a decisão: deferido ou indeferido.
+
+Caso de transferência das D33, D36 e D37 (consulta 12 ao popper), escrito antes de qualquer execução. Não tem exemplo correspondente em `references/`. Testa também quando a skill **não** deve perguntar. Avaliado por rubrica, sem total fixo:
+
+- **Requerimento** é ALI por evidência: "registrar" afirma que a aplicação o mantém. Grupo de alternativas de origem (ALI × AIE) para o requerimento reprova S1.
+- **Registrar requerimento** é EE por evidência. **Registrar a decisão** é uma EE por evidência: deferido e indeferido são valores do mesmo processo (mesma lógica, mesmos dados), não duas funções.
+- Consultar requerimentos é aceito como hipótese ligada a "analisado", e a ausência também é aceita. O AIE de servidor é opcional; se entrar, é hipótese ligada a uma transação que o lê.
+- Cenário mínimo e máximo coerentes. Cobertura completa ou parcial.
+- **Proibidas** (como funções ou como hipóteses com PF): edição genérica dos dados do requerimento ou exclusão dele, como funções adicionais (03 §3: "registrar" não as implica; o registro da decisão, que muda a situação do requerimento, **não** é essa edição); notificação ao servidor; recurso; consulta do servidor à situação do próprio requerimento.
+- **Pendências obrigatórias:** como o servidor é identificado e de onde vêm os dados dele.
+- **Pendências proibidas (contraste):** perguntar **se existe** análise ou decisão (o pedido a descreve); perguntar quem mantém os requerimentos ou de onde vêm (a origem está afirmada). Perguntas sobre detalhes do fluxo (prazos, recurso, notificação, critérios) são aceitas.
+
 ---
 
 ## Casos de argumentos

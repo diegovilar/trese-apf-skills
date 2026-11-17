@@ -67,6 +67,51 @@ def g04_correto():
     return e
 
 
+def g07_correto():
+    e = _base("Atestados médicos", "sistema da Seção de Assistência à Saúde; origem dos atestados em aberto")
+    e["cobertura"] = {"status": "parcial", "motivo": "pedido de uma linha; o que 'controlar' abrange é desconhecido"}
+    e["hipoteses"] = [
+        {"id": "H1", "descricao": "Atestados mantidos por este sistema, com registro", "trecho": "controlar os atestados médicos", "grupo": "origem dos atestados"},
+        {"id": "H2", "descricao": "Atestados mantidos por outro sistema e lidos aqui", "trecho": "controlar os atestados médicos", "grupo": "origem dos atestados", "requer": ["H3"]},
+        {"id": "H3", "descricao": "Controlar inclui consultar os atestados", "trecho": "controlar"},
+        {"id": "H4", "descricao": "Controlar inclui alterar o atestado", "trecho": "controlar", "requer": ["H1"]},
+        {"id": "H5", "descricao": "Controlar inclui excluir o atestado", "trecho": "controlar", "requer": ["H1"]},
+    ]
+    e["funcoes"] = [
+        _f("F01", "ALI", "Atestado médico", "controlar os atestados médicos", "mantido aqui sob H1", hip="H1"),
+        _f("F02", "EE", "Registrar atestado", "atestados médicos apresentados pelos servidores", "manutenção mínima sob H1", hip="H1"),
+        _f("F03", "AIE", "Atestado médico (outro sistema)", "controlar os atestados médicos", "lido sob H2", hip="H2"),
+        _f("F04", "CE", "Consultar atestados", "controlar", "H3", hip="H3"),
+        _f("F05", "EE", "Alterar atestado", "controlar", "H4", hip="H4"),
+        _f("F06", "EE", "Excluir atestado", "controlar", "H5", hip="H5"),
+    ]
+    e["pendencias"] = [
+        {"id": "P1", "descricao": "Quais operações 'controlar' abrange."},
+        {"id": "P2", "descricao": "Onde os atestados são registrados: neste sistema ou em outro, do qual seriam lidos."},
+        {"id": "P3", "descricao": "Se a Seção confere e aceita formalmente cada atestado, ou se ele passa por junta médica, e quem faz isso."},
+        {"id": "P4", "descricao": "Como o servidor é identificado e de onde vêm os dados dele."},
+    ]
+    return e
+
+
+def g08_correto():
+    e = _base("Requerimentos do Protocolo", "sistema da Seção de Protocolo; dados dos servidores em aberto")
+    e["hipoteses"] = [
+        {"id": "H1", "descricao": "A análise inclui consultar os requerimentos registrados", "trecho": "Cada requerimento é analisado pela chefia da seção"},
+    ]
+    e["funcoes"] = [
+        _f("F01", "ALI", "Requerimento", "registrar os requerimentos que os servidores entregam no balcão", "mantido pela aplicação"),
+        _f("F02", "EE", "Registrar requerimento", "registrar os requerimentos que os servidores entregam no balcão", "inclui o requerimento"),
+        _f("F03", "EE", "Registrar decisão do requerimento", "registra no sistema a decisão: deferido ou indeferido", "grava a decisão; deferido e indeferido são valores do mesmo processo"),
+        _f("F04", "CE", "Consultar requerimentos", "Cada requerimento é analisado pela chefia da seção", "H1", hip="H1"),
+    ]
+    e["pendencias"] = [
+        {"id": "P1", "descricao": "Como o servidor é identificado no requerimento e de onde vêm os dados dele."},
+        {"id": "P2", "descricao": "Há prazos ou critérios para a análise, ou recurso contra o indeferimento?"},
+    ]
+    return e
+
+
 def dossies():
     """(id, caso, json, critérios que devem reprovar; vazio = positivo)."""
     out = [("P1", "G01", g01_correto(), []), ("P2", "G04", g04_correto(), [])]
@@ -92,4 +137,21 @@ def dossies():
     for h in e["hipoteses"]:
         h.pop("grupo", None)
     out.append(("E5", "G04", e, ["S3"]))
+
+    # Calibração delta (consulta 13): S4 pelo significado e pendências proibidas (contraste).
+    out.append(("P3", "G07", g07_correto(), []))  # homologação por paráfrase inequívoca
+
+    e = g07_correto()  # E6: homologação só como verbo ambíguo numa lista de operações
+    e["pendencias"] = [
+        {"id": "P1", "descricao": "Quais operações 'controlar' abrange (registrar, alterar, excluir, consultar, validar)."},
+        {"id": "P2", "descricao": "Onde os atestados são registrados: neste sistema ou em outro, do qual seriam lidos."},
+        {"id": "P4", "descricao": "Como o servidor é identificado e de onde vêm os dados dele."},
+    ]
+    out.append(("E6", "G07", e, ["S4"]))
+
+    out.append(("P4", "G08", g08_correto(), []))
+
+    e = g08_correto()  # E7: pergunta indevida (o pedido descreve o fluxo)
+    e["pendencias"].append({"id": "P3", "descricao": "Há análise ou decisão sobre os requerimentos? Por quem?"})
+    out.append(("E7", "G08", e, ["S4"]))
     return [(i, c, copy.deepcopy(j), alvo) for i, c, j, alvo in out]

@@ -113,6 +113,7 @@ Sem pedido explícito de configuração, trate a mensagem inteira como subsídio
 - Classifique cada função como **evidência** (afirmada no pedido), **hipótese** (implicada por uma palavra ou frase, com o trecho) ou **pendência** (nem afirmada nem implicada: não conta). Veja a convenção C1 em 03 §1.
 - Uma hipótese com efeito em PF entra nos cenários mesmo quando também gera pendência de confirmação: a pendência não substitui a hipótese.
 - Verbo amplo ("gerenciar", "manter", "acompanhar", "controlar") sem as operações discriminadas: além das hipóteses que ele implica, registre a pendência "quais operações '<verbo>' abrange". Se o pedido lista as operações, não pergunte.
+- Registros que alguém apresenta ou solicita a uma unidade, sem dizer se há análise ou decisão sobre eles: registre essa pendência, sem presumir o fluxo e sem PF (03 §1). Se o pedido descreve o fluxo, não pergunte se ele existe.
 - Toda hipótese que muda o total entra ligada às funções correspondentes. O script calcula o cenário mínimo e o máximo. Alternativas excludentes ("ALI **ou** AIE") vão num grupo, e hipóteses que só fazem sentido juntas são ligadas com `requer`, para que cada cenário seja uma aplicação possível (03 §1). Não apresente valor central nem "total provável".
 - Cobertura parcial (funções que o subsídio não permite identificar) é diferente de faixa de fator (fatores EFPA desconhecidos). Declare as duas quando houver.
 - "Conservador" não significa subcontar: nada implicado pelo pedido é descartado em silêncio.

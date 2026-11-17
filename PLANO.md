@@ -245,6 +245,23 @@ Versão com D33 e G07 (`config_hash` `5d2dfa2487945c76`). Executado o primeiro b
 - Resultados da `completa-2` ficam como diagnóstico e não entram no denominador da próxima rodada. As ~190 tarefas restantes não serão executadas.
 - Auditoria: a execução inválida é um caso legítimo do auditor (um arquivo de nome fixo no `/tmp` pode levar uma execução a ler o diretório de outra). O runner ganhou `repetir <rodada> <tarefa>`, que cria a repetição seguinte do mesmo caso e marca a inválida (fora dos hashes; 88 testes).
 
+## Rodada `completa-3` (17/11/2026): primeiro bloco
+
+Versão com D36 (`config_hash` `e9ae2ea398eb14c2`). Bloco completo: G04 e G07, 5 repetições cada, nenhuma inválida. Consumo: Claude 5 h 65% → 61%; Codex 5 h 91% → 84%.
+
+- **G04: 5/5 em todos os critérios** (9–23 PF em todas; grupo de origem, alcance de "gerenciar" e dados do servidor presentes).
+- **G07: S4 reprovado em 2 de 5** (r2 e r5); K3, S1, S3 e S5 ok em todas (9–23 PF). Nas duas faltou a pendência obrigatória sobre homologação ou perícia; na r5 havia só "validar" na lista de operações de "controlar", e o juiz não aceitou. A pendência D36 (identificação e dados do servidor) saiu em todas.
+- Pela regra (S em ≥ 4 de 5), o bloco **reprova** no G07.
+- Padrão das três rodadas: cada correção resolve o que mira, e aparece outra pendência obrigatória omitida de forma intermitente (origem → alcance do verbo → dados do servidor → homologação).
+
+**Consultas 12 e 13 ao popper; decisões do usuário:**
+- Auditoria do contrato do S4 (sem cota): das pendências obrigatórias de G03b, G04 e G07, as sem regra na skill são aprovação, cálculo e prestação de contas (G04, 9/9) e homologação (G07, 7/9). A conta de recall composto é hipótese, não diagnóstico (O1, consulta 12). **O usuário manteve todas como obrigatórias.**
+- D37: convenção em 03 §1 e na política de incerteza: registros que alguém apresenta ou solicita a uma unidade, sem dizer se há análise ou decisão sobre eles, geram essa pendência; sem presumir o fluxo, sem PF; não pergunta se o fluxo existe quando o pedido o descreve. Cobre análise, aprovação e homologação; não garante cálculo nem prestação de contas.
+- S4 do juiz: avaliado pelo significado no contexto; menção genérica ou ambígua não basta; pendência proibida pelo gabarito (contraste) reprova; sem obrigatórias nem proibidas, aprova (O1, consulta 13).
+- G08 (holdout com contrastes): Protocolo registra requerimentos entregues por servidores; a chefia registra no sistema a decisão (deferido ou indeferido). Origem e fluxo afirmados: grupo de origem e pergunta "há análise?" reprovam; uma EE de decisão; proibida a edição genérica ou exclusão do requerimento, sem confundir com o registro da decisão (O2, O4).
+- Calibração delta do juiz (O3): dossiês P3 (G07 correto, homologação por paráfrase), E6 (G07 só com "validar" na lista de operações → S4), P4 (G08 correto) e E7 (G08 com pergunta indevida → S4). Quatro chamadas do Codex; as demais da calibração antiga não são repetidas.
+- **Aprovado pelo usuário (17/11/2026):** D37, G08, S4 e calibração delta (rodada `calib-3`, só P3, E6, P4 e E7). Se o juiz acertar os 4, está autorizado o primeiro bloco da `completa-4` (G04, G07 e G08, 5× cada, mesma regra de parada); se errar algum, parar e levar ao usuário. O resto da `completa-4` pede novo ok.
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.
