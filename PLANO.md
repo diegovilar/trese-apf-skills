@@ -159,7 +159,18 @@ Fato adicional da NESMA: a indicativa supõe, em média, 3 EE + 2 SE + 1 CE por 
 | G05 | todos ok (100 PF) | todos ok | |
 | G06 | todos ok (47 PF, após reverificação) | pendente | antes, o runner não achava o JSON (caminho guardado num arquivo) |
 
-Pendentes em `curta-3`: juiz do G06, M01–M04, A01–A15, L01, L02 e os juízes correspondentes. Instruções para retomar: `HANDOFF.md`.
+**`curta-3` concluída (17/11/2026):** 30 execuções do executor (nenhuma inválida) e 10 do juiz.
+
+| Grupo | Resultado automático | Juiz |
+|---|---|---|
+| Contagem G01–G06 (7) | todos os critérios ok | 7/7 aprovados em todos os critérios |
+| Metamórficos M01, M02, M03a, M03b, M04 | M01, M03a, M04 ok; **M02 e M03b reprovaram no K2** | M01, M02, M04 aprovados |
+| Relações metamórficas M01–M05 | 5/5 ok (45=45, 45=45, md=txt, 47=47, 20 PF × 14,75 PFM com Cancelar) | — |
+| Argumentos válidos A01–A04, A14, A15 | todos ok (configuração, exportação idêntica, pergunta de formato) | — |
+| Alertas A05–A13b | todos ok (estágio 1 sem acesso ao subsídio; estágio 2 sem contagem) | — |
+| Linguagem natural L01, L02 | ok (L01 só pediu confirmação com `saida=xlsx`; L02 executou com os padrões) | — |
+
+**Falha encontrada:** em M02 e M03b, a contagem estava certa (45 PF, tipos idênticos), mas o executor errou ao **redigitar a legenda** na resposta ("(dados)" → "(dado)"; "alteradas" → "alterada"). Em 2 de 19 execuções que mostram a tabela (~10%). As exportações, escritas pelo script, saíram idênticas. Com N = 5 e K2 crítico em todas as execuções, essa taxa reprovaria a rodada completa. Correção em revisão (consulta 8 ao popper).
 
 ## Evals do agente: implementação
 
