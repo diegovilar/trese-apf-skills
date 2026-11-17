@@ -477,6 +477,29 @@ def comparar(rodada: str) -> None:
     (dir_rodada(rodada) / "metamorficos.json").write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(out, ensure_ascii=False, indent=1))
 
+def repetir(rodada: str, tid: str) -> None:
+    """Repete uma execução inválida numa repetição nova do mesmo caso (README: inválidas são
+    relatadas à parte e repetidas). A inválida fica no estado, marcada com quem a repete."""
+    estado = carregar_estado(rodada)
+    t = estado["tarefas"].get(tid)
+    if t is None:
+        sys.exit(f"tarefa inexistente: {tid}")
+    if t["tipo"] != "exec" or t["fase"] != "invalido":
+        sys.exit(f"só se repete execução inválida; {tid} é '{t['tipo']}' em '{t['fase']}'")
+    if t.get("repetida_por"):
+        sys.exit(f"{tid} já foi repetida por {t['repetida_por']}")
+    cid = t["caso"]
+    r = 1 + max(x["rep"] for x in estado["tarefas"].values() if x["tipo"] == "exec" and x.get("caso") == cid)
+    novo = f"exec-{cid}-r{r}"
+    estado["tarefas"][novo] = {"tipo": "exec", "caso": cid, "rep": r, "consome": "claude", "repete": tid, "fase": "pendente"}
+    c = C.CASOS[cid]
+    if c["tipo"] == "contagem" and not c.get("sem_juiz"):
+        estado["tarefas"][f"juiz-{cid}-r{r}"] = {"tipo": "juiz", "caso": cid, "rep": r, "consome": "codex",
+                                                 "depende": novo, "fase": "pendente"}
+    t["repetida_por"] = novo
+    salvar_estado(rodada, estado)
+    print(json.dumps({"repete": tid, "nova": novo}, ensure_ascii=False))
+
 
 def main() -> None:
     ap = argparse.ArgumentParser()
@@ -493,6 +516,9 @@ def main() -> None:
     sp = sub.add_parser("executar")
     sp.add_argument("rodada")
     sp.add_argument("tarefa")
+    sp = sub.add_parser("repetir")
+    sp.add_argument("rodada")
+    sp.add_argument("tarefa")
     a = ap.parse_args()
     if a.cmd == "preparar":
         reps = 5 if a.tipo == "completa" else 1
@@ -501,6 +527,8 @@ def main() -> None:
         print(json.dumps(proxima(a.rodada), ensure_ascii=False))
     elif a.cmd == "executar":
         executar(a.rodada, a.tarefa)
+    elif a.cmd == "repetir":
+        repetir(a.rodada, a.tarefa)
     elif a.cmd == "status":
         status(a.rodada)
     elif a.cmd == "comparar":

@@ -268,6 +268,31 @@ class TestPreparacaoEHashes(unittest.TestCase):
             R.versoes = original
             shutil.rmtree(d, ignore_errors=True)
 
+    def test_repetir_execucao_invalida(self):
+        nome = "teste-unitario-repetir"
+        d = R.dir_rodada(nome)
+        shutil.rmtree(d, ignore_errors=True)
+        original = R.versoes
+        try:
+            R.versoes = lambda: {}
+            R.preparar(nome, "completa", 5, ["G04"])
+            with self.assertRaises(SystemExit):  # só inválida se repete
+                R.repetir(nome, "exec-G04-r2")
+            est = R.carregar_estado(nome)
+            est["tarefas"]["exec-G04-r2"]["fase"] = "invalido"
+            R.salvar_estado(nome, est)
+            R.repetir(nome, "exec-G04-r2")
+            est = R.carregar_estado(nome)
+            self.assertEqual(est["tarefas"]["exec-G04-r2"]["repetida_por"], "exec-G04-r6")
+            self.assertEqual(est["tarefas"]["exec-G04-r6"]["repete"], "exec-G04-r2")
+            self.assertEqual(est["tarefas"]["juiz-G04-r6"]["depende"], "exec-G04-r6")
+            self.assertEqual(est["tarefas"]["juiz-G04-r6"]["fase"], "pendente")
+            with self.assertRaises(SystemExit):  # não repete duas vezes
+                R.repetir(nome, "exec-G04-r2")
+        finally:
+            R.versoes = original
+            shutil.rmtree(d, ignore_errors=True)
+
     def test_verificador_fora_do_hash_de_execucao(self):
         self.assertNotIn("verificador", Path(R.__file__).read_text().split("def hash_execucao")[1].split("def hash_juiz")[0])
 
