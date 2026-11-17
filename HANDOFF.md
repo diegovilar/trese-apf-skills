@@ -8,14 +8,14 @@ Para retomar o trabalho em outra sessão (humana ou de agente). Leia também o `
 - Testes unitários: `python3 -m unittest discover -s evals/unit` (87 passando).
 - Evals do agente: **rodada curta `curta-3` concluída.**
 - A `curta-3` terminou (resultado no `PLANO.md`). Falha: erro de transcrição da legenda em 2 de 19 respostas. Mitigação aplicada (D32: perfil `chat` com legenda contextual).
-- Próximo passo, **com ok do usuário**: rodada de fumaça `python3 evals/agente/runner.py preparar fumaca-1 curta --casos M02,M03b,G03a,G03b,G04,G05,G06`. Se passar, pedir ok para a **rodada completa** (`preparar completa-1 completa`).
+- Próximo passo, **já autorizado pelo usuário em 17/11/2026**: rodada de fumaça `python3 evals/agente/runner.py preparar fumaca-1 curta --casos M02,M03b,G03a,G03b,G04,G05,G06`. Se passar, pedir ok para a **rodada completa** (`preparar completa-1 completa`).
 
 ## Regras que valem (combinadas com o usuário)
 
-1. **Não executar nada que consuma cota sem o ok do usuário para a fase.** Fases: sondagens (feitas), calibração (feita), rodada curta (feita), fumaça (pendente de ok), rodada completa (pendente de ok).
+1. **Não executar nada que consuma cota sem o ok do usuário para a fase.** Fases: sondagens (feitas), calibração (feita), rodada curta (feita), fumaça (**autorizada**), rodada completa (pendente de ok, a pedir depois da fumaça).
 2. **Antes de cada tarefa que consome cota, ler a cota** (ferramenta de uso do OpenChamber, `providerId` `claude` para o executor e `codex` para o juiz). Se qualquer janela (5 h ou semanal) estiver **abaixo de 15%**, ou a leitura falhar, **parar** e avisar o usuário. Esta sessão de orquestração também consome a cota do Claude.
 3. **Uma tarefa por chamada** (`proxima` → ler cota → `executar`).
-4. Recomendações e decisões com consequência passam pelo **popper** (subagente de segunda opinião) antes de chegar ao usuário. Sessão do popper: `ses_e166880bdffeQatE857gIDKXkq`; próxima consulta: **9**; padrão: com proposta. O usuário prefere ver só a posição final, depois do retorno do popper, com o bloco "Revisão do popper" ao fim.
+4. Recomendações e decisões com consequência passam pelo **popper** (subagente de segunda opinião) antes de chegar ao usuário. A sessão anterior do popper (`ses_e166880bdffeQatE857gIDKXkq`, 8 consultas) só funciona a partir da sessão que a abriu: **abra um popper novo** (`/use-popper`, padrão com proposta) e, na abertura, mande o contexto: objetivo da skill, `PLANO.md` (decisões D1–D32 e as revisões das consultas 1 a 8) e este handoff. Numere as consultas a partir de 9, para manter a continuidade com o `PLANO.md`. O usuário prefere ver só a posição final, depois do retorno do popper, com o bloco "Revisão do popper" ao fim.
 5. Respostas ao usuário em português, curtas, sem concordar por reflexo.
 
 ## Comandos
@@ -53,3 +53,12 @@ python3 evals/agente/runner.py reverificar curta-3       # reavalia execuções 
 - O executor pode quebrar linhas longas ao copiar a tabela (quebra suave do Markdown): o verificador compara a prosa com espaços normalizados, mas exige cada linha de tabela idêntica e na mesma ordem.
 - O juiz varia em casos de fronteira (calibração, PLANO.md): uma reprovação isolada do juiz deve ser lida junto com a justificativa.
 - Resultados brutos (`evals/agente/resultados/`) ficam fora do git (`.gitignore`); o resumo de cada rodada vai para o `PLANO.md`.
+
+## Para começar a próxima sessão
+
+1. Ler `HANDOFF.md` e `PLANO.md` (seções "Decisões fechadas", "Evals do agente" e "Rodada curta: andamento").
+2. Abrir o popper novo (regra 4).
+3. Conferir: `python3 -m unittest discover -s evals/unit` (87 testes) e `git log --oneline | head -3` (último commit esperado: o deste handoff).
+4. Rodar a fumaça: `preparar fumaca-1 curta --casos M02,M03b,G03a,G03b,G04,G05,G06`; depois, tarefa a tarefa, `proxima` → ler cota → `executar`. São 7 execuções e 5 juízes.
+5. Analisar (`status fumaca-1`; diffs de K2, se houver), registrar no `PLANO.md`, consultar o popper e só então pedir ao usuário o ok da rodada completa.
+
