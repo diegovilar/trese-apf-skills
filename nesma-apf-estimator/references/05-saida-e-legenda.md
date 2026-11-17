@@ -83,7 +83,7 @@ python3 <skill>/scripts/apf.py render ARQUIVO.json --format xlsx --out ARQUIVO.x
 
 - Grave o JSON de trabalho num diretório temporário (ex.: `mktemp -d`), não no projeto do usuário.
 - Se `check` falhar, corrija o JSON e rode de novo. Nunca contorne o script calculando à mão.
-- O que se mostra ao usuário é a saída de `render --format md`, **literalmente**, sem reescrever números nem reordenar linhas.
+- O que se mostra ao usuário é a saída de `render --format md`, **copiada integralmente para a sua mensagem**, sem reescrever números nem reordenar linhas. A saída do comando, sozinha, não é vista pelo usuário.
 
 ## 3. Conteúdo das saídas
 

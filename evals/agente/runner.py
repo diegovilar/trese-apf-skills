@@ -244,8 +244,13 @@ def ler_trace(caminho: Path) -> Dict[str, Any]:
             pass
     init = next((e for e in eventos if e.get("type") == "system" and e.get("subtype") == "init"), {})
     result = next((e for e in reversed(eventos) if e.get("type") == "result"), {})
-    ferramentas, textos = [], []
+    ferramentas, textos, saidas = [], [], []
     for e in eventos:
+        if e.get("type") == "user":
+            for bloco in (e.get("message") or {}).get("content") or []:
+                if isinstance(bloco, dict) and bloco.get("type") == "tool_result":
+                    c = bloco.get("content")
+                    saidas.append(c if isinstance(c, str) else json.dumps(c, ensure_ascii=False))
         if e.get("type") == "assistant":
             for bloco in (e.get("message") or {}).get("content") or []:
                 if isinstance(bloco, dict) and bloco.get("type") == "tool_use":
@@ -256,7 +261,8 @@ def ler_trace(caminho: Path) -> Dict[str, Any]:
     if final and (not textos or textos[-1].strip() != final.strip()):
         textos.append(final)
     # texto_final: tudo o que o agente escreveu ao usuário, na ordem (a tabela pode vir antes da exportação).
-    return {"init": init, "result": result, "ferramentas": ferramentas, "texto_final": "\n\n".join(textos)}
+    return {"init": init, "result": result, "ferramentas": ferramentas, "saidas": saidas,
+            "texto_final": "\n\n".join(textos)}
 
 
 PERMITIDOS_ABS = ("/usr/bin/", "/bin/", "/usr/local/bin/", "/opt/homebrew/bin/", "/dev/null", "/usr/sbin/")
@@ -310,10 +316,33 @@ def arquivos_criados(ws: Path) -> List[str]:
     return sorted(out)
 
 
-def achar_json(ws: Path) -> Optional[Path]:
+TEMP_SISTEMA = re.compile(r"(/(?:private/)?(?:var/folders|tmp)/[\w./\-]+)")
+
+
+def diretorios_temporarios(saidas: List[str], desde: float) -> List[Path]:
+    """Diretórios temporários criados pelo agente (o mktemp do Claude Code ignora o TMPDIR passado)."""
+    achados = []
+    for s in saidas:
+        for m in TEMP_SISTEMA.finditer(s):
+            p = Path(m.group(1).rstrip("."))
+            alvo = p if p.is_dir() else p.parent
+            try:
+                if alvo.is_dir() and alvo.stat().st_mtime >= desde and alvo not in achados and len(alvo.parts) > 4:
+                    achados.append(alvo)
+            except OSError:
+                continue
+    return achados
+
+
+def achar_json(ws: Path, extras: Optional[List[Path]] = None) -> Optional[Path]:
     candidatos = []
-    for p in ws.rglob("*.json"):
-        if ".claude" in p.relative_to(ws).parts:
+    raizes = [ws] + list(extras or [])
+    arquivos = []
+    for raiz in raizes:
+        for p in (raiz.rglob("*.json") if raiz == ws else raiz.glob("*.json")):
+            arquivos.append(p)
+    for p in arquivos:
+        if str(p).startswith(str(ws) + "/") and ".claude" in p.relative_to(ws).parts:
             continue
         try:
             dados = json.loads(p.read_text(encoding="utf-8"))
@@ -357,7 +386,7 @@ def conteudo_xlsx(dados: bytes) -> Dict[str, bytes]:
         return {n: z.read(n) for n in z.namelist() if n.startswith("xl/")}
 
 
-def verificar(c: Dict[str, Any], ws: Path, tr: Dict[str, Any], hash_antes: str) -> Dict[str, Any]:
+def verificar(c: Dict[str, Any], ws: Path, tr: Dict[str, Any], hash_antes: str, desde: float = 0.0) -> Dict[str, Any]:
     v: Dict[str, Any] = {"criterios": {}, "invalido": None}
     crit = v["criterios"]
     if not tr["result"] or tr["result"].get("is_error"):
@@ -372,7 +401,8 @@ def verificar(c: Dict[str, Any], ws: Path, tr: Dict[str, Any], hash_antes: str) 
         return v
 
     texto = tr["texto_final"]
-    criados = arquivos_criados(ws)
+    temporarios = diretorios_temporarios(tr.get("saidas", []), desde) if desde else []
+    criados = arquivos_criados(ws) + [str(f) for d in temporarios for f in sorted(d.rglob("*")) if f.is_file()]
     apf_cmds = chamadas_apf(tr["ferramentas"])
     t = c["tipo"]
 
@@ -405,13 +435,13 @@ def verificar(c: Dict[str, Any], ws: Path, tr: Dict[str, Any], hash_antes: str) 
           "render": any(" render " in f" {x} " for x in apf_cmds)}
     k1["ok"] = all(k1.values())
     crit["K1"] = k1
-    caminho_json = achar_json(ws)
+    caminho_json = achar_json(ws, temporarios)
     v["tem_json"] = caminho_json is not None
     if caminho_json is None:
         crit["K2"] = {"ok": False, "motivo": "JSON canônico não encontrado"}
         return v
     est = json.loads(caminho_json.read_text(encoding="utf-8"))
-    v["json"] = str(caminho_json.relative_to(ws))
+    v["json"] = str(caminho_json)
     erros = apf.validar(est)
     if erros:
         crit["K2"] = {"ok": False, "motivo": "JSON inválido: " + "; ".join(erros[:5])}
@@ -420,7 +450,7 @@ def verificar(c: Dict[str, Any], ws: Path, tr: Dict[str, Any], hash_antes: str) 
     md = apf.render_md(est, calc)
     k2 = {"bloco_literal": normalizar(md) in normalizar(texto)}
     exporta = c.get("exporta")
-    exportados = [p for p in criados if Path(p).suffix in (".md", ".txt", ".xlsx") and not p.startswith("tmp/")]
+    exportados = [p for p in arquivos_criados(ws) if Path(p).suffix in (".md", ".txt", ".xlsx") and not p.startswith("tmp/")]
     if exporta:
         alvo = [p for p in exportados if p.endswith("." + exporta)]
         k2["exportou"] = len(alvo) == 1
@@ -467,14 +497,15 @@ def executar_exec(rodada: str, tid: str, t: Dict[str, Any]) -> Dict[str, Any]:
     prompt, precisa_arquivo = montar_invocacao(c)
     ws = preparar_ws(tid, c["subsidio"] if precisa_arquivo else None)
     hash_antes = sha_arvore(ws / ".claude" / "skills" / "nesma-apf-estimator")
+    desde = dt.datetime.now().timestamp() - 1
     t.update({"ws": str(ws), "prompt": prompt, "inicio": agora()})
     r = rodar_claude(ws, prompt, saida)
     t.update({"fase": "executado", "codigo": r["codigo"], "segundos": r["segundos"]})
     tr = ler_trace(saida / "trace.jsonl")
     (saida / "resposta_final.md").write_text(tr["texto_final"] or "", encoding="utf-8")
-    v = verificar(c, ws, tr, hash_antes)
+    v = verificar(c, ws, tr, hash_antes, desde)
     if v.get("json"):
-        shutil.copy(ws / v["json"], saida / "estimativa.json")
+        shutil.copy(v["json"], saida / "estimativa.json")
     for rel in arquivos_criados(ws):
         destino = saida / "ws" / rel
         destino.parent.mkdir(parents=True, exist_ok=True)
