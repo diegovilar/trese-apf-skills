@@ -296,7 +296,8 @@ def recuperar_json(snap: Path, tr: Dict[str, Any]) -> Tuple[Optional[Path], str]
             continue
         if not isinstance(est, dict) or est.get("versao_esquema") != 1 or apf.validar(est):
             continue
-        if compacto(apf.render_md(est, apf.calcular(est))) in alvo:
+        calc = apf.calcular(est)
+        if any(compacto(apf.render_md(est, calc, perfil)) in alvo for perfil in ("chat", "arquivo")):
             candidatos.append(p)
     conteudos = {p.read_bytes() for p in candidatos}
     if not candidatos:
@@ -372,7 +373,7 @@ def verificar_snapshot(c: Dict[str, Any], saida: Path) -> Dict[str, Any]:
     v["json"] = str(caminho_json.relative_to(snap))
     est = json.loads(caminho_json.read_text(encoding="utf-8"))
     calc = apf.calcular(est)
-    md = apf.render_md(est, calc)
+    md = apf.render_md(est, calc, "chat")  # o que o agente deve mostrar na resposta
     k2: Dict[str, Any] = {"bloco_literal": bloco_presente(md, texto)}
     exporta = c.get("exporta")
     exportados = [p for p in arquivos_criados(arquivos) if Path(p).suffix in (".md", ".txt", ".xlsx") and not p.startswith("tmp/")]
@@ -384,7 +385,7 @@ def verificar_snapshot(c: Dict[str, Any], saida: Path) -> Dict[str, Any]:
             if exporta == "xlsx":
                 k2["exportacao_identica"] = conteudo_xlsx(dados) == conteudo_xlsx(apf.gerar_xlsx(est, calc))
             else:  # arquivos escritos pelo script: comparação estrita (sem relaxar espaços)
-                confiavel = md if exporta == "md" else apf.render_txt(est, calc)
+                confiavel = apf.render_md(est, calc, "arquivo") if exporta == "md" else apf.render_txt(est, calc, "arquivo")
                 k2["exportacao_identica"] = normalizar(dados.decode("utf-8")) == normalizar(confiavel)
     else:
         k2["nada_exportado"] = not exportados

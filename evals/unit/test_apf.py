@@ -355,6 +355,50 @@ class TestRender(unittest.TestCase):
         self.assertIn("50%", apf.render_txt(e, apf.calcular(e)))
 
 
+class TestPerfis(unittest.TestCase):
+    """Perfil 'chat' (legenda contextual) × 'arquivo' (legenda completa), consulta 8 ao popper."""
+
+    def secoes_sem_legenda(self, md):
+        return md.split("## Legenda")[0]
+
+    def test_chat_tem_so_termos_usados(self):
+        e = fx.g01()
+        c = apf.calcular(e)
+        termos = [t for t, _ in apf.legenda(e, c, "chat")]
+        self.assertIn("ALI", termos)
+        self.assertNotIn("PFM", termos)
+        self.assertNotIn("Op. (I/A/E)", termos)
+        self.assertNotIn("Pesos (indicativa)", termos)
+        e = fx.g03b()
+        termos = [t for t, _ in apf.legenda(e, apf.calcular(e), "chat")]
+        for t in ("PFM", "Fator", "Faixa de fator", "Op. (I/A/E)", "Cobertura"):
+            self.assertIn(t, termos)
+        e = fx.g04()
+        self.assertIn("Cenário mínimo / máximo", [t for t, _ in apf.legenda(e, apf.calcular(e), "chat")])
+
+    def test_dados_essenciais_iguais_entre_perfis(self):
+        for e in (fx.g01(), fx.g02(), fx.g03a(), fx.g03b(), fx.g04(), fx.g05(), fx.g06()):
+            c = apf.calcular(e)
+            chat, arq = apf.render_md(e, c, "chat"), apf.render_md(e, c, "arquivo")
+            self.assertEqual(self.secoes_sem_legenda(chat), self.secoes_sem_legenda(arq))
+            self.assertLess(len(chat), len(arq) + 1)
+            self.assertEqual(apf.legenda(e, c, "arquivo"), list(apf.LEGENDA))
+            for t, d in apf.legenda(e, c, "chat"):
+                self.assertIn((t, d), apf.LEGENDA)
+
+    def test_cli_padrao_por_perfil(self):
+        with tempfile.TemporaryDirectory() as d:
+            ok = os.path.join(d, "ok.json")
+            with open(ok, "w", encoding="utf-8") as fh:
+                json.dump(fx.g01(), fh, ensure_ascii=False)
+            r = subprocess.run([sys.executable, SCRIPT, "render", ok, "--format", "md"], capture_output=True, text=True)
+            self.assertNotIn("**PFM:**", r.stdout)
+            saida = os.path.join(d, "x.md")
+            subprocess.run([sys.executable, SCRIPT, "render", ok, "--format", "md", "--out", saida], check=True, capture_output=True)
+            with open(saida, encoding="utf-8") as fh:
+                self.assertIn("**PFM:**", fh.read())
+
+
 class TestXlsx(unittest.TestCase):
     def abrir(self, est):
         dados = apf.gerar_xlsx(est, apf.calcular(est))

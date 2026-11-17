@@ -83,7 +83,8 @@ python3 <skill>/scripts/apf.py render ARQUIVO.json --format xlsx --out ARQUIVO.x
 
 - Grave o JSON de trabalho num diretório temporário (ex.: `mktemp -d`), não no projeto do usuário.
 - Se `check` falhar, corrija o JSON e rode de novo. Nunca contorne o script calculando à mão.
-- O que se mostra ao usuário é a saída de `render --format md`, **copiada integralmente para a sua mensagem**, sem reescrever números nem reordenar linhas. A saída do comando, sozinha, não é vista pelo usuário.
+- O que se mostra ao usuário é a saída de `render --format md` **sem `--out`**, copiada integralmente para a sua mensagem, sem reescrever números nem palavras e sem reordenar linhas. A saída do comando, sozinha, não é vista pelo usuário.
+- **Perfis de renderização** (escolhidos pelo script, nunca pelo agente): sem `--out`, o perfil é `chat`, com a legenda só dos termos que aparecem no resultado. Com `--out`, o perfil é `arquivo`, com a legenda completa. Os dois perfis têm exatamente os mesmos números, seções, hipóteses, premissas e avisos; só a legenda muda. A planilha sempre traz a legenda completa.
 
 ## 3. Conteúdo das saídas
 
@@ -95,7 +96,7 @@ As três saídas têm as mesmas seções, nesta ordem:
 4. **Premissas assumidas.**
 5. **Itens não contados:** item, categoria e justificativa.
 6. **Dúvidas de requisito e pendências.**
-7. **Legenda:** tipos de função, operação, complexidade, pesos, base, cenários, unidades (PF, PF de melhoria, PFM) e fatores.
+7. **Legenda:** tipos de função, operação, complexidade, pesos, base, cenários, unidades (PF, PF de melhoria, PFM) e fatores. No perfil `chat`, só os termos que aparecem no resultado; nos arquivos, completa.
 
 Particularidades:
 

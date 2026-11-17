@@ -100,7 +100,7 @@ class TestVerificacao(Base):
     def _g01(self):
         est = fx.g01()
         calc = apf.calcular(est)
-        return est, calc, apf.render_md(est, calc)
+        return est, calc, apf.render_md(est, calc, "chat")
 
     def _execucao_valida(self, est, md):
         (self.ws / "tmp" / "d").mkdir()

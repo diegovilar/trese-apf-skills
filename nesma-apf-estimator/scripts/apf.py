@@ -6,7 +6,8 @@ Somente biblioteca padrão; Python >= 3.8.
 Uso:
     python3 apf.py check  ESTIMATIVA.json
     python3 apf.py calc   ESTIMATIVA.json            # JSON com os valores calculados
-    python3 apf.py render ESTIMATIVA.json --format md|txt [--out ARQUIVO]
+    python3 apf.py render ESTIMATIVA.json --format md|txt [--out ARQUIVO] [--perfil chat|arquivo]
+        (sem --out o padrão é 'chat': legenda só com os termos usados; com --out, 'arquivo': legenda completa)
     python3 apf.py render ESTIMATIVA.json --format xlsx --out ARQUIVO.xlsx
 
 O agente monta o JSON canônico (ver references/05-saida-e-legenda.md). Este script
@@ -683,9 +684,38 @@ LEGENDA = [
 ]
 
 
+def legenda(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo") -> List[Tuple[str, str]]:
+    """Perfil 'arquivo': legenda completa (exigida na planilha e nos arquivos exportados).
+    Perfil 'chat': só os termos que aparecem neste resultado, para reduzir o texto que o agente
+    precisa copiar para a resposta. A seleção é determinística, feita aqui, nunca pelo agente."""
+    if perfil == "arquivo":
+        return list(LEGENDA)
+    tipos = {ln["tipo"] for ln in calc["linhas"]}
+    melhoria = est["tipo_projeto"] == "melhoria"
+    nesma = calc["unidade"] == "PFM"
+    usar = set(tipos) | {"Base"}
+    if melhoria:
+        usar.add("Op. (I/A/E)")
+    if est["metodo"] == "estimada":
+        usar |= {"Complexidade", "Pesos (estimada)"}
+    else:
+        usar.add("Pesos (indicativa)")
+    if est.get("hipoteses"):
+        usar.add("Cenário mínimo / máximo")
+    if calc["cobertura"] == "parcial":
+        usar.add("Cobertura")
+    if melhoria and not nesma:
+        usar.add("PF de melhoria")
+    if nesma:
+        usar |= {"PFM", "Fator"}
+        if calc["tem_faixa_de_fator"]:
+            usar.add("Faixa de fator")
+    return [(t, d) for t, d in LEGENDA if t in usar]
+
+
 # --------------------------------------------------------------------------- markdown
 
-def render_md(est: Dict[str, Any], calc: Dict[str, Any]) -> str:
+def render_md(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo") -> str:
     p = est["projeto"]
     casas = _casas(calc)
     nesma = calc["unidade"] == "PFM"
@@ -777,7 +807,7 @@ def render_md(est: Dict[str, Any], calc: Dict[str, Any]) -> str:
     secao("Dúvidas de requisito e pendências", est.get("pendencias", []))
     out.append("## Legenda")
     out.append("")
-    for termo, desc in LEGENDA:
+    for termo, desc in legenda(est, calc, perfil):
         out.append(f"- **{termo}:** {desc}")
     out.append("")
     return "\n".join(out)
@@ -811,7 +841,7 @@ def _quebrar(texto: str, largura: int = 96, recuo: str = "    ") -> List[str]:
     return linhas
 
 
-def render_txt(est: Dict[str, Any], calc: Dict[str, Any]) -> str:
+def render_txt(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo") -> str:
     p = est["projeto"]
     casas = _casas(calc)
     nesma = calc["unidade"] == "PFM"
@@ -892,7 +922,7 @@ def render_txt(est: Dict[str, Any], calc: Dict[str, Any]) -> str:
         out += _quebrar(f"- {_md(item['item'])} ({CATEGORIAS_NAO_CONTADOS[item['categoria']]}): {_md(item['justificativa'])}", recuo="  ")
     secao("DÚVIDAS DE REQUISITO E PENDÊNCIAS", est.get("pendencias", []))
     out += ["", "LEGENDA", ""]
-    for termo, desc in LEGENDA:
+    for termo, desc in legenda(est, calc, perfil):
         out += _quebrar(f"{termo}: {desc}", recuo="  ")
     out.append("")
     return "\n".join(out)
@@ -1149,6 +1179,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     sp.add_argument("json")
     sp.add_argument("--format", required=True, choices=("md", "txt", "xlsx"))
     sp.add_argument("--out")
+    sp.add_argument("--perfil", choices=("chat", "arquivo"),
+                    help="padrão: 'chat' (legenda só com os termos usados) ao imprimir; 'arquivo' (legenda completa) com --out")
     args = ap.parse_args(argv)
     if not args.cmd:
         ap.print_help(sys.stderr)
@@ -1177,7 +1209,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             return 2
         dados = gerar_xlsx(est, calc)
     else:
-        texto = render_md(est, calc) if args.format == "md" else render_txt(est, calc)
+        perfil = args.perfil or ("arquivo" if args.out else "chat")
+        texto = render_md(est, calc, perfil) if args.format == "md" else render_txt(est, calc, perfil)
         if not args.out:
             sys.stdout.write(texto)
             return 0

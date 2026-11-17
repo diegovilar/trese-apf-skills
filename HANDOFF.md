@@ -5,18 +5,17 @@ Para retomar o trabalho em outra sessão (humana ou de agente). Leia também o `
 ## Onde estamos
 
 - A skill está construída em `nesma-apf-estimator/` (SKILL.md, `references/` 01–05, `scripts/apf.py`). O usuário aprovou o conteúdo; a instalação em harness é com ele.
-- Testes unitários: `python3 -m unittest discover -s evals/unit` (84 passando).
-- Evals do agente: **rodada curta `curta-3` em andamento.**
-  - Concluídos: G01, G02, G03a, G03b, G04, G05 e G06 (execução); todos passam nos critérios automáticos. Juízes de G01 a G05 aprovaram tudo.
-  - Próxima tarefa: `juiz-G06-r1` (Codex). Depois: M01, M02, M03a, M03b, M04, A01–A15 (com A13a/b), L01, L02 e os juízes de M01, M02 e M04.
-- Depois da curta: `comparar curta-3` (relações metamórficas, sem cota), análise, ajustes na skill se preciso, e só então a **rodada completa** (N = 5), com ok do usuário.
+- Testes unitários: `python3 -m unittest discover -s evals/unit` (87 passando).
+- Evals do agente: **rodada curta `curta-3` concluída.**
+- A `curta-3` terminou (resultado no `PLANO.md`). Falha: erro de transcrição da legenda em 2 de 19 respostas. Mitigação aplicada (D32: perfil `chat` com legenda contextual).
+- Próximo passo, **com ok do usuário**: rodada de fumaça `python3 evals/agente/runner.py preparar fumaca-1 curta --casos M02,M03b,G03a,G03b,G04,G05,G06`. Se passar, pedir ok para a **rodada completa** (`preparar completa-1 completa`).
 
 ## Regras que valem (combinadas com o usuário)
 
-1. **Não executar nada que consuma cota sem o ok do usuário para a fase.** Fases: sondagens (feitas), calibração (feita), rodada curta (autorizada e em andamento), rodada completa (pendente de ok).
+1. **Não executar nada que consuma cota sem o ok do usuário para a fase.** Fases: sondagens (feitas), calibração (feita), rodada curta (feita), fumaça (pendente de ok), rodada completa (pendente de ok).
 2. **Antes de cada tarefa que consome cota, ler a cota** (ferramenta de uso do OpenChamber, `providerId` `claude` para o executor e `codex` para o juiz). Se qualquer janela (5 h ou semanal) estiver **abaixo de 15%**, ou a leitura falhar, **parar** e avisar o usuário. Esta sessão de orquestração também consome a cota do Claude.
 3. **Uma tarefa por chamada** (`proxima` → ler cota → `executar`).
-4. Recomendações e decisões com consequência passam pelo **popper** (subagente de segunda opinião) antes de chegar ao usuário. Sessão do popper: `ses_e166880bdffeQatE857gIDKXkq`; próxima consulta: **8**; padrão: com proposta. O usuário prefere ver só a posição final, depois do retorno do popper, com o bloco "Revisão do popper" ao fim.
+4. Recomendações e decisões com consequência passam pelo **popper** (subagente de segunda opinião) antes de chegar ao usuário. Sessão do popper: `ses_e166880bdffeQatE857gIDKXkq`; próxima consulta: **9**; padrão: com proposta. O usuário prefere ver só a posição final, depois do retorno do popper, com o bloco "Revisão do popper" ao fim.
 5. Respostas ao usuário em português, curtas, sem concordar por reflexo.
 
 ## Comandos

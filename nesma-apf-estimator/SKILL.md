@@ -101,9 +101,9 @@ Sem pedido explícito de configuração, trate a mensagem inteira como subsídio
 
 **Etapa 4: cálculo.** Monte o JSON canônico (05 §1) num diretório temporário e rode `apf.py check`. Corrija até passar. Os pesos, fatores, cenários e totais vêm **só** do script. Declare `cobertura: parcial` sempre que o subsídio não permitir identificar todas as funções afetadas (ex.: melhoria sem baseline, pedido vago), e ponha em `avisos` o que o resumo precisa dizer (ex.: pedido só cosmético no `sem-fatores`).
 
-**Etapa 5: memória de cálculo e premissas.** Rode `apf.py render --format md` e **copie a saída inteira para a sua resposta**, exatamente como o script a imprimiu: resumo executivo, memória de cálculo, hipóteses e cenários, premissas, itens não contados, pendências e legenda. A saída de um comando não chega ao usuário por si só (fica recolhida no resultado da ferramenta); só o que está na sua mensagem é lido. Não resuma, não reescreva números e não diga "veja acima". Depois:
+**Etapa 5: memória de cálculo e premissas.** Rode `apf.py render --format md`, sem `--out` (o script usa o perfil de chat, com a legenda só dos termos que aparecem no resultado), e **copie a saída inteira para a sua resposta**, exatamente como o script a imprimiu: resumo executivo, memória de cálculo, hipóteses e cenários, premissas, itens não contados, pendências e legenda. A saída de um comando não chega ao usuário por si só (fica recolhida no resultado da ferramenta); só o que está na sua mensagem é lido. Não resuma, não reescreva números nem palavras (nem para "corrigir" a concordância) e não diga "veja acima". Depois:
 
-- se `saida` foi informado, exporte nesse formato;
+- se `saida` foi informado, exporte nesse formato (antes ou depois de mostrar a tabela; o que não pode faltar é a tabela na sua mensagem);
 - senão, pergunte: "Quer exportar? `.md`, `.txt`, `.xlsx` ou nenhum." e exporte o que for escolhido;
 - exporte com `apf.py render --format <fmt> --out <arquivo>` (nome e local: 05 §4) e informe o caminho. O script nunca sobrescreve: se sair com código 3, use o próximo sufixo `-2`, `-3`….
 

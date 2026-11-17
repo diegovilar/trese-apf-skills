@@ -170,7 +170,13 @@ Fato adicional da NESMA: a indicativa supõe, em média, 3 EE + 2 SE + 1 CE por 
 | Alertas A05–A13b | todos ok (estágio 1 sem acesso ao subsídio; estágio 2 sem contagem) | — |
 | Linguagem natural L01, L02 | ok (L01 só pediu confirmação com `saida=xlsx`; L02 executou com os padrões) | — |
 
-**Falha encontrada:** em M02 e M03b, a contagem estava certa (45 PF, tipos idênticos), mas o executor errou ao **redigitar a legenda** na resposta ("(dados)" → "(dado)"; "alteradas" → "alterada"). Em 2 de 19 execuções que mostram a tabela (~10%). As exportações, escritas pelo script, saíram idênticas. Com N = 5 e K2 crítico em todas as execuções, essa taxa reprovaria a rodada completa. Correção em revisão (consulta 8 ao popper).
+**Falha encontrada:** em M02 e M03b, a contagem estava certa (45 PF, tipos idênticos), mas o executor errou ao **redigitar a legenda** na resposta ("(dados)" → "(dado)"; "alteradas" → "alterada"). Em 2 de 19 execuções que mostram a tabela (~10%). As exportações, escritas pelo script, saíram idênticas. Com N = 5 e K2 crítico em todas as execuções, essa taxa reprovaria a rodada completa.
+
+**Consulta 8 ao popper (mitigação, não correção comprovada):**
+- D32: o script passa a ter dois perfis de renderização. `chat` (padrão sem `--out`) traz a legenda só com os termos que aparecem no resultado. `arquivo` (padrão com `--out`, e sempre na planilha) traz a legenda completa. Números, seções, hipóteses, premissas e avisos são idênticos nos dois perfis (testado). O verificador compara a resposta com o perfil `chat` e as exportações com o perfil `arquivo`.
+- SKILL.md: copiar sem reescrever palavras; com `saida=` informado, exportar antes ou depois de mostrar a tabela é indiferente (o M03b exportou antes, e o SKILL.md não deixava isso claro; o runner não verifica a ordem).
+- Próximo passo, se o usuário autorizar: rodada de **fumaça** com M02, M03b, G03a, G03b, G04, G05 e G06 (7 execuções e 5 juízes), sem conclusão estatística (zero erros em 19 ainda seria compatível com taxa de até cerca de 15%). Se passar, pedir ok para a rodada completa com esta versão congelada, sem misturar resultados antigos.
+- 87 testes unitários passando.
 
 ## Evals do agente: implementação
 
