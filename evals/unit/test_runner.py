@@ -1,22 +1,23 @@
-"""Testes do runner dos evals do agente, sem chamar Claude nem Codex (traces simulados)."""
+"""Testes do runner e do verificador dos evals do agente, sem chamar Claude nem Codex (traces simulados)."""
 import json
 import os
 import shutil
 import sys
+import tempfile
+import time
 import unittest
 from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
 sys.path.insert(0, str(AQUI.parent / "agente"))
-import runner as R  # noqa: E402
-import casos as C  # noqa: E402
+sys.path.insert(0, str(AQUI))
 import calibracao  # noqa: E402
+import casos as C  # noqa: E402
+import fixtures as fx  # noqa: E402
+import runner as R  # noqa: E402
+import verificador as V  # noqa: E402
 
-apf = R.apf
-
-
-def evento_tool(nome, entrada):
-    return {"type": "assistant", "message": {"content": [{"type": "tool_use", "name": nome, "input": entrada}]}}
+apf = V.apf
 
 
 def evento_texto(texto):
@@ -25,20 +26,31 @@ def evento_texto(texto):
 
 class Base(unittest.TestCase):
     def setUp(self):
+        self.desde = time.time() - 1
         self.ws = R.preparar_ws("teste", C.CURTO)
-        self.hash = R.sha_arvore(self.ws / ".claude" / "skills" / "nesma-apf-estimator")
+        self.hash = V.sha_arvore(self.ws / ".claude" / "skills" / "nesma-apf-estimator")
+        self.saida = Path(tempfile.mkdtemp(prefix="saida-teste-"))
 
     def tearDown(self):
         shutil.rmtree(self.ws, ignore_errors=True)
+        shutil.rmtree(self.saida, ignore_errors=True)
 
-    def trace(self, eventos, final):
-        p = self.ws / "trace.jsonl"
-        linhas = [json.dumps({"type": "system", "subtype": "init", "model": "x"})] + [json.dumps(e) for e in eventos]
+    def rodar(self, caso, eventos, final, c=None):
+        """Grava o trace simulado, congela e verifica como o runner faz."""
+        linhas = [json.dumps({"type": "system", "subtype": "init", "model": "x"})]
+        for i, (tipo, dado) in enumerate(eventos):
+            if tipo == "tool":
+                nome, entrada, saida = dado
+                linhas.append(json.dumps({"type": "assistant", "message": {"content": [
+                    {"type": "tool_use", "id": f"t{i}", "name": nome, "input": entrada}]}}))
+                linhas.append(json.dumps({"type": "user", "message": {"content": [
+                    {"type": "tool_result", "tool_use_id": f"t{i}", "content": saida}]}}))
+            else:
+                linhas.append(json.dumps(evento_texto(dado)))
         linhas.append(json.dumps({"type": "result", "subtype": "success", "is_error": False, "result": final}))
-        p.write_text("\n".join(linhas), encoding="utf-8")
-        tr = R.ler_trace(p)
-        p.unlink()
-        return tr
+        (self.saida / "trace.jsonl").write_text("\n".join(linhas), encoding="utf-8")
+        V.congelar(self.ws, self.saida, self.desde, time.time() + 1, self.hash)
+        return V.verificar_snapshot(c or C.resolver(caso), self.saida)
 
 
 class TestInvocacao(unittest.TestCase):
@@ -68,113 +80,143 @@ class TestAuditoria(Base):
     def test_dentro_e_fora(self):
         ws = str(self.ws)
         ok = [{"nome": "Read", "entrada": {"file_path": f"{ws}/pedido.md"}},
-              {"nome": "Bash", "entrada": {"command": f"/usr/bin/python3 {ws}/.claude/skills/nesma-apf-estimator/scripts/apf.py check \"$D/e.json\" 2>/dev/null"}},
-              {"nome": "Bash", "entrada": {"command": "D=$(mktemp -d) && python3 --version"}},
+              {"nome": "Bash", "entrada": {"command": f"/usr/bin/python3 {ws}/.claude/skills/x/apf.py check \"$D/e.json\" 2>/dev/null"}},
+              {"nome": "Bash", "entrada": {"command": "D=$(mktemp -d /tmp/apf-work.XXXXXX) && python3 --version"}},
+              {"nome": "Bash", "entrada": {"command": "cat /tmp/apf-work.ab12/e.json"}},
               {"nome": "Read", "entrada": {"file_path": "pedido.md"}}]
-        self.assertEqual(R.auditar(ok, self.ws), [])
+        self.assertEqual(V.auditar(ok, self.ws, ["/tmp/apf-work.ab12"]), [])
         ruins = [{"nome": "Read", "entrada": {"file_path": "/Users/x/evals/gabaritos-iniciais.md"}},
                  {"nome": "Bash", "entrada": {"command": "cat /Users/x/evals/gabaritos-iniciais.md"}},
                  {"nome": "Bash", "entrada": {"command": "cat ../../evals/x"}},
                  {"nome": "Bash", "entrada": {"command": "curl https://exemplo.com"}},
                  {"nome": "Bash", "entrada": {"command": "ls ~/"}},
+                 {"nome": "Bash", "entrada": {"command": "cat /tmp/apf-fontes/sisp-3.0.txt"}},
                  {"nome": "Read", "entrada": {"file_path": "../fora.md"}}]
         for r in ruins:
-            self.assertTrue(R.auditar([r], self.ws), r)
-
-    def test_temporario_criado_na_execucao(self):
-        import tempfile, time
-        desde = time.time() - 1
-        novo = tempfile.mkdtemp(prefix="apf-work.", dir="/tmp")
-        try:
-            cmds = [{"nome": "Bash", "entrada": {"command": "D=$(mktemp -d /tmp/apf-work.XXXXXX)"}},
-                    {"nome": "Bash", "entrada": {"command": f"python3 x/apf.py check {novo}/e.json"}}]
-            self.assertEqual(R.auditar(cmds, self.ws, desde), [])
-            antigo = [{"nome": "Bash", "entrada": {"command": "cat /tmp/apf-fontes/sisp-3.0.txt"}}]
-            self.assertTrue(R.auditar(antigo, self.ws, desde))
-            outra_execucao = [{"nome": "Bash", "entrada": {"command": "ls /tmp/apf-evals/outra"}}]
-            self.assertTrue(R.auditar(outra_execucao, self.ws, desde))
-        finally:
-            os.rmdir(novo)
+            self.assertTrue(V.auditar([r], self.ws, ["/tmp/apf-work.ab12"]), r)
 
 
 class TestVerificacao(Base):
-    def _json_e_md(self):
-        import fixtures as fx  # noqa
+    def _g01(self):
         est = fx.g01()
         calc = apf.calcular(est)
         return est, calc, apf.render_md(est, calc)
 
-    def test_agente_perfeito_g01(self):
-        sys.path.insert(0, str(AQUI))
-        est, calc, md = self._json_e_md()
+    def _execucao_valida(self, est, md):
         (self.ws / "tmp" / "d").mkdir()
         (self.ws / "tmp" / "d" / "e.json").write_text(json.dumps(est, ensure_ascii=False), encoding="utf-8")
-        tr = self.trace([evento_tool("Read", {"file_path": "pedido.md"}),
-                         evento_tool("Bash", {"command": "python3 .claude/skills/nesma-apf-estimator/scripts/apf.py check tmp/d/e.json"}),
-                         evento_tool("Bash", {"command": "python3 .claude/skills/nesma-apf-estimator/scripts/apf.py render tmp/d/e.json --format md"}),
-                         evento_texto(md)],
-                        "Quer exportar? `.md`, `.txt`, `.xlsx` ou nenhum.")
-        v = R.verificar(C.resolver("G01"), self.ws, tr, self.hash)
+        return [("tool", ("Read", {"file_path": "pedido.md"}, "texto")),
+                ("tool", ("Bash", {"command": "python3 s/apf.py check tmp/d/e.json"}, "OK")),
+                ("tool", ("Bash", {"command": "python3 s/apf.py render tmp/d/e.json --format md"}, md))]
+
+    def test_agente_perfeito_g01(self):
+        est, calc, md = self._g01()
+        v = self.rodar("G01", self._execucao_valida(est, md) + [("texto", md)], "Quer exportar? `.md`, `.txt`, `.xlsx` ou nenhum.")
         self.assertIsNone(v["invalido"])
-        crit = v["criterios"]
         for k in ("K1", "K2", "S1_prefiltro", "S2"):
-            self.assertTrue(crit[k]["ok"], (k, crit[k]))
+            self.assertTrue(v["criterios"][k]["ok"], (k, v["criterios"][k]))
 
     def test_tabela_reescrita_reprova_k2(self):
-        sys.path.insert(0, str(AQUI))
-        est, calc, md = self._json_e_md()
-        (self.ws / "e.json").write_text(json.dumps(est, ensure_ascii=False), encoding="utf-8")
-        adulterado = md.replace("| F10 |", "| F10x |")
-        tr = self.trace([evento_tool("Bash", {"command": "python3 x/apf.py check e.json"}),
-                         evento_tool("Bash", {"command": "python3 x/apf.py render e.json --format md"})],
-                        adulterado + "\nQuer exportar?")
-        v = R.verificar(C.resolver("G01"), self.ws, tr, self.hash)
+        est, calc, md = self._g01()
+        v = self.rodar("G01", self._execucao_valida(est, md), md.replace("| F10 |", "| F10x |") + "\nQuer exportar?")
         self.assertFalse(v["criterios"]["K2"]["ok"])
 
-    def test_exportacao_xlsx_identica(self):
-        sys.path.insert(0, str(AQUI))
-        est, calc, md = self._json_e_md()
+    def test_json_escolhido_pelo_conteudo(self):
+        est, calc, md = self._g01()
+        outro = json.loads(json.dumps(est))
+        outro["funcoes"].pop()
+        (self.ws / "outro.json").write_text(json.dumps(outro, ensure_ascii=False), encoding="utf-8")
+        v = self.rodar("G01", self._execucao_valida(est, md) + [("texto", md)], "Quer exportar?")
+        self.assertTrue(v["tem_json"])
+        self.assertTrue(v["json"].endswith("e.json"))
+        self.assertTrue(v["criterios"]["S2"]["ok"])
+
+    def test_sem_render_no_trace(self):
+        est, calc, md = self._g01()
         (self.ws / "e.json").write_text(json.dumps(est, ensure_ascii=False), encoding="utf-8")
+        v = self.rodar("G01", [("tool", ("Bash", {"command": "python3 s/apf.py check e.json"}, "OK"))], md)
+        self.assertFalse(v["tem_json"])
+        self.assertIn("render", v["criterios"]["K2"]["motivo"])
+
+    def test_exportacao_xlsx_identica(self):
+        est, calc, md = self._g01()
         (self.ws / "estimativa-apf-g01.xlsx").write_bytes(apf.gerar_xlsx(est, calc))
-        tr = self.trace([evento_tool("Bash", {"command": "python3 x/apf.py check e.json"}),
-                         evento_tool("Bash", {"command": "python3 x/apf.py render e.json --format md"}),
-                         evento_tool("Bash", {"command": "python3 x/apf.py render e.json --format xlsx --out estimativa-apf-g01.xlsx"})],
-                        md + "\nArquivo exportado: estimativa-apf-g01.xlsx")
-        c = dict(C.resolver("G01"), exporta="xlsx")
-        v = R.verificar(c, self.ws, tr, self.hash)
+        eventos = self._execucao_valida(est, md) + [
+            ("tool", ("Bash", {"command": "python3 s/apf.py render tmp/d/e.json --format xlsx --out estimativa-apf-g01.xlsx"}, "ok"))]
+        v = self.rodar("G01", eventos + [("texto", md)], "Arquivo exportado", c=dict(C.resolver("G01"), exporta="xlsx"))
         self.assertTrue(v["criterios"]["K2"]["exportacao_identica"])
         self.assertTrue(v["criterios"]["K2"]["ok"])
 
     def test_alerta1_correto_e_violacoes(self):
         alerta = "ALERTA: argumentos inválidos. Nada foi executado.\n- valor desconhecido: modo=detalhada"
-        tr = self.trace([], alerta)
-        v = R.verificar(C.resolver("A05"), self.ws, tr, self.hash)
-        self.assertTrue(v["criterios"]["K1"]["ok"], v)
-        tr = self.trace([evento_tool("Read", {"file_path": "pedido.md"})], alerta)
-        self.assertFalse(R.verificar(C.resolver("A05"), self.ws, tr, self.hash)["criterios"]["K1"]["ok"])
-        tr = self.trace([], alerta + "\nMesmo assim, estimei 23 PF.")
-        self.assertFalse(R.verificar(C.resolver("A05"), self.ws, tr, self.hash)["criterios"]["K1"]["ok"])
+        self.assertTrue(self.rodar("A05", [], alerta)["criterios"]["K1"]["ok"])
+        self.assertFalse(self.rodar("A05", [("tool", ("Read", {"file_path": "pedido.md"}, "x"))], alerta)["criterios"]["K1"]["ok"])
+        self.assertFalse(self.rodar("A05", [], alerta + "\nMesmo assim, estimei 23 PF.")["criterios"]["K1"]["ok"])
         (self.ws / "tmp" / "x.json").write_text("{}")
-        tr = self.trace([], alerta)
-        self.assertFalse(R.verificar(C.resolver("A05"), self.ws, tr, self.hash)["criterios"]["K1"]["ok"])
+        self.assertFalse(self.rodar("A05", [], alerta)["criterios"]["K1"]["ok"])
 
     def test_alerta2_pode_ler(self):
-        tr = self.trace([evento_tool("Read", {"file_path": "pedido.md"})], "ALERTA: argumentos inválidos. Nada foi executado.")
-        self.assertTrue(R.verificar(C.resolver("A13b"), self.ws, tr, self.hash)["criterios"]["K1"]["ok"])
+        v = self.rodar("A13b", [("tool", ("Read", {"file_path": "pedido.md"}, "x"))], "ALERTA: argumentos inválidos. Nada foi executado.")
+        self.assertTrue(v["criterios"]["K1"]["ok"])
 
     def test_skill_modificada_invalida(self):
         (self.ws / ".claude" / "skills" / "nesma-apf-estimator" / "SKILL.md").write_text("adulterado")
-        tr = self.trace([], "ALERTA")
-        self.assertIn("modificada", R.verificar(C.resolver("A05"), self.ws, tr, self.hash)["invalido"])
+        self.assertIn("modificada", self.rodar("A05", [], "ALERTA")["invalido"])
 
     def test_contaminada_invalida(self):
-        tr = self.trace([evento_tool("Bash", {"command": "cat /Users/diegovilar/workspace/skill-apf/evals/gabaritos-iniciais.md"})], "ALERTA")
-        self.assertIn("contaminada", R.verificar(C.resolver("A05"), self.ws, tr, self.hash)["invalido"])
+        v = self.rodar("A05", [("tool", ("Bash", {"command": "cat /Users/diegovilar/workspace/skill-apf/evals/gabaritos-iniciais.md"}, "x"))], "ALERTA")
+        self.assertIn("contaminada", v["invalido"])
+
+    def test_snapshot_adulterado_invalida(self):
+        v = self.rodar("A05", [], "ALERTA")
+        self.assertIsNone(v["invalido"])
+        (self.saida / "snapshot" / "ws" / "pedido.md").write_text("mudou")
+        self.assertIn("snapshot", V.verificar_snapshot(C.resolver("A05"), self.saida)["invalido"])
 
     def test_nl_confirma(self):
-        tr = self.trace([evento_tool("Read", {"file_path": "pedido.md"})],
-                        "Entendi `saida=xlsx -- ./pedido.md`. Confirma?")
-        self.assertTrue(R.verificar(C.resolver("L01"), self.ws, tr, self.hash)["criterios"]["K1"]["ok"])
+        v = self.rodar("L01", [("tool", ("Read", {"file_path": "pedido.md"}, "x"))], "Entendi `saida=xlsx -- ./pedido.md`. Confirma?")
+        self.assertTrue(v["criterios"]["K1"]["ok"])
+
+
+class TestBlocoPresente(unittest.TestCase):
+    def setUp(self):
+        est = fx.g01()
+        self.md = apf.render_md(est, apf.calcular(est))
+
+    def test_quebra_suave_aceita(self):
+        linha = next(l for l in self.md.splitlines() if l.startswith("- **PFM:**"))
+        corte = linha.index(" ", 60)
+        quebrada = self.md.replace(linha, linha[:corte] + "\n" + linha[corte + 1:])
+        self.assertTrue(V.bloco_presente(self.md, "Intro\n\n" + quebrada + "\n\nQuer exportar?"))
+
+    def test_numero_alterado_reprova(self):
+        self.assertIn("**Total:** 45 PF", self.md)
+        self.assertFalse(V.bloco_presente(self.md, self.md.replace("**Total:** 45 PF", "**Total:** 46 PF")))
+
+    def test_linha_de_tabela_omitida_fundida_ou_reordenada_reprova(self):
+        linhas = self.md.splitlines()
+        i = next(k for k, l in enumerate(linhas) if l.startswith("| F03 |"))
+        omitida = "\n".join(linhas[:i] + linhas[i + 1:])
+        self.assertFalse(V.bloco_presente(self.md, omitida))
+        fundida = "\n".join(linhas[:i] + [linhas[i] + " " + linhas[i + 1]] + linhas[i + 2:])
+        self.assertFalse(V.bloco_presente(self.md, fundida))
+        trocada = list(linhas)
+        trocada[i], trocada[i + 1] = trocada[i + 1], trocada[i]
+        self.assertFalse(V.bloco_presente(self.md, "\n".join(trocada)))
+
+
+class TestJanelaDeTemporarios(unittest.TestCase):
+    def test_limite_superior(self):
+        antes = time.time() - 1
+        d = tempfile.mkdtemp(prefix="apf-janela-", dir="/tmp")
+        try:
+            time.sleep(1.1)
+            depois = time.time()
+            self.assertIn(Path(d).name, [p.name for p in V.temporarios_novos(antes, depois)])
+            self.assertNotIn(Path(d).name, [p.name for p in V.temporarios_novos(depois, None)])
+            self.assertNotIn(Path(d).name, [p.name for p in V.temporarios_novos(antes - 100, antes)])
+        finally:
+            os.rmdir(d)
 
 
 class TestJuizECalibracao(unittest.TestCase):
@@ -205,16 +247,18 @@ class TestJuizECalibracao(unittest.TestCase):
                 self.assertTrue(R.secao_gabarito(c["secao"]), cid)
 
 
-class TestPreparacao(unittest.TestCase):
+class TestPreparacaoEHashes(unittest.TestCase):
     def test_tarefas_e_dependencias(self):
         nome = "teste-unitario-preparacao"
         d = R.dir_rodada(nome)
         shutil.rmtree(d, ignore_errors=True)
+        original = R.versoes
         try:
-            original = R.versoes
             R.versoes = lambda: {}
             R.preparar(nome, "curta", 1, None)
             est = R.carregar_estado(nome)
+            self.assertIn("hash_execucao", est)
+            self.assertIn("hash_verificador", est)
             execs = [t for t in est["tarefas"].values() if t["tipo"] == "exec"]
             juizes = [t for t in est["tarefas"].values() if t["tipo"] == "juiz"]
             self.assertEqual(len(execs), len(C.CASOS))
@@ -223,6 +267,9 @@ class TestPreparacao(unittest.TestCase):
         finally:
             R.versoes = original
             shutil.rmtree(d, ignore_errors=True)
+
+    def test_verificador_fora_do_hash_de_execucao(self):
+        self.assertNotIn("verificador", Path(R.__file__).read_text().split("def hash_execucao")[1].split("def hash_juiz")[0])
 
 
 if __name__ == "__main__":

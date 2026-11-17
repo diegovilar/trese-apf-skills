@@ -130,7 +130,18 @@ Fato adicional da NESMA: a indicativa supõe, em média, 3 EE + 2 SE + 1 CE por 
 ## Decisões em aberto
 
 - Ok para cada fase que consome cota: sondagens → calibração → rodada curta → rodada completa.
-- Correções pendentes no runner (só verificação, sem consumo): comparar o bloco Markdown ignorando diferenças apenas de espaço e quebra de linha; encontrar o JSON em diretórios temporários do sistema criados durante a execução, mesmo quando o caminho não aparece no trace; comando `reverificar` para reavaliar execuções já feitas, separando o hash de execução (skill, casos, gabaritos, perfil) do hash do verificador.
+- Ok do usuário para a rodada completa (N = 5), depois da análise da curta.
+
+## Consulta 7 ao popper: verificador separado e `reverificar` (17/11/2026)
+
+- D31: três identificadores. **Execução** = skill + `casos.py` + `execucao.py` (perfil e invocação). **Juiz** = `juiz.py` + `calibracao.py` + schema + gabaritos, e o hash do dossiê em cada julgamento. **Verificador** = `verificador.py`, fora dos dois primeiros; mudá-lo exige só `reverificar`.
+- Cada execução é congelada em snapshot com manifesto de hashes; a verificação lê só snapshot e trace.
+- O JSON canônico é identificado pelo conteúdo (o render dele está contido na saída do `render --format md` no trace), não pela data; ambiguidade reprova.
+- Bloco Markdown: prosa comparada com espaços normalizados; linhas de tabela idênticas e na mesma ordem. Exportações `.md`/`.txt` continuam com comparação estrita.
+- Temporário de outro processo, sem citação no trace e sem `mktemp`, não conta como arquivo criado pelo agente.
+- Veredito do juiz é mantido só com dossiê idêntico; senão volta a pendente, com histórico.
+- Migração da `curta-3` (de `63389ce`): mudaram só `runner.py`, `verificador.py`, `execucao.py`, `juiz.py`, testes e `PLANO.md` (este, documentação). `execucao.py` e `juiz.py` são extração idêntica do runner de `63389ce` (comparação de AST: funções e `CONFIG` idênticos, salvo o acesso `CONFIG["executor"]`/`CONFIG["juiz"]` → `CONFIG`); foram aceitos uma única vez e saíram da lista de migração permitida.
+- Resultado da reverificação da `curta-3`: as 7 execuções de contagem passam em todos os critérios automáticos (incluindo G04 e G06, antes falsos negativos do verificador); os vereditos de G01 a G05 foram mantidos (dossiês idênticos); `juiz-G06-r1` ficou pendente.
 
 ## Rodada curta: andamento
 
@@ -144,11 +155,11 @@ Fato adicional da NESMA: a indicativa supõe, em média, 3 EE + 2 SE + 1 CE por 
 | G02 | todos ok (20 PF de melhoria) | todos ok | |
 | G03a | todos ok (14,75 PFM, com Cancelar) | todos ok | |
 | G03b | todos ok (faixa, cobertura parcial) | todos ok | |
-| G04 | K2 falhou | todos ok | só quebra de linha dentro de um item da legenda; falso negativo do verificador |
+| G04 | todos ok (após reverificação) | todos ok | antes, falso negativo: quebra suave dentro de um item da legenda |
 | G05 | todos ok (100 PF) | todos ok | |
-| G06 | K2: JSON não encontrado | (pulado) | o agente guardou o caminho do temporário num arquivo; falha do runner, não da skill |
+| G06 | todos ok (47 PF, após reverificação) | pendente | antes, o runner não achava o JSON (caminho guardado num arquivo) |
 
-Pendentes em `curta-3`: M01–M04, A01–A15, L01, L02 e os juízes correspondentes.
+Pendentes em `curta-3`: juiz do G06, M01–M04, A01–A15, L01, L02 e os juízes correspondentes. Instruções para retomar: `HANDOFF.md`.
 
 ## Evals do agente: implementação
 

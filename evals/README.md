@@ -10,6 +10,10 @@ Três camadas, separadas:
 
 Gabaritos aprovados: `evals/gabaritos-iniciais.md` (revisão 3 no G04).
 
+## Estrutura do código (após a consulta 7 ao popper)
+
+`execucao.py` (o que o executor recebe; hash de execução), `juiz.py` (o que o juiz recebe; hash do juiz e do dossiê), `verificador.py` (critérios automáticos sobre snapshots congelados; mudar exige só `runner.py reverificar <rodada>`), `runner.py` (orquestração e estado). Como retomar uma rodada: `HANDOFF.md` na raiz.
+
 ## Evals do agente (desenho revisado após a consulta 6 ao popper)
 
 ### Princípios

@@ -43,27 +43,12 @@ import apf  # noqa: E402  (cópia confiável, do repositório)
 import calibracao  # noqa: E402
 import casos as C  # noqa: E402
 
-CONFIG = {
-    "executor": {
-        "cmd": "claude",
-        "modelo": "claude-sonnet-5-5",
-        "esforco": "high",
-        # Perfil validado por sondagem. A sondagem sondas-1 mostrou que --restricted não descobre
-        # .claude/skills do projeto; por decisão registrada (PLANO.md), o isolamento das configurações
-        # do usuário fica com --setting-sources project e o confinamento com a auditoria do trace.
-        "perfil": ["--setting-sources", "project", "--strict-mcp-config",
-                   "--tools", "Read,Write,Edit,Glob,Grep,Bash,Skill",
-                   "--allowedTools", "Read,Write,Edit,Glob,Grep,Bash,Skill",
-                   "--permission-prompts", "none"],
-        "timeout_s": 1200,
-    },
-    "juiz": {
-        "cmd": "codex",
-        "modelo": "gpt-6.1-sol",
-        "esforco": "high",
-        "timeout_s": 900,
-    },
-}
+import execucao as E  # noqa: E402
+import juiz as J  # noqa: E402
+from execucao import montar_invocacao, preparar_ws, rodar_claude  # noqa: E402,F401
+from juiz import interpretar_veredito, montar_dossie, rodar_codex, secao_gabarito  # noqa: E402,F401
+
+CONFIG = {"executor": E.CONFIG, "juiz": J.CONFIG}
 
 
 # --------------------------------------------------------------------------- utilidades
@@ -89,13 +74,34 @@ def sha_arquivos(*caminhos: Path) -> str:
     return h.hexdigest()
 
 
-def config_hash() -> str:
+def hash_execucao() -> str:
+    """O que determina o pedido e o ambiente do executor: skill, casos, runner e perfil."""
     h = hashlib.sha256()
     h.update(sha_arvore(SKILL).encode())
-    h.update(sha_arquivos(AQUI / "casos.py", AQUI / "calibracao.py", AQUI / "runner.py",
-                          AQUI / "veredito.schema.json", GABARITOS).encode())
-    h.update(json.dumps(CONFIG, sort_keys=True).encode())
+    h.update(sha_arquivos(AQUI / "casos.py", AQUI / "execucao.py").encode())
     return h.hexdigest()[:16]
+
+
+def hash_juiz() -> str:
+    """O que determina o pedido ao juiz, além do dossiê de cada tarefa (registrado por tarefa)."""
+    h = hashlib.sha256()
+    h.update(sha_arquivos(AQUI / "juiz.py", AQUI / "calibracao.py", AQUI / "veredito.schema.json", GABARITOS).encode())
+    return h.hexdigest()[:16]
+
+
+def config_hash() -> str:
+    """Identificador combinado (compatibilidade e exibição)."""
+    return hashlib.sha256((hash_execucao() + hash_juiz()).encode()).hexdigest()[:16]
+
+
+def hashes_compativeis(estado: Dict[str, Any], tarefa: Dict[str, Any]) -> Optional[str]:
+    if "hash_execucao" not in estado:
+        return "rodada no formato antigo; rode 'reverificar --migrar-de <commit>' antes de continuar"
+    if tarefa["consome"] == "claude" and estado["hash_execucao"] != hash_execucao():
+        return "a configuração de EXECUÇÃO mudou desde a preparação; prepare uma rodada nova"
+    if tarefa["consome"] == "codex" and estado["hash_juiz"] != hash_juiz():
+        return "a configuração do JUIZ mudou desde a preparação; prepare uma rodada nova"
+    return None
 
 
 def dir_rodada(rodada: str) -> Path:
@@ -156,6 +162,7 @@ def preparar(rodada: str, tipo: str, reps: int, so: Optional[List[str]]) -> None
     for t in tarefas.values():
         t["fase"] = "pendente"
     estado = {"rodada": rodada, "tipo": tipo, "criada": agora(), "config_hash": config_hash(),
+              "hash_execucao": hash_execucao(), "hash_juiz": hash_juiz(), "hash_verificador": hash_verificador(),
               "config": CONFIG, "versoes": versoes(), "tarefas": tarefas}
     salvar_estado(rodada, estado)
     print(json.dumps({"rodada": rodada, "tarefas": len(tarefas), "config_hash": estado["config_hash"]}, ensure_ascii=False))
@@ -163,11 +170,12 @@ def preparar(rodada: str, tipo: str, reps: int, so: Optional[List[str]]) -> None
 
 def proxima(rodada: str) -> Dict[str, Any]:
     estado = carregar_estado(rodada)
-    if estado["config_hash"] != config_hash():
-        return {"erro": "configuração mudou desde a preparação da rodada; prepare uma rodada nova"}
     for tid, t in estado["tarefas"].items():
         if t["fase"] != "pendente":
             continue
+        erro = hashes_compativeis(estado, t)
+        if erro:
+            return {"erro": erro, "tarefa": tid}
         dep = t.get("depende")
         if dep:
             fd = estado["tarefas"][dep]["fase"]
@@ -184,337 +192,8 @@ def proxima(rodada: str) -> Dict[str, Any]:
 
 # --------------------------------------------------------------------------- executor
 
-def montar_invocacao(c: Dict[str, Any]) -> Tuple[str, bool]:
-    """(prompt, precisa_arquivo_pedido)."""
-    t = c["tipo"]
-    if t in ("nl_confirma", "nl_executa"):
-        return c["prosa"], c.get("subsidio") is not None
-    if c.get("arquivo_inexistente"):
-        return f"/nesma-apf-estimator -- {c['arquivo_inexistente']}", False
-    args = c.get("args")
-    if c.get("inline"):
-        if args is None:
-            return f"/nesma-apf-estimator {c['subsidio']}", False
-        return f"/nesma-apf-estimator {args} -- {c['subsidio']}".replace("  ", " "), False
-    if args is None:
-        return "/nesma-apf-estimator ./pedido.md", True
-    if c.get("sem_delimitador"):
-        return f"/nesma-apf-estimator {args} ./pedido.md", True
-    return f"/nesma-apf-estimator {args} -- ./pedido.md", True
-
-
-def preparar_ws(nome: str, subsidio: Optional[str]) -> Path:
-    BASE_WS.mkdir(parents=True, exist_ok=True)
-    ws = Path(tempfile.mkdtemp(prefix=f"{nome}-", dir=BASE_WS)).resolve()
-    shutil.copytree(SKILL, ws / ".claude" / "skills" / "nesma-apf-estimator",
-                    ignore=shutil.ignore_patterns("__pycache__"))
-    (ws / "tmp").mkdir()
-    if subsidio is not None:
-        (ws / "pedido.md").write_text(subsidio, encoding="utf-8")
-    return ws
-
-
-def rodar_claude(ws: Path, prompt: str, saida: Path) -> Dict[str, Any]:
-    cfg = CONFIG["executor"]
-    cmd = [cfg["cmd"], "-p", prompt, "--model", cfg["modelo"], "--effort", cfg["esforco"],
-           "--output-format", "stream-json", "--verbose", "--no-session-persistence"] + cfg["perfil"]
-    env = dict(os.environ, TMPDIR=str(ws / "tmp"))
-    inicio = dt.datetime.now()
-    try:
-        r = subprocess.run(cmd, cwd=ws, env=env, capture_output=True, text=True, timeout=cfg["timeout_s"])
-        codigo, stdout, stderr = r.returncode, r.stdout, r.stderr
-    except subprocess.TimeoutExpired as e:
-        parcial = e.stdout or ""
-        codigo, stdout, stderr = "timeout", parcial.decode() if isinstance(parcial, bytes) else parcial, "timeout"
-    (saida / "trace.jsonl").write_text(stdout, encoding="utf-8")
-    (saida / "stderr.txt").write_text(stderr or "", encoding="utf-8")
-    (saida / "comando.json").write_text(json.dumps({"cmd": cmd, "cwd": str(ws)}, ensure_ascii=False, indent=2), encoding="utf-8")
-    return {"codigo": codigo, "segundos": (dt.datetime.now() - inicio).total_seconds()}
-
-
-def ler_trace(caminho: Path) -> Dict[str, Any]:
-    eventos = []
-    for linha in caminho.read_text(encoding="utf-8").splitlines():
-        linha = linha.strip()
-        if not linha:
-            continue
-        try:
-            eventos.append(json.loads(linha))
-        except json.JSONDecodeError:
-            pass
-    init = next((e for e in eventos if e.get("type") == "system" and e.get("subtype") == "init"), {})
-    result = next((e for e in reversed(eventos) if e.get("type") == "result"), {})
-    ferramentas, textos, saidas = [], [], []
-    for e in eventos:
-        if e.get("type") == "user":
-            for bloco in (e.get("message") or {}).get("content") or []:
-                if isinstance(bloco, dict) and bloco.get("type") == "tool_result":
-                    c = bloco.get("content")
-                    saidas.append(c if isinstance(c, str) else json.dumps(c, ensure_ascii=False))
-        if e.get("type") == "assistant":
-            for bloco in (e.get("message") or {}).get("content") or []:
-                if isinstance(bloco, dict) and bloco.get("type") == "tool_use":
-                    ferramentas.append({"nome": bloco.get("name"), "entrada": bloco.get("input") or {}})
-                elif isinstance(bloco, dict) and bloco.get("type") == "text" and (bloco.get("text") or "").strip():
-                    textos.append(bloco["text"])
-    final = result.get("result") if isinstance(result.get("result"), str) else ""
-    if final and (not textos or textos[-1].strip() != final.strip()):
-        textos.append(final)
-    # texto_final: tudo o que o agente escreveu ao usuário, na ordem (a tabela pode vir antes da exportação).
-    return {"init": init, "result": result, "ferramentas": ferramentas, "saidas": saidas,
-            "texto_final": "\n\n".join(textos)}
-
-
-PERMITIDOS_ABS = ("/usr/bin/", "/bin/", "/usr/local/bin/", "/opt/homebrew/bin/", "/dev/null", "/usr/sbin/")
-REDE = re.compile(r"\b(curl|wget|nc|ssh|scp|rsync|ftp)\b|https?://", re.I)
-
-
-def raiz_temporaria(p: str) -> Optional[Path]:
-    """Primeiro nível de um caminho em /tmp ou no TMPDIR do sistema (/var/folders/.../T)."""
-    q = p.replace("/private/", "/", 1) if p.startswith("/private/") else p
-    m = re.match(r"^(/tmp/[^/]+|/var/folders/[^/]+/[^/]+/T/[^/]+)", q)
-    return Path(m.group(1)) if m else None
-
-
-def temp_da_execucao(p: str, desde: float) -> bool:
-    """Diretório temporário criado durante a execução (mktemp do próprio agente)."""
-    if not desde:
-        return False
-    r = raiz_temporaria(p)
-    if r is None:
-        return False
-    if "XXX" in r.name:  # modelo do mktemp, ainda não resolvido
-        return True
-    try:
-        st = r.stat()
-    except OSError:
-        return False
-    nasc = getattr(st, "st_birthtime", st.st_ctime)
-    return nasc >= desde and not str(r).startswith(str(BASE_WS))
-
-
-def auditar(ferramentas: List[Dict[str, Any]], ws: Path, desde: float = 0.0) -> List[str]:
-    """Acessos observáveis fora do diretório da execução (temporários criados por ela são permitidos)."""
-    raizes = {str(ws), str(ws).replace("/private/tmp/", "/tmp/"), str(ws).replace("/tmp/", "/private/tmp/")}
-    problemas = []
-
-    def dentro(p: str) -> bool:
-        return any(p == r or p.startswith(r + "/") for r in raizes) or temp_da_execucao(p, desde)
-
-    for f in ferramentas:
-        nome, ent = f["nome"], f["entrada"]
-        if nome in ("WebFetch", "WebSearch"):
-            problemas.append(f"{nome}: acesso à rede")
-        if nome in ("Read", "Write", "Edit", "Glob", "Grep", "NotebookEdit"):
-            for chave in ("file_path", "path", "notebook_path"):
-                v = ent.get(chave)
-                if isinstance(v, str) and v:
-                    p = v if v.startswith("/") else str((ws / v))
-                    if ".." in Path(v).parts or not dentro(os.path.normpath(p)):
-                        problemas.append(f"{nome} fora do diretório: {v}")
-        if nome == "Bash":
-            cmd = ent.get("command") or ""
-            if REDE.search(cmd):
-                problemas.append(f"Bash com rede: {cmd[:120]}")
-            if re.search(r"(^|[\s'\"=(])~(/|\s|$)", cmd):
-                problemas.append(f"Bash com ~: {cmd[:120]}")
-            if re.search(r"(^|[\s'\"=/])\.\.(/|\s|$)", cmd):
-                problemas.append(f"Bash com '..': {cmd[:120]}")
-            for m in re.finditer(r"(?<![\w.$}])(/[\w.@+\-]+(?:/[\w.@+\-]*)*)", cmd):
-                p = m.group(1)
-                if dentro(p) or p.startswith(PERMITIDOS_ABS) or p in ("/", "/tmp"):
-                    continue
-                problemas.append(f"Bash fora do diretório: {p}")
-    return problemas
-
-
-def arquivos_criados(ws: Path) -> List[str]:
-    out = []
-    for p in ws.rglob("*"):
-        if not p.is_file():
-            continue
-        rel = p.relative_to(ws)
-        if rel.parts[0] == ".claude" or str(rel) == "pedido.md":
-            continue
-        out.append(str(rel))
-    return sorted(out)
-
-
-TEMP_SISTEMA = re.compile(r"(/(?:private/)?(?:var/folders|tmp)/[\w./\-]+)")
-
-
-def diretorios_temporarios(saidas: List[str], desde: float) -> List[Path]:
-    """Diretórios temporários criados pelo agente (o mktemp do Claude Code ignora o TMPDIR passado)."""
-    achados = []
-    for s in saidas:
-        for m in TEMP_SISTEMA.finditer(s):
-            raiz = raiz_temporaria(m.group(1).rstrip("."))
-            if raiz is None or str(raiz).startswith(str(BASE_WS)):
-                continue
-            alvo = raiz
-            try:
-                if alvo.is_dir() and alvo.stat().st_mtime >= desde and alvo not in achados:
-                    achados.append(alvo)
-            except OSError:
-                continue
-    return achados
-
-
-def achar_json(ws: Path, extras: Optional[List[Path]] = None) -> Optional[Path]:
-    candidatos = []
-    raizes = [ws] + list(extras or [])
-    arquivos = []
-    for raiz in raizes:
-        for p in (raiz.rglob("*.json") if raiz == ws else raiz.glob("*.json")):
-            arquivos.append(p)
-    for p in arquivos:
-        if str(p).startswith(str(ws) + "/") and ".claude" in p.relative_to(ws).parts:
-            continue
-        try:
-            dados = json.loads(p.read_text(encoding="utf-8"))
-        except Exception:
-            continue
-        if isinstance(dados, dict) and dados.get("versao_esquema") == 1:
-            candidatos.append(p)
-    if not candidatos:
-        return None
-    return max(candidatos, key=lambda p: p.stat().st_mtime)
-
-
-def normalizar(texto: str) -> str:
-    return "\n".join(l.rstrip() for l in texto.replace("\r\n", "\n").split("\n")).strip()
-
-
-def comeca_com_alerta(texto: str) -> bool:
-    linhas = [l.strip() for l in texto.strip().splitlines() if l.strip() and not l.strip().startswith("```")]
-    return bool(linhas) and linhas[0].upper().startswith("ALERTA")
-
-
-def tem_contagem(texto: str) -> bool:
-    return bool(re.search(r"\d+(,\d+)?\s*(PF|PFM)\b", texto)) or texto.count("|") >= 6
-
-
-def chamadas_apf(ferramentas: List[Dict[str, Any]]) -> List[str]:
-    return [f["entrada"].get("command", "") for f in ferramentas
-            if f["nome"] == "Bash" and "apf.py" in (f["entrada"].get("command") or "")]
-
-
-def toca_pedido(ferramentas: List[Dict[str, Any]]) -> bool:
-    return any("pedido.md" in json.dumps(f["entrada"], ensure_ascii=False) for f in ferramentas)
-
-
-def multiconjunto(est: Dict[str, Any]) -> List[Tuple[str, Optional[str]]]:
-    return sorted(((f["tipo"], f.get("operacao")) for f in est["funcoes"]), key=lambda x: (x[0], x[1] or ""))
-
-
-def conteudo_xlsx(dados: bytes) -> Dict[str, bytes]:
-    with zipfile.ZipFile(__import__("io").BytesIO(dados)) as z:
-        return {n: z.read(n) for n in z.namelist() if n.startswith("xl/")}
-
-
-def verificar(c: Dict[str, Any], ws: Path, tr: Dict[str, Any], hash_antes: str, desde: float = 0.0) -> Dict[str, Any]:
-    v: Dict[str, Any] = {"criterios": {}, "invalido": None}
-    crit = v["criterios"]
-    if not tr["result"] or tr["result"].get("is_error"):
-        v["invalido"] = "execução sem resultado (erro, autenticação ou timeout)"
-        return v
-    if sha_arvore(ws / ".claude" / "skills" / "nesma-apf-estimator") != hash_antes:
-        v["invalido"] = "a cópia da skill foi modificada durante a execução"
-        return v
-    acessos = auditar(tr["ferramentas"], ws, desde)
-    if acessos:
-        v["invalido"] = "contaminada: " + "; ".join(acessos[:5])
-        return v
-
-    texto = tr["texto_final"]
-    comandos = [f["entrada"].get("command") or "" for f in tr["ferramentas"] if f["nome"] == "Bash"]
-    temporarios = diretorios_temporarios(tr.get("saidas", []) + comandos, desde) if desde else []
-    criados = arquivos_criados(ws) + [str(f) for d in temporarios for f in sorted(d.rglob("*")) if f.is_file()]
-    apf_cmds = chamadas_apf(tr["ferramentas"])
-    t = c["tipo"]
-
-    if t in ("alerta1", "alerta2"):
-        crit["K1"] = {
-            "alerta": comeca_com_alerta(texto),
-            "sem_script": not apf_cmds,
-            "sem_arquivos": not criados,
-            "sem_contagem": not tem_contagem(texto),
-        }
-        if t == "alerta1":
-            crit["K1"]["sem_acesso_ao_subsidio"] = not toca_pedido(tr["ferramentas"])
-        crit["K1"]["ok"] = all(crit["K1"].values())
-        return v
-
-    if t == "nl_confirma":
-        crit["K1"] = {
-            "sem_script": not apf_cmds,
-            "sem_arquivos": not criados,
-            "mostra_invocacao": c["espera_invocacao"] in texto,
-            "pede_confirmacao": "?" in texto,
-            "sem_contagem": not tem_contagem(texto),
-        }
-        crit["K1"]["ok"] = all(crit["K1"].values())
-        return v
-
-    # Execução esperada (contagem, valido, nl_executa)
-    k1 = {"sem_alerta": not comeca_com_alerta(texto),
-          "check": any(" check " in f" {x} " for x in apf_cmds),
-          "render": any(" render " in f" {x} " for x in apf_cmds)}
-    k1["ok"] = all(k1.values())
-    crit["K1"] = k1
-    caminho_json = achar_json(ws, temporarios)
-    v["tem_json"] = caminho_json is not None
-    if caminho_json is None:
-        crit["K2"] = {"ok": False, "motivo": "JSON canônico não encontrado"}
-        return v
-    est = json.loads(caminho_json.read_text(encoding="utf-8"))
-    v["json"] = str(caminho_json)
-    erros = apf.validar(est)
-    if erros:
-        crit["K2"] = {"ok": False, "motivo": "JSON inválido: " + "; ".join(erros[:5])}
-        return v
-    calc = apf.calcular(est)
-    md = apf.render_md(est, calc)
-    k2 = {"bloco_literal": normalizar(md) in normalizar(texto)}
-    exporta = c.get("exporta")
-    exportados = [p for p in arquivos_criados(ws) if Path(p).suffix in (".md", ".txt", ".xlsx") and not p.startswith("tmp/")]
-    if exporta:
-        alvo = [p for p in exportados if p.endswith("." + exporta)]
-        k2["exportou"] = len(alvo) == 1
-        if alvo:
-            dados = (ws / alvo[0]).read_bytes()
-            if exporta == "xlsx":
-                k2["exportacao_identica"] = conteudo_xlsx(dados) == conteudo_xlsx(apf.gerar_xlsx(est, calc))
-            else:
-                confiavel = md if exporta == "md" else apf.render_txt(est, calc)
-                k2["exportacao_identica"] = normalizar(dados.decode("utf-8")) == normalizar(confiavel)
-    else:
-        k2["nada_exportado"] = not exportados
-    if c.get("pergunta_formato") or (t == "contagem" and not exporta):
-        k2["perguntou_formato"] = bool(re.search(r"export", texto, re.I))
-    k2["ok"] = all(x for x in k2.values() if isinstance(x, bool))
-    crit["K2"] = k2
-
-    if t in ("valido", "nl_executa"):
-        esp = c.get("espera", {})
-        crit["config"] = {k: est.get(k) == val for k, val in esp.items()}
-        crit["config"]["ok"] = all(crit["config"].values())
-        return v
-
-    # contagem
-    unidade = c.get("unidade")
-    if unidade:
-        crit["K4"] = {"ok": calc["unidade"] == unidade, "obtido": calc["unidade"]}
-    if c.get("cobertura"):
-        crit["cobertura"] = {"ok": calc["cobertura"] == c["cobertura"], "obtido": calc["cobertura"]}
-    if c.get("tipos"):
-        obtido = multiconjunto(est)
-        crit["S1_prefiltro"] = {"ok": obtido == c["tipos"], "obtido": Counter(f"{a}/{b}" for a, b in obtido),
-                                "esperado": Counter(f"{a}/{b}" for a, b in c["tipos"])}
-    if c.get("totais"):
-        par = (calc["total_min"], calc["total_max"])
-        crit["S2"] = {"ok": par in c["totais"], "obtido": [str(x) for x in par]}
-    return v
+from verificador import (chamadas_apf, congelar, hash_verificador, ler_trace, multiconjunto,  # noqa: E402
+                         sha_arquivo, verificar_snapshot)
 
 
 def executar_exec(rodada: str, tid: str, t: Dict[str, Any]) -> Dict[str, Any]:
@@ -525,24 +204,31 @@ def executar_exec(rodada: str, tid: str, t: Dict[str, Any]) -> Dict[str, Any]:
     ws = preparar_ws(tid, c["subsidio"] if precisa_arquivo else None)
     hash_antes = sha_arvore(ws / ".claude" / "skills" / "nesma-apf-estimator")
     desde = dt.datetime.now().timestamp() - 1
-    t.update({"ws": str(ws), "prompt": prompt, "inicio": agora()})
+    t.update({"ws": str(ws), "prompt": prompt, "inicio": agora(), "hash_skill": hash_antes})
     r = rodar_claude(ws, prompt, saida)
-    t.update({"fase": "executado", "codigo": r["codigo"], "segundos": r["segundos"]})
+    ate = dt.datetime.now().timestamp() + 1
+    t.update({"fase": "executado", "codigo": r["codigo"], "segundos": r["segundos"], "janela": [desde, ate]})
     tr = ler_trace(saida / "trace.jsonl")
     (saida / "resposta_final.md").write_text(tr["texto_final"] or "", encoding="utf-8")
-    v = verificar(c, ws, tr, hash_antes, desde)
-    if v.get("json"):
-        shutil.copy(v["json"], saida / "estimativa.json")
-    for rel in arquivos_criados(ws):
-        destino = saida / "ws" / rel
-        destino.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy(ws / rel, destino)
-    uso = tr["result"].get("usage") if tr["result"] else None
-    t.update({"fase": "invalido" if v["invalido"] else "verificado", "motivo": v["invalido"],
-              "tem_json": bool(v.get("tem_json")), "criterios": v["criterios"],
-              "custo_usd": (tr["result"] or {}).get("total_cost_usd"), "uso": uso,
-              "init": {k: tr["init"].get(k) for k in ("model", "apiKeySource", "permissionMode", "tools", "skills", "slash_commands", "cwd")}})
+    congelar(ws, saida, desde, ate, hash_antes)
+    aplicar_verificacao(c, saida, t)
+    t.update({"custo_usd": (tr["result"] or {}).get("total_cost_usd"), "uso": (tr["result"] or {}).get("usage"),
+              "init": {k: tr["init"].get(k) for k in ("model", "apiKeySource", "permissionMode", "tools", "skills", "cwd")}})
     return t
+
+
+def aplicar_verificacao(c: Dict[str, Any], saida: Path, t: Dict[str, Any]) -> None:
+    v = verificar_snapshot(c, saida)
+    if "criterios" in t or t.get("motivo"):
+        t.setdefault("historico_verificacao", []).append(
+            {k: t.get(k) for k in ("fase", "motivo", "criterios", "verificador", "tem_json")})
+    t.update({"fase": "invalido" if v["invalido"] else "verificado", "motivo": v["invalido"],
+              "tem_json": bool(v.get("tem_json")), "criterios": v["criterios"], "verificador": v["verificador"],
+              "procedencia": v.get("procedencia")})
+    if v.get("json"):
+        shutil.copy(saida / "snapshot" / v["json"], saida / "estimativa.json")
+    elif (saida / "estimativa.json").exists():
+        (saida / "estimativa.json").unlink()
 
 
 # --------------------------------------------------------------------------- sondas
@@ -552,12 +238,10 @@ def executar_sonda_exec(rodada: str, tid: str, t: Dict[str, Any]) -> Dict[str, A
     saida.mkdir(exist_ok=True)
     if t["variante"] == "skill":
         ws = preparar_ws(tid, C.CURTO)
-        prompt = "/nesma-apf-estimator modo=detalhada -- ./pedido.md"
+        prompt = E.PROMPT_SONDA_SKILL
     else:
         ws = preparar_ws(tid, None)
-        prompt = ("Responda só com uma lista. 1) Quais arquivos de instrução (CLAUDE.md, AGENTS.md ou semelhantes) ou "
-                  "memórias foram carregados no seu contexto? Dê os caminhos ou diga 'nenhum'. 2) Quais skills estão "
-                  "disponíveis? 3) Quais ferramentas você tem? Não use nenhuma ferramenta.")
+        prompt = E.PROMPT_SONDA_CONTEXTO
     r = rodar_claude(ws, prompt, saida)
     tr = ler_trace(saida / "trace.jsonl")
     (saida / "resposta_final.md").write_text(tr["texto_final"] or "", encoding="utf-8")
@@ -571,100 +255,20 @@ def executar_sonda_exec(rodada: str, tid: str, t: Dict[str, Any]) -> Dict[str, A
 
 # --------------------------------------------------------------------------- juiz
 
-INSTRUCOES_JUIZ = """Você é o juiz de uma avaliação. Um agente executou a skill `nesma-apf-estimator` (estimativa de pontos de função NESMA) sobre o subsídio abaixo. Avalie o resultado dele contra o gabarito aprovado e as convenções. Não use ferramentas, não leia arquivos e não execute comandos: tudo o que você precisa está neste texto.
-
-Critérios (responda um booleano para cada, com justificativa curta e uma citação literal do JSON ou da resposta que sustente o veredito; se não houver o que citar, use ""):
-- K3: nenhuma função listada como PROIBIDA no gabarito foi contada (em `funcoes`), nem com outro nome.
-- S1: as funções obrigatórias do gabarito estão presentes com o tipo correto (e, em melhoria, a operação correta), correspondendo NOME A NOME e PELO SIGNIFICADO, não só pela contagem de tipos. Uma função trocada por outra do mesmo tipo reprova. Nos casos avaliados por rubrica, aplique a rubrica do gabarito.
-- S3: hipóteses e cenários coerentes: toda hipótese que muda o total está registrada com o efeito; alternativas que se excluem estão no mesmo grupo; nenhum cenário (mínimo ou máximo) descreve uma aplicação impossível, como contar a mesma entidade como ALI e AIE ao mesmo tempo, ou um arquivo sem processo que o mantenha ou leia. Se não houver hipóteses e o gabarito não exigir, aprove.
-- S4: todas as pendências obrigatórias do gabarito aparecem (com estas ou outras palavras) em `pendencias`. Se o gabarito não exigir pendências, aprove.
-- S5: rastreabilidade: o campo `requisito` de cada função cita ou parafraseia fielmente um trecho que EXISTE no subsídio, ou a função está ligada a uma hipótese cujo trecho existe. Compare com o subsídio original; trecho inventado ou distorcido reprova.
-Em `observacoes`, registre qualquer outro problema relevante que você notar (não afeta os critérios).
-"""
-
-
-def secao_gabarito(nome: str) -> str:
-    texto = GABARITOS.read_text(encoding="utf-8")
-    m = re.search(rf"^## {re.escape(nome)} ·.*?(?=^## |\Z)", texto, re.S | re.M)
-    return m.group(0).strip() if m else ""
-
-
-def secao_convencoes() -> str:
-    texto = GABARITOS.read_text(encoding="utf-8")
-    m = re.search(r"^## Convenções usadas nos gabaritos.*?(?=^## )", texto, re.S | re.M)
-    return m.group(0).strip() if m else ""
-
-
-def montar_dossie(caso_id: str, invocacao: str, subsidio: str, est: Dict[str, Any], resposta: str, nota: str = "") -> str:
-    c = C.CASOS[caso_id]
-    partes = [INSTRUCOES_JUIZ,
-              "## Invocação exata\n\n" + invocacao,
-              "## Subsídio completo (fonte da verdade para S5)\n\n" + subsidio,
-              "## Gabarito do caso\n\n" + secao_gabarito(c.get("secao", caso_id))]
-    if nota:
-        partes.append("## Nota sobre esta variante\n\n" + nota)
-    partes += ["## Convenções\n\n" + secao_convencoes(),
-               "## JSON canônico produzido pelo agente\n\n```json\n" + json.dumps(est, ensure_ascii=False, indent=2) + "\n```",
-               "## Resposta final do agente\n\n" + resposta]
-    return "\n\n".join(partes)
-
-
-def rodar_codex(prompt: str, saida: Path, com_schema: bool = True) -> Dict[str, Any]:
-    cfg = CONFIG["juiz"]
-    vazio = Path(tempfile.mkdtemp(prefix="juiz-", dir=BASE_WS if BASE_WS.exists() else None))
-    ultimo = saida / "veredito_bruto.txt"
-    cmd = [cfg["cmd"], "exec", "-m", cfg["modelo"], "-c", f'model_reasoning_effort="{cfg["esforco"]}"',
-           "--ephemeral", "--skip-git-repo-check", "--sandbox", "read-only", "--json",
-           "-C", str(vazio), "-o", str(ultimo)]
-    if com_schema:
-        cmd += ["--output-schema", str(AQUI / "veredito.schema.json")]
-    cmd.append("-")
-    try:
-        r = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=cfg["timeout_s"])
-        codigo, stdout, stderr = r.returncode, r.stdout, r.stderr
-    except subprocess.TimeoutExpired:
-        codigo, stdout, stderr = "timeout", "", "timeout"
-    (saida / "juiz_trace.jsonl").write_text(stdout or "", encoding="utf-8")
-    (saida / "juiz_stderr.txt").write_text(stderr or "", encoding="utf-8")
-    (saida / "juiz_dossie.md").write_text(prompt, encoding="utf-8")
-    acoes = []
-    for linha in (stdout or "").splitlines():
-        try:
-            ev = json.loads(linha)
-        except json.JSONDecodeError:
-            continue
-        item = ev.get("item") or {}
-        if item.get("type") in ("command_execution", "file_change", "mcp_tool_call", "web_search"):
-            acoes.append(item.get("type"))
-    texto = ultimo.read_text(encoding="utf-8") if ultimo.exists() else ""
-    return {"codigo": codigo, "texto": texto, "acoes": acoes, "stderr": (stderr or "")[-2000:]}
-
-
-def interpretar_veredito(texto: str) -> Optional[Dict[str, Any]]:
-    try:
-        v = json.loads(texto)
-    except json.JSONDecodeError:
-        m = re.search(r"\{.*\}", texto, re.S)
-        if not m:
-            return None
-        try:
-            v = json.loads(m.group(0))
-        except json.JSONDecodeError:
-            return None
-    if not all(isinstance(v.get(k), dict) and isinstance(v[k].get("ok"), bool) for k in ("K3", "S1", "S3", "S4", "S5")):
-        return None
-    return v
-
-
-def executar_juiz(rodada: str, tid: str, t: Dict[str, Any], estado: Dict[str, Any]) -> Dict[str, Any]:
+def dossie_da_tarefa(rodada: str, t: Dict[str, Any], estado: Dict[str, Any]) -> str:
     dep = estado["tarefas"][t["depende"]]
     pasta_exec = dir_rodada(rodada) / t["depende"]
     est = json.loads((pasta_exec / "estimativa.json").read_text(encoding="utf-8"))
     resposta = (pasta_exec / "resposta_final.md").read_text(encoding="utf-8")
     c = C.CASOS[t["caso"]]
+    return montar_dossie(t["caso"], dep["prompt"], c["subsidio"], est, resposta, c.get("nota_juiz", ""))
+
+
+def executar_juiz(rodada: str, tid: str, t: Dict[str, Any], estado: Dict[str, Any]) -> Dict[str, Any]:
     saida = dir_rodada(rodada) / tid
     saida.mkdir(exist_ok=True)
-    dossie = montar_dossie(t["caso"], dep["prompt"], c["subsidio"], est, resposta, c.get("nota_juiz", ""))
+    dossie = dossie_da_tarefa(rodada, t, estado)
+    t["hash_dossie"] = hashlib.sha256(dossie.encode()).hexdigest()[:16]
     r = rodar_codex(dossie, saida)
     v = interpretar_veredito(r["texto"])
     if r["acoes"]:
@@ -704,7 +308,7 @@ def executar_calib(rodada: str, tid: str, t: Dict[str, Any]) -> Dict[str, Any]:
 def executar_sonda_juiz(rodada: str, tid: str, t: Dict[str, Any]) -> Dict[str, Any]:
     saida = dir_rodada(rodada) / tid
     saida.mkdir(exist_ok=True)
-    r = rodar_codex("Responda apenas com a palavra OK. Não use ferramentas.", saida, com_schema=False)
+    r = rodar_codex(J.PROMPT_SONDA, saida, com_schema=False)
     ok = r["codigo"] == 0 and "OK" in r["texto"].upper()
     t.update({"fase": "verificado" if ok else "invalido", "codigo": r["codigo"], "resposta": r["texto"][:200],
               "stderr": r["stderr"], "acoes": r["acoes"]})
@@ -715,11 +319,12 @@ def executar_sonda_juiz(rodada: str, tid: str, t: Dict[str, Any]) -> Dict[str, A
 
 def executar(rodada: str, tid: str) -> None:
     estado = carregar_estado(rodada)
-    if estado["config_hash"] != config_hash():
-        sys.exit("configuração mudou desde a preparação da rodada; prepare uma rodada nova")
     t = estado["tarefas"].get(tid)
     if t is None:
         sys.exit(f"tarefa inexistente: {tid}")
+    erro = hashes_compativeis(estado, t)
+    if erro:
+        sys.exit(erro)
     if t["fase"] != "pendente":
         sys.exit(f"tarefa {tid} já está em '{t['fase']}'")
     t["inicio"] = agora()
@@ -755,6 +360,88 @@ def resumo_tarefa(tid: str, t: Dict[str, Any]) -> Dict[str, Any]:
     if t.get("custo_usd") is not None:
         r["custo_usd"] = t["custo_usd"]
     return r
+
+
+# execucao.py e juiz.py NÃO entram: mudá-los altera o que executor e juiz recebem (rodada nova).
+# (Na migração da curta-3 eles foram aceitos uma única vez, por serem extração idêntica do runner; ver PLANO.md.)
+PERMITIDOS_NA_MIGRACAO = ("evals/agente/runner.py", "evals/agente/verificador.py", "evals/unit/", "PLANO.md",
+                          "evals/README.md", "HANDOFF.md", ".gitignore")
+
+
+def reverificar(rodada: str, migrar_de: Optional[str]) -> None:
+    """Reavalia, sem consumo de cota, todas as execuções já feitas com o verificador atual."""
+    estado = carregar_estado(rodada)
+    precisa_migrar = ("hash_execucao" not in estado or estado["hash_execucao"] != hash_execucao()
+                      or estado["hash_juiz"] != hash_juiz())
+    if precisa_migrar or migrar_de:
+        if not migrar_de:
+            sys.exit("os hashes de execução/juiz mudaram: informe --migrar-de <commit>; a migração só é aceita "
+                     "se, desde esse commit, mudaram apenas arquivos que não afetam executor nem juiz")
+        mudados = subprocess.run(["git", "diff", "--name-only", migrar_de, "--", "."], cwd=RAIZ,
+                                 capture_output=True, text=True, check=True).stdout.split()
+        mudados += subprocess.run(["git", "ls-files", "--others", "--exclude-standard"], cwd=RAIZ,
+                                  capture_output=True, text=True, check=True).stdout.split()
+        proibidos = [m for m in mudados if not m.startswith(PERMITIDOS_NA_MIGRACAO)]
+        if proibidos:
+            sys.exit("migração recusada: mudaram arquivos que afetam execução ou juiz: " + ", ".join(proibidos))
+        estado.setdefault("migracoes", []).append({"de_commit": migrar_de, "config_hash_antigo": estado["config_hash"],
+                                                   "hash_execucao_antigo": estado.get("hash_execucao"),
+                                                   "hash_juiz_antigo": estado.get("hash_juiz"), "em": agora(),
+                                                   "mudados": sorted(set(mudados))})
+        estado.update({"hash_execucao": hash_execucao(), "hash_juiz": hash_juiz(), "config_hash": config_hash()})
+    relatorio = {}
+    for tid, t in estado["tarefas"].items():
+        if t["tipo"] != "exec" or t["fase"] == "pendente":
+            continue
+        saida = dir_rodada(rodada) / tid
+        if not (saida / "snapshot" / "manifesto.json").exists():
+            ws = Path(t["ws"])
+            if not ws.exists():
+                relatorio[tid] = "sem snapshot e sem diretório da execução"
+                continue
+            ini = dt.datetime.fromisoformat(t["inicio"]).timestamp() - 2
+            fim = dt.datetime.fromisoformat(t["fim"]).timestamp() + 2
+            congelar(ws, saida, ini, fim, t.get("hash_skill") or sha_arvore(SKILL))
+        antes = (t["fase"], t.get("tem_json"))
+        aplicar_verificacao(C.resolver(t["caso"]), saida, t)
+        relatorio[tid] = {"antes": antes[0], "depois": t["fase"], "criterios": {k: x.get("ok") for k, x in t["criterios"].items()}}
+    for tid, t in estado["tarefas"].items():
+        if t["tipo"] != "juiz":
+            continue
+        dep = estado["tarefas"][t["depende"]]
+        if t["fase"] == "pulado" and dep.get("tem_json"):
+            novo = hashlib.sha256(dossie_da_tarefa(rodada, t, estado).encode()).hexdigest()[:16]
+            hist = [h for h in t.get("historico_julgamento", []) if h.get("hash_dossie") == novo]
+            antigo_txt = dir_rodada(rodada) / tid / "juiz_dossie.md"
+            if not hist and antigo_txt.exists() and hashlib.sha256(antigo_txt.read_text(encoding="utf-8").encode()).hexdigest()[:16] == novo:
+                hist = [h for h in t.get("historico_julgamento", []) if h.get("veredito")]
+            if hist:
+                t.update({"fase": "julgado", "motivo": None, "veredito": hist[-1]["veredito"], "hash_dossie": novo})
+                relatorio[tid] = "veredito restaurado do histórico (dossiê idêntico)"
+            else:
+                t["fase"], t["motivo"] = "pendente", None
+                relatorio[tid] = "volta a pendente (a execução passou a ter JSON)"
+        elif t["fase"] == "julgado":
+            if not dep.get("tem_json"):
+                t.setdefault("historico_julgamento", []).append({"veredito": t.pop("veredito"), "hash_dossie": t.get("hash_dossie")})
+                t["fase"], t["motivo"] = "pulado", "a execução deixou de ter JSON"
+                relatorio[tid] = "pulado"
+                continue
+            novo = hashlib.sha256(dossie_da_tarefa(rodada, t, estado).encode()).hexdigest()[:16]
+            antigo_txt = dir_rodada(rodada) / tid / "juiz_dossie.md"
+            antigo = t.get("hash_dossie") or (hashlib.sha256(antigo_txt.read_text(encoding="utf-8").encode()).hexdigest()[:16]
+                                               if antigo_txt.exists() else None)
+            if novo == antigo:
+                t["hash_dossie"] = novo
+                relatorio[tid] = "veredito mantido (dossiê idêntico)"
+            else:
+                t.setdefault("historico_julgamento", []).append({"veredito": t.pop("veredito"), "hash_dossie": antigo})
+                t["fase"] = "pendente"
+                relatorio[tid] = "volta a pendente (dossiê mudou)"
+    estado.setdefault("historico_verificador", []).append({"em": agora(), "verificador": hash_verificador()})
+    estado["hash_verificador"] = hash_verificador()
+    salvar_estado(rodada, estado)
+    print(json.dumps(relatorio, ensure_ascii=False, indent=1, default=str))
 
 
 def status(rodada: str) -> None:
@@ -800,6 +487,9 @@ def main() -> None:
     sp.add_argument("--casos", help="lista separada por vírgula")
     for nome in ("proxima", "status", "comparar"):
         sub.add_parser(nome).add_argument("rodada")
+    sp = sub.add_parser("reverificar")
+    sp.add_argument("rodada")
+    sp.add_argument("--migrar-de", help="commit em que a rodada (formato antigo) foi preparada")
     sp = sub.add_parser("executar")
     sp.add_argument("rodada")
     sp.add_argument("tarefa")
@@ -815,6 +505,8 @@ def main() -> None:
         status(a.rodada)
     elif a.cmd == "comparar":
         comparar(a.rodada)
+    elif a.cmd == "reverificar":
+        reverificar(a.rodada, a.migrar_de)
 
 
 if __name__ == "__main__":
