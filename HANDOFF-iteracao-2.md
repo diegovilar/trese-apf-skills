@@ -1,10 +1,10 @@
-# Handoff — iteração 2 da skill `nesma-apf-estimator` (em andamento)
+# Handoff — iteração 2 da skill `nesma-apf-estimator` (encerrada)
 
 Para quem retomar a iteração 2. Estado em 18/11/2026, fim da sessão que fez as consultas 32 a 44 ao popper. O histórico completo (decisões D40–D68, rodadas, consultas) está no `PLANO.md`; as seções desta sessão começam em "Plano de continuação da iteração 2 (consultas 32 a 34)". Regras de operação, comandos e armadilhas: `HANDOFF.md`.
 
 ## Próximo passo
 
-**T5 concluído (C1–C6 atendidos, sessão `ses_e0f8024bcffei2fNg5HrMY4Dbu`; ver PLANO.md).** Relatório da iteração 2 escrito (`RELATORIO-iteracao-2.md`, revisado na consulta 55). Próximo: README e guia de uso para o analista; depois, marcar a iteração como encerrada no relatório e nos handoffs. Popper da sessão de 18/11 (tarde): `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 a 55); numa sessão nova, abra outro e continue da **consulta 56**.
+**T5 concluído (C1–C6 atendidos, sessão `ses_e0f8024bcffei2fNg5HrMY4Dbu`; ver PLANO.md).** **Iteração 2 encerrada em 18/11/2026, sem aprovação integral** (D71, consulta 56): relatório (`RELATORIO-iteracao-2.md`), `README.md` e `GUIA-DE-USO.md` prontos. Modo interativo continua experimental. Nenhuma rodada nem trabalho novo autorizado; uma iteração 3 (contenção, representação da incerteza) exige desenho próprio e decisão do usuário. Popper da sessão de 18/11 (tarde): `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 a 56); numa sessão nova, abra outro e continue da **consulta 57**.
 
 Feito nesta sessão (detalhes no `PLANO.md`, seções "Rodada `regressao-1`" em diante):
 - **Fase 4 (`regressao-1`)**: sem regressão grosseira nos casos cobertos (N = 1; G02 reposto pela D69; G07 lacuna declarada).
@@ -65,7 +65,7 @@ Melhorar a **descoberta de lacunas de domínio** em pedidos vagos (o requisito n
 3. ~~Camada 2 mínima~~: encerrada com limitação (D65–D67).
 4. ~~Regressão ampliada do modo direto~~: `regressao-1` concluída.
 5. ~~Holdouts~~: encerrada com limites (D70, D71).
-6. **Encerramento** ← próximo: T5 manual (lote, resposta livre, exportação, correção), relatório da iteração 2, `RELATORIO`/README, guia de uso.
+6. ~~Encerramento~~ (concluído em 18/11): T5 manual (lote, resposta livre, exportação, correção), relatório da iteração 2, `RELATORIO`/README, guia de uso.
 
 Pendências de produto, para depois: correção mostrando só o que mudou (exige IDs estáveis e decidir onde fica o resultado completo quando não se exporta); outras reduções de volume.
 

@@ -1,6 +1,6 @@
 # Relatório final — iteração 2 da skill `nesma-apf-estimator`
 
-18/11/2026. Iteração **em encerramento** por decisão do usuário (D71; faltam README e guia de uso), **sem aprovação integral**: o alvo da iteração teve sinal favorável, mas a contenção (perguntas e hipóteses indevidas) não foi demonstrada e há limitações conhecidas (ver "Resultado dos evals"). Skill congelada no estado do commit `0c5a3b3`. Detalhes, decisões (D40–D71) e todas as rodadas em `PLANO.md`; relatório anterior em `RELATORIO-iteracao-1.md`.
+18/11/2026. Iteração **encerrada** por decisão do usuário (D71), **sem aprovação integral**: o alvo da iteração teve sinal favorável, mas a contenção (perguntas e hipóteses indevidas) não foi demonstrada e há limitações conhecidas (ver "Resultado dos evals"). Skill congelada no estado do commit `0c5a3b3`. Detalhes, decisões (D40–D71) e todas as rodadas em `PLANO.md`; relatório anterior em `RELATORIO-iteracao-1.md`. Documentação de uso: `README.md` e `GUIA-DE-USO.md`.
 
 ## Objetivo
 
@@ -67,6 +67,5 @@ Igual à da iteração 1, reforçada: a lista de pendências **não é exaustiva
 
 ## Pendente
 
-- README e guia de uso para o analista (fase 6).
 - Trabalho futuro, se houver iteração 3, com desenho próprio e não por regra em prosa: contenção de hipóteses e perguntas; representação da incerteza; correção mostrando só o que mudou (exige IDs estáveis); a metamórfica "não interativo ≡ não sei" sobre execuções reais; H3c e H1 com N > 1.
 - Diretórios de execução dos evals em `/private/tmp/apf-evals` e cópias do T5 em `/tmp/t5`: os snapshots necessários estão em `evals/agente/resultados/` (fora do git); a remoção fica a critério do usuário.

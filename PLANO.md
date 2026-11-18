@@ -550,6 +550,8 @@ Popper da sessão: `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 em diante). Pr
 
 - Observações (não reprovam): fronteira assumida sem perguntar; F08 "Consultar solicitações para decisão da chefia" como hipótese (H1) — a mesma família da inflação do H1c; P11 (quem é a chefia imediata) aberta no lote 2.
 
+**Encerramento da iteração 2 (fase 6; consultas 55 e 56), 18/11/2026.** `RELATORIO-iteracao-2.md`, `README.md` (raiz) e `GUIA-DE-USO.md` (para o analista: instalação, acionamento por ambiente, argumentos, prévia e perguntas, exportação, correção, leitura do resultado e revisão obrigatória, com as limitações medidas traduzidas). **Iteração 2 encerrada, sem aprovação integral**; modo interativo experimental (D59, D67); nenhuma rodada autorizada.
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.
