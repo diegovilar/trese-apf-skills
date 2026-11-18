@@ -402,6 +402,21 @@ Versão `4eb6077f21f4f68d` (commit `5f00974`, com D55 e D56). Consumo: Codex 5 h
 - Leitura (1 repetição por caso; sem conclusão estatística): a 3B removeu as incoerências que mirava em H2 e G04i, mas induziu hipóteses sem apoio no texto em 2 de 3 casos de ajuste (H2, H3); nos controles, nada detectado.
 - D58 (usuário, consulta 31): **3B abandonada**; `SKILL.md` revertido ao estado anterior a `c5e6cfe` (base `451690d` + D55/D56); `--reps` do runner mantido. Não se atribui o ganho ao item 1 nem a inflação ao item 2 (rodaram juntos, uma vez). A representação da incerteza (S3) fica como **limitação conhecida** e trabalho separado; não é apagada dos resultados. A reversão não demonstra que a base seja melhor. Próximo: bloco de **descoberta** H2 e H3, N = 5, na versão retomada; critério fixado antes: S4 e R ≥ 4/5 por caso; S3, S1, K3 e medidas relatados; só K1/K2 (verificador), cota ou execução inválida interrompem. H2 e H3 estão expostos: o bloco mede estabilidade, não generalização.
 
+## Bloco de descoberta `descoberta-1` (18/11/2026)
+
+Versão retomada (`config_hash` `4eb6077f21f4f68d`, igual à da `k2-previa`), H2 e H3, N = 5, autorizado (D58). 10 execuções e 10 juízes, nenhuma inválida; K1 e K2 ok em todas. Consumo: Claude 5 h 62% → 55%; Codex 5 h 58% → 51%.
+
+| Caso | S4 | R | S4+R | S3 | S1, K3, S5 | Perguntas |
+|---|---|---|---|---|---|---|
+| H2 | 5/5 | 5/5 | 5/5 | 2/5 | 5/5 | 8, 7, 7, 4, 9 |
+| H3 | 4/5 | 4/5 | 3/5 | 3/5 | 5/5 | 6, 6, 6, 7, 7 |
+
+- **Critério fixado (S4 e R ≥ 4/5 por caso): atendido nos dois.** O resultado conjunto S4+R do H3 é 3/5.
+- H3 S4 ✗ (r2): de novo a pergunta sobre o tratamento das ocorrências sem "por quem" (o mesmo da `ajuste-1`: não era efeito da 3B). H3 R ✗ (r5): a pergunta de autonomia das ocorrências ofereceu como alternativa "só vista pela remessa", que o pedido exclui (há lista própria para a seção).
+- S3 (limitação conhecida): H2 r2, r3, r5 sem a hipótese do registro posterior da entrega; H3 r3 com ALI de ocorrências afirmado; H3 r5 com AIE de zonas eleitorais sem apoio — o mesmo tipo de inflação da `ajuste-1` aparece sem a 3B, o que enfraquece a atribuição daquela inflação à 3B.
+- Medidas: no H2 r1–r2, uma pergunta genérica e uma sem efeito na contagem; nenhuma redundante no H2.
+- H2 e H3 estavam expostos: o bloco mede estabilidade da descoberta nestes casos, não generalização.
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.
