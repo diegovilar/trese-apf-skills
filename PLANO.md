@@ -492,7 +492,7 @@ Popper da sessão: `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 em diante). Pr
 |---|---------|--------|
 | D69 | **Reposição de execução invalidada por `..` (consulta 46).** `exec-G02-r1` foi invalidada pela auditoria (`ls -R scripts tmp ../../../tmp` a partir da cópia da skill; o destino real é o `tmp` do próprio workspace, único apontamento do trace; snapshot e cópia da skill íntegros). Registrada como invalidação pela política de auditoria, não como falha da skill; os 20 PF dela não contam como evidência. Usuário autorizou repor o G02 (`repetir` → `exec-G02-r2`, executada com o juiz logo em seguida, fora da ordem do `proxima`) e, **só nesta rodada**, repor uma vez sem parar outra execução invalidada apenas por `..` com destino comprovado dentro do workspace; qualquer outra invalidação ou reincidência no mesmo caso para. M05 conferida pelos mesmos predicados do `comparar` sobre G02-r2 × G03a-r1 (o comparador pareia por número de repetição e não segue `repetida_por`). | Usuário; consulta 46 |
 
-**Resultado (config `5be257e4fb57843d`, N = 1): nenhuma reprovação.** 15 execuções do Claude (14 válidas + G02-r1 inválida) e 12 juízes, todos concluídos; a regra de reincidência da D69 não foi usada.
+**Resultado (config `5be257e4fb57843d`, N = 1): nenhuma reprovação.** 15 execuções do Claude (14 válidas + G02-r1 inválida) e 11 julgamentos (12 tarefas de juiz; `juiz-G02-r1` pulada por depender da execução inválida); a regra de reincidência da D69 não foi usada.
 
 | Caso | Verificador | Juiz |
 |---|---|---|
@@ -504,7 +504,7 @@ Popper da sessão: `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 em diante). Pr
 
 - Relações: M01, M02 (45 = 45), M03 (45 = 45), M04 (47 = 47) pelo `comparar`; **M05 ✓** (G02-r2 = 20 PF de melhoria; G03a-r1 = 14,75 PFM; multiconjunto do G03a = G02 + EE A). As linhas `r2` do `comparar` ("faltam resultados") são artefato da repetição, não pendências.
 - O S4 do G04 passou nesta execução; com N = 1 isso não prova que a limitação da iteração 1 foi superada no modo direto.
-- Leitura: sem sinal de regressão grosseira do modo direto na versão atual. N = 1 não mede estabilidade. **G07 não coberto (lacuna declarada).**
+- Leitura (consulta 47): **fase 4 concluída sem regressão grosseira detectada nos casos cobertos.** N = 1 não mede estabilidade. **G07 não coberto (lacuna declarada).** A D69 não vale para a fase 5.
 - Custo: US$ 4,50 no executor (estimativa do Claude Code); Claude 5 h 74% → 66% (semanal 87%); Codex 5 h 94% → 84% (semanal 77% → 75%). Bem abaixo da estimativa da D68.
 
 ## Evals do agente: implementação
