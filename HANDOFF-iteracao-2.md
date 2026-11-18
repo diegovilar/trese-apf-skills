@@ -2,22 +2,14 @@
 
 Para quem retomar a iteração 2. Estado em 18/11/2026, fim da sessão que fez as consultas 32 a 44 ao popper. O histórico completo (decisões D40–D68, rodadas, consultas) está no `PLANO.md`; as seções desta sessão começam em "Plano de continuação da iteração 2 (consultas 32 a 34)". Regras de operação, comandos e armadilhas: `HANDOFF.md`.
 
-## Próximo passo (já autorizado pelo usuário)
+## Próximo passo
 
-**Rodada `regressao-1` (fase 4, D68).** O usuário autorizou em 18/11 para ser executada na próxima sessão. Antes de começar: abrir um popper novo (consulta 45 em diante), conferir testes e `config_hash` (seção final do `HANDOFF.md`) e ler a cota.
+**T5 manual (fase 6, D71)**, executado pelo usuário no OpenCode pelo roteiro `evals/T5-roteiro.md` (critérios C1–C6 fixados antes; pausa antes da correção para a orquestração registrar hashes e o estado anterior). Depois: ler a sessão no banco do OpenCode, registrar o T5 no `PLANO.md` e escrever o relatório da iteração 2, README/RELATORIO e o guia de uso. Popper da sessão de 18/11 (tarde): `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 a 54); numa sessão nova, abra outro e continue da **consulta 55**.
 
-```bash
-python3 evals/agente/runner.py preparar regressao-1 curta --casos G01,G02,G03a,G03b,G04,G05,G06,G08,M01,M02,M03a,M03b,M04,A03 --reps 1
-# laço: proxima → ler cota do provedor indicado → executar <tarefa>
-python3 evals/agente/runner.py comparar regressao-1   # relações M01–M05, sem cota
-```
-
-- 14 execuções do Claude + 11 juízes do Codex (M03a, M03b, A03 sem juiz). Estimativa: 30–40% da janela de 5 h do Claude, ~11 pontos do Codex.
-- **Interrompem** (registrar, parar e levar ao usuário via popper; sem continuação diagnóstica automática): K1, K2 (por categorias, D67), K3 ou S2 (totais exatos) reprovados; execução inválida; cota < 15%.
-- **Não interrompem:** reprovação S1/S3/S4/S5 do juiz. Conferir a justificativa contra o pedido e a rubrica e registrar como falha desta execução, limitação conhecida (ex.: S4 do G04) ou discordância fundamentada do juiz. Não repetir seletivamente, não corrigir a skill.
-- Relações M01–M05 devem passar. N = 1 é diagnóstico de regressão grosseira, não estabilidade; uma reprovação isolada não prova regressão causada pela iteração 2.
-- G07 fora por orçamento: **lacuna declarada**. Sem nova calibração do juiz final.
-- Depois: resumo da rodada no `PLANO.md` e decisão sobre a fase 5 (holdouts), via popper.
+Feito nesta sessão (detalhes no `PLANO.md`, seções "Rodada `regressao-1`" em diante):
+- **Fase 4 (`regressao-1`)**: sem regressão grosseira nos casos cobertos (N = 1; G02 reposto pela D69; G07 lacuna declarada).
+- **Fase 5**: H4 redigido por agente de contexto limpo (duas devoluções) e aprovado (D70). `holdout-h4` (N = 5): E1 perguntada 5/5, hipótese B 0/5, R 2/5 (juiz inconsistente sobre ambiguidade da rubrica). `holdout-gerais`: H1-r1 ✓; **H1c K3 3/3 ✗** (CE autônoma da equipe como hipótese); H3c-r1 K2 ✗ por procedência (JSON editado após o render), sem juiz. Fase 5 encerrada sem correção da skill (D71); limitações principais: inflação por hipótese, contenção das perguntas, S3.
+- `config_hash` atual dos evals: `87654cd6ba3cf1a0` (inclui o H4); a skill não muda desde `0c5a3b3`.
 
 ## Objetivo da iteração
 
@@ -71,9 +63,9 @@ Melhorar a **descoberta de lacunas de domínio** em pedidos vagos (o requisito n
 1. ~~S3~~: aceito como limitação (D59).
 2. ~~Caminho com ferramenta~~: T4 atendeu (D61–D63); T5 manual no fim.
 3. ~~Camada 2 mínima~~: encerrada com limitação (D65–D67).
-4. **Regressão ampliada do modo direto:** `regressao-1`, autorizada (D68). ← próximo
-5. **Holdouts** com a variante congelada: H1, H1c, H3c e um holdout novo de descoberta de etapas; dimensionar e autorizar cada bloco.
-6. **Encerramento:** T5 manual (lote, resposta livre, exportação, correção), relatório da iteração 2, `RELATORIO`/README, guia de uso.
+4. ~~Regressão ampliada do modo direto~~: `regressao-1` concluída.
+5. ~~Holdouts~~: encerrada com limites (D70, D71).
+6. **Encerramento** ← próximo: T5 manual (lote, resposta livre, exportação, correção), relatório da iteração 2, `RELATORIO`/README, guia de uso.
 
 Pendências de produto, para depois: correção mostrando só o que mudou (exige IDs estáveis e decidir onde fica o resultado completo quando não se exporta); outras reduções de volume.
 

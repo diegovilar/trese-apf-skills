@@ -4,15 +4,15 @@ Para retomar o trabalho em outra sessão (humana ou de agente). Leia também o `
 
 ## Onde estamos
 
-**Iteração 2 em andamento** (estado e próximos passos: `HANDOFF-iteracao-2.md`). A iteração 1 foi encerrada em 17/11/2026 como versão inicial (`38f562b`; `RELATORIO-iteracao-1.md`). **Autorizada pelo usuário em 18/11 para a próxima sessão: a rodada `regressao-1` (fase 4), exatamente como especificada na D68 e no topo do `HANDOFF-iteracao-2.md`.** Nada além dela está autorizado. Deste arquivo valem as regras de operação, os comandos, a arquitetura e as armadilhas abaixo.
+**Iteração 2 em andamento** (estado e próximos passos: `HANDOFF-iteracao-2.md`). A iteração 1 foi encerrada em 17/11/2026 como versão inicial (`38f562b`; `RELATORIO-iteracao-1.md`). Fases 4 e 5 concluídas em 18/11 (D68–D71). **Próximo: T5 manual pelo usuário (`evals/T5-roteiro.md`) e encerramento da iteração 2.** Nenhuma rodada de eval está autorizada. Deste arquivo valem as regras de operação, os comandos, a arquitetura e as armadilhas abaixo.
 
 - Testes unitários: `python3 -m unittest discover -s evals/unit` (154 passando).
 - Histórico das rodadas (iteração 1: curta-3, fumaça, completa-1 a -5, calib-1 a -3, diag-1, k2-aviso; iteração 2: calib-4 a -8, curta-4, k2-previa, ajuste-1, descoberta-1, sonda-c2, camada2-1, camada2-2; checagens manuais T1–T4 no OpenCode): `PLANO.md`.
-- Poppers: iteração 1, `ses_e15628079ffehR54kQzwIQFPNZ` (consultas 9 a 18); iteração 2, `ses_e141aaae0ffeuGbrEAhpELk1I3` (consultas 19 a 31) e `ses_e119daa1effePIY2FtgGWuHA2q` (consultas 32 a 44). Numa sessão nova, abra outro e numere a partir da **consulta 45**.
+- Poppers: iteração 1, `ses_e15628079ffehR54kQzwIQFPNZ` (consultas 9 a 18); iteração 2, `ses_e141aaae0ffeuGbrEAhpELk1I3` (consultas 19 a 31) `ses_e119daa1effePIY2FtgGWuHA2q` (consultas 32 a 44) e `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 a 54). Numa sessão nova, abra outro e numere a partir da **consulta 55**.
 
 ## Regras que valem (combinadas com o usuário)
 
-1. **Não executar nada que consuma cota sem o ok do usuário para a fase.** A única fase autorizada é a `regressao-1` (D68), com a regra de parada dela.
+1. **Não executar nada que consuma cota sem o ok do usuário para a fase.** Nenhuma rodada está autorizada agora.
 2. **Antes de cada tarefa que consome cota, ler a cota** (ferramenta de uso do OpenChamber, `providerId` `claude` para o executor e `codex` para o juiz). Se qualquer janela (5 h ou semanal) estiver **abaixo de 15%**, ou a leitura falhar, **parar** e avisar o usuário. Esta sessão de orquestração também consome a cota do Claude.
 3. **Uma tarefa por chamada** (`proxima` → ler cota → `executar`).
 4. Recomendações e decisões com consequência passam pelo **popper** (subagente de segunda opinião) antes de chegar ao usuário. Um popper só funciona a partir da sessão que o abriu: **abra um novo** (`/use-popper`, padrão com proposta), mande na abertura o objetivo, o `PLANO.md`, este arquivo e o `HANDOFF-iteracao-2.md`, e continue a numeração das consultas a partir da última registrada no `PLANO.md`. O usuário prefere ver só a posição final, depois do retorno do popper, com o bloco "Revisão do popper" ao fim.
