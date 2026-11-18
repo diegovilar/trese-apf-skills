@@ -184,7 +184,7 @@ class TestPrevia(unittest.TestCase):
         texto = apf.render_previa(g04_lote1())
         self.assertNotRegex(texto, r"\bPF\b|PFM|Total|Cenário|Complexidade")
         self.assertNotRegex(texto, r"\|\s*\d+\s*\|")  # nenhuma célula só com número
-        self.assertIn("Nada foi calculado ainda", texto)
+        self.assertIn(apf.PREVIA_INTRO, texto)
 
     def test_tipos_em_termos_de_negocio(self):
         texto = apf.render_previa(g04_lote1())

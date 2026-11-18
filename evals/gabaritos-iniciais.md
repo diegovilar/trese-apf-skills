@@ -353,7 +353,7 @@ Argumentos: `tipo=desenvolvimento`
   - Nomeações — **ALI**; “registrar cada nomeação”, com data de envio e situação de presença.
   - Eleitores — **AIE**; “inscrição e o nome [...] consultados no cadastro eleitoral, que é mantido no sistema eleitoral”. Lido ao registrar a nomeação.
   - Registrar nomeação — **EE**; “O cartório vai registrar cada nomeação”.
-  - Consultar locais — **CE**; “consultar a relação de locais de votação, com nome e endereço”.
+  - Consultar locais — **CE**; “consultar a relação de locais de votação, com nome e endereço”. **Decomposição alternativa aceita** (decisão do usuário após a `curta-4`, só para rodadas futuras): a consulta tratada como parte do registro da nomeação, porque serve à escolha do local nesse registro (01 §3), com fundamentação. Nesse caso não há a CE (−4 PF em todas as referências de cálculo), e o arquivo de locais (AIE ou ALI) é lido pelo registro da nomeação.
   - Enviar convocação — o envio é **evidência** (“enviar as convocações por e-mail”; “a data de envio [...] fique na nomeação”); a **autonomia** dele não está decidida pelo texto. Aceitar, com fundamentação, uma de duas decomposições coerentes, sem contar o envio duas vezes: **(a)** **SE** autônoma (por evidência ou hipótese), que envia e grava a data na nomeação; **(b)** envio absorvido na EE Registrar nomeação, como consequência dela (01 §4). Se a autonomia ficar como hipótese, os efeitos dela precisam aparecer coerentemente nos cenários.
   - Consultar convocações com problema de entrega — **CE**; “uma relação das convocações com problema de entrega”, sem indicadores pedidos.
   - Registrar comparecimento ou ausência — **EE**; “registrará o comparecimento ou a ausência na nomeação”. É uma operação com resultados alternativos.
@@ -383,6 +383,7 @@ Argumentos: `tipo=desenvolvimento`
 - Intermediário, L-externa + R-posterior: base + **1 AIE × 5 + 1 EE × 4 = 46 PF**.
 - Máximo, L-local + R-posterior: base + **1 ALI × 7 + 2 EE × 4 = 52 PF**. As duas EE adicionais são alimentação dos locais e retorno da entrega.
 - Nomeações é mantido por registro, envio, presença e, quando aplicável, retorno. A situação de falha é gravada na função que envia ou na EE posterior; a CE de problemas não lê um dado sem origem. Eleitores é lido no registro, e Locais é lido pela consulta, com mantenedora no cenário local.
+- **Consulta dos locais absorvida no registro** (decomposição alternativa da CE): subtrair 4 PF de qualquer referência acima; combina com (a) ou (b).
 - **Decomposição (b), envio absorvido no registro:** base **1 ALI × 7 + 1 AIE × 5 + 2 EE × 4 + 3 CE × 4 = 32 PF**; mínimo **37 PF**, intermediário **41 PF**, máximo **47 PF**. As duas faixas (42–52 e 37–47) são aceitas conforme a decomposição fundamentada.
 
 **Cobertura:** **completa para as interpretações delimitadas nos cenários**, com origem e alcance do retorno ainda abertos. Também aceitar cobertura parcial se a skill explicar que ainda não consegue delimitar os resultados de entrega envolvidos; não aceitar “parcial” como desculpa para omitir funções já expressas ou as alternativas.
@@ -435,7 +436,7 @@ Argumentos: `tipo=desenvolvimento`
   - Eleitores — **AIE**; “consultados no cadastro eleitoral, que é mantido no sistema eleitoral”.
   - Locais — **AIE**; “relação de locais [...] mantida no sistema de locais da Justiça Eleitoral”.
   - Registrar nomeação — **EE**; “O cartório vai registrar cada nomeação”.
-  - Consultar locais — **CE**; “o servidor precisa consultar a relação de locais”.
+  - Consultar locais — **CE**; “o servidor precisa consultar a relação de locais”. Mesma decomposição alternativa aceita em H2: consulta como parte do registro da nomeação, com fundamentação (−4 PF; o AIE de locais é lido pelo registro).
   - Enviar convocação — mesmas duas decomposições aceitas em H2: **(a)** **SE** autônoma ou **(b)** envio absorvido na EE Registrar nomeação, sem contar duas vezes.
   - Receber e registrar resultado da entrega — **EE**; “O serviço de comunicação avisará o sistema [...] e essas respostas devem atualizar a situação”.
   - Consultar convocações com problema — **CE**; “uma relação das convocações com problema de entrega”.
@@ -451,7 +452,7 @@ Argumentos: `tipo=desenvolvimento`
   - Funções de outro contato, dispensa, treinamento, substituição e punição — sem requisito.
 
 **Cenários (referência de cálculo, não exigência numérica):**
-- Mínimo = máximo: **1 ALI × 7 + 2 AIE × 5 + 3 EE × 4 + 3 CE × 4 + 1 SE × 5 = 46 PF** na decomposição (a); **41 PF** na (b), com o envio absorvido no registro.
+- Mínimo = máximo: **1 ALI × 7 + 2 AIE × 5 + 3 EE × 4 + 3 CE × 4 + 1 SE × 5 = 46 PF** na decomposição (a); **41 PF** na (b), com o envio absorvido no registro. Com a consulta dos locais absorvida no registro, 4 PF a menos (42 ou 37).
 - Registro, presença e resultado da entrega mantêm Nomeações; o envio também grava nesse ALI. Eleitores é lido no registro e Locais na consulta. O recebimento de mensagens não deixa um AIE fictício sem leitura.
 
 **Cobertura:** **completa para o escopo expresso**. As duas alternativas do holdout agora têm respostas funcionais.
@@ -529,7 +530,8 @@ Argumentos: `tipo=desenvolvimento`
   - Função autônoma de aviso só porque há comunicação à seção — “Ao registrar” descreve consequência do registro.
   - CE adicional de PDF — “imprimir essa ficha” é outra mídia da consulta, sem outro conteúdo ou lógica implicados.
   - Uma EE por retorno parcial ou por urna; arquivos por tabela física ou por status — repetição, detalhe ou implementação não criam funções.
-  - Separar ALI sem hipótese de autonomia, ou somar simultaneamente o arquivo e um segundo arquivo que apenas duplica o mesmo grupo lógico.
+  - Somar simultaneamente o arquivo e um segundo arquivo que apenas duplica o mesmo grupo lógico.
+  - (Decisão do usuário após a `curta-4`, só para rodadas futuras: separar ALI **como certeza**, sem hipótese de autonomia, não é função proibida e não reprova o K3; reprova o **S3**, por omitir a incerteza de agrupamento.)
   - Gestão local de usuários, software de urna, carga de software, votação e apuração — exclusões expressas.
 
 **Cenários (referência de cálculo, não exigência numérica):**
@@ -620,7 +622,7 @@ Argumentos: `tipo=desenvolvimento`
   - EE extra de análise humana ou outra de encerramento além da conclusão — “registra sua conclusão para dar o caso por encerrado” descreve uma atividade de negócio, não três transações.
   - SE autônoma de aviso à seção, CE extra de PDF, EE por retorno parcial, arquivo por status — mesmos motivos de H3.
   - ALI de urnas, gestão local de usuários e funções de votação/apuração — fonte externa ou exclusão expressa.
-  - Arquivos adicionais apresentados como certeza só porque foram citados registros diferentes — agrupamento ainda exige hipótese fundamentada.
+  - (Decisão do usuário após a `curta-4`, só para rodadas futuras: arquivos adicionais apresentados como certeza só porque foram citados registros diferentes não reprovam o K3; reprovam o **S3**, porque o agrupamento ainda exige hipótese fundamentada.)
 
 **Cenários (referência de cálculo, não exigência numérica):**
 - Mínimo, modelo agregado: **1 ALI × 7 + 2 AIE × 5 + 9 EE × 4 + 2 CE × 4 + 1 SE × 5 = 66 PF**.

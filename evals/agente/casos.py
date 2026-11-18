@@ -109,7 +109,9 @@ NOTA_G04I = ("Variante da camada 1 (modo interativo; a execução termina na pr�
              "sistema ou lidas de outro); (2) o que \"gerenciar\" abrange; (3) como o servidor é identificado e de onde "
              "vêm os dados dele; (4) se há análise, aprovação ou decisão sobre as solicitações, e por quem. Cálculo do "
              "valor e prestação de contas são pendências de diagnóstico (relatadas em medidas.diagnostico_presentes, não "
-             "reprovam). S4_antigo: avalie também a lista de pendências obrigatórias do gabarito do G04 (o que "
+             "reprovam). S3: exigir a consulta também na alternativa \"mantidas por este sistema\" segue o exemplo 3 "
+             "das referências da skill e não reprova; premissa que fixa algo que uma pendência declara desconhecido "
+             "continua sendo incoerência (decisão do usuário após a `curta-4`). S4_antigo: avalie também a lista de pendências obrigatórias do gabarito do G04 (o que "
              "\"gerenciar\" abrange; fluxo de aprovação; cálculo do valor; prestação de contas; origem dos dados do "
              "servidor), pela regra da iteração 1.")
 

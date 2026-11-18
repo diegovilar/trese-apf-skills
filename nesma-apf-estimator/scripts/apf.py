@@ -809,7 +809,7 @@ def linhas_resumo_extra(est: Dict[str, Any], calc: Dict[str, Any]) -> List[Tuple
     """Pares (rótulo, texto) que todo resumo executivo mostra depois do total."""
     pares: List[Tuple[str, str]] = []
     if calc["cobertura"] == "parcial":
-        pares.append(("Cobertura", "parcial. " + str(calc["motivo_cobertura"])))
+        pares.append(("Cobertura", "parcial: " + str(calc["motivo_cobertura"])))
     else:
         pares.append(("Cobertura", "completa em relação ao pedido analisado"))
     if calc["rotulo"]:
@@ -1163,8 +1163,7 @@ TIPO_NEGOCIO = {
     "CE": "consulta sem cálculo",
 }
 OPERACAO_NEGOCIO = {"I": "nova", "A": "alterada", "E": "excluída"}
-PREVIA_INTRO = ("Nada foi calculado ainda. Esta é a lista do que identifiquei no pedido, sem pontos de função. "
-                "Confira, corrija o que estiver errado ou faltando e responda às perguntas.")
+PREVIA_INTRO = "Prévia sem pontos de função: confira a lista e responda no fim."
 PREVIA_FECHO_PERGUNTAS = ("Responda pelo número da pergunta (ex.: \"1: sim; 3: não sei\"); observações são bem-vindas. "
                           "\"Não sei\" é aceito: a dúvida fica registrada como pendência. Para calcular com o que já se "
                           "sabe, responda \"calcular\". Se algo na lista estiver errado ou faltando, diga também.")
@@ -1186,7 +1185,7 @@ def render_previa(est: Dict[str, Any]) -> str:
     out.append(f"- **Origem do subsídio:** {_md(p['origem_subsidio'])}")
     cob = est["cobertura"]
     if cob.get("status") == "parcial":
-        out.append(f"- **Cobertura:** parcial. {_md(cob.get('motivo'))}")
+        out.append(f"- **Cobertura:** parcial: {_md(cob.get('motivo'))}")
     else:
         out.append("- **Cobertura:** completa em relação ao pedido analisado")
     out.append("")
