@@ -666,6 +666,15 @@ def limpar_sessoes(rodada: str) -> None:
             else:
                 shutil.copytree(p, destino, dirs_exist_ok=True)
                 shutil.rmtree(p)
+        for pasta in {p.parent for p in achados}:  # o Claude Code deixa uma pasta `memory` vazia por projeto
+            try:
+                (pasta / "memory").rmdir()
+            except OSError:
+                pass
+            try:
+                pasta.rmdir()
+            except OSError:
+                pass
         relatorio[sessao] = {"turno_final": tid, "removidos": [str(p) for p in achados]}
     print(json.dumps(relatorio, ensure_ascii=False, indent=1))
 
