@@ -513,6 +513,23 @@ Popper da sessão: `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 em diante). Pr
 
 **Redação do H4 (5a, D70; consultas 48 a 51).** Pacote em `/tmp/apf-holdout-novo/` (BRIEF revisado na 48: etapa-alvo nomeada, âncora × autonomia, fronteira inferível, sem exigir leitura externa; critérios do juiz sem `S4_antigo` nem instruções operacionais). Isolamento conferido no banco do OpenCode: cada sessão do redator leu só o BRIEF e os 5 arquivos do pacote. **v1** (`ses_e0fba7480ffeBidX94ZZH117FL`, guardada em `/tmp/apf-holdout-v1-devolvido/`) devolvida (49): a etapa-alvo era só a autonomia de um passo descrito (confirmação que encerra o lote), não etapa ausente; causa parcial, uma frase minha no BRIEF, trocada por "a ação buscada fica em aberto; decomposição pode ser efeito, não a única informação ausente". **v2** (sessão nova `ses_e0fb6faf6ffeFxgLXFlFeDT8FP`) devolvida na mesma sessão (50): pergunta plausível mas não necessária; nota do último comprovante contraditória com o S4. **v3** aprovada pelo popper (51) e **pelo usuário sem ajustes**: eliminação de documentos em papel; E1 = algum resultado parcial da fragmentação é registrado no sistema com o lote aberto, ou o acompanhamento fica no papel e só a baixa é lançada (23 × 27 PF). Limites registrados: a leitura mais natural é A (obrigatória é a pergunta, não a função); a âncora é saliente; o padrão é próximo ao E3 do H3 (exposto), logo aprovação = sinal de transferência desse padrão, não descoberta de etapas em geral. H5 não pedido. Transcrito para `gabaritos-iniciais.md` (seção H4; procedência na introdução dos holdouts, fora da seção que o juiz lê) e `casos.py` (`H4`, camada 1). 154 testes. **Configuração congelada para a 5b: `87654cd6ba3cf1a0`.**
 
+**Rodada `holdout-h4` (5b-1, D70), autorizada pelo usuário; config `87654cd6ba3cf1a0`.** 5 execuções e 5 juízes, nenhuma inválida; K1, K2, K3, S1, S5 em 5/5.
+
+| H4 | r1 | r2 | r3 | r4 | r5 | Total |
+|---|---|---|---|---|---|---|
+| S4 (E1 perguntada) | ✓ | ✓ | ✓ | ✓ | ✓ | **5/5** |
+| R | ✓ | ✓ | ✗ | ✗ | ✗ | **2/5** |
+| S4+R | ✓ | ✓ | ✗ | ✗ | ✗ | 2/5 |
+| S3 | ✗ | ✗ | ✗ | ✗ | ✗ | 0/5 |
+| Perguntas | 4 | 4 | 4 | 3 | 2 | |
+
+- **Critério da D70: S4 ≥ 4/5 atendido; R ≥ 4/5 não atendido.** A etapa-alvo foi perguntada em todas as repetições, quase sempre com as alternativas A/B do gabarito.
+- R (leitura das justificativas): r3 e r4 reprovaram por perguntar o que acontece com o lote **retido** (reavaliação), que o juiz leu como proibido pelo comentário da rubrica em "Pendências de diagnóstico" ("não dá âncora para investigar recurso contra retenção, reabertura") e pela lista de funções proibidas; no r1, a mesma pergunta (P4) e a de correção/exclusão passaram ("a proibição de contar não equivale à proibição de perguntar"). **Inconsistência do juiz sobre uma ambiguidade da rubrica**, que não lista essas perguntas entre as proibidas. r4 também ofereceu a opção "vêm de outro sistema" para dados em papel; r5 perguntou se o sistema deve calcular o saldo de caixas (proibido como função; pergunta que amplia) e correção/exclusão. Rubrica não alterada (mudança depois do resultado só vale para frente).
+- S3 0/5: em todas, a alternativa B ficou só como pendência, sem hipótese ligada a uma EE — a limitação conhecida (D59).
+- Leitura: sinal favorável de transferência do padrão de lacuna (registro intermediário) a um domínio novo; não demonstra descoberta de etapas em geral; contenção das perguntas não demonstrada.
+
+**Rodada `holdout-gerais` (5b-2, D70), autorizada; interrompida pela regra de parada.** H1-r1: tudo ✓ (8 perguntas; diagnóstico: autenticação, encaminhamento, resposta, prazos). **H1c-r1: K3 ✗** — F07 "Consultar manifestações para análise (equipe)", CE sob a hipótese H1 ("analisar o conteúdo"), quando o gabarito do H1c diz que não há consulta adicional da equipe sustentada (só diagnóstico) e proíbe consulta adicional apenas por outro perfil; a skill também perguntou isso (P5). R ✗ (P3 "o mesmo cidadão pode ter várias manifestações?", vínculo já expresso). Reprovação não é falso positivo do verificador; é inflação por hipótese (mesma família do S3). Parada após 2 execuções e 2 juízes; 14 tarefas pendentes.
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.
