@@ -220,6 +220,8 @@ Caso de transferência das D33, D36 e D37 (consulta 12 ao popper), escrito antes
 
 Redigidos por um agente `general-intern` com contexto limpo, depois do congelamento da variante (D46, commit `451690d`): ele leu só 01, 02 e 03 §1–§9 das referências. Segunda versão revisada (consultas 21 e 22 ao popper) e aprovada pelo usuário em 17/11/2026, com três ajustes: duas decomposições aceitas para o envio da convocação (H2, H2c); separações de arquivos e máximos de H3/H3c não obrigatórios; E2 e E3 exigidas como pendência com pergunta na camada 1. Contrato do S4 versão 2 (D43): as pendências obrigatórias valem sobre **todas** as pendências do JSON da prévia, não só as do primeiro lote; as de diagnóstico são relatadas e não reprovam; as proibidas (contrastes) reprovam. Os cenários são referências de cálculo, não exigência numérica. Invocação: `tipo=desenvolvimento`, com o padrão `interativo=sim`; a execução termina na prévia.
 
+**H4** (D70): redigido em 18/11/2026 por um `general-intern` de contexto limpo, com só o pacote da D46/D70 (01, 02, 03 §1–§9, convenções C1–C4, critérios do juiz da prévia, contrato do S4 v2, teste de admissibilidade, modelo vazio); duas devoluções (consultas 49 e 50) e aprovado pelo usuário sem ajustes (consulta 51). Mede transferência de um padrão de lacuna próximo ao E3 do H3 (registro intermediário de resultados parciais), não descoberta de etapas em geral; a obrigatória é a pergunta, não a função.
+
 ## H1 · Manifestações à Ouvidoria (holdout, pouco subsídio, rubrica)
 
 Argumentos: `tipo=desenvolvimento`
@@ -650,3 +652,60 @@ Argumentos: `tipo=desenvolvimento`
 - A pergunta sobre autonomia dos arquivos continua permitida, pois não foi respondida no contraste.
 
 **Notas para o juiz:** contraste mais informativo, com o nível “rico” do par. As inserções respondem somente às lacunas obrigatórias de H3; não fixam o agrupamento dos arquivos. A conferência passa a EE de evidência pela separação entre chegada registrada e resultado posterior registrado, não por ser feita por outro perfil. A conclusão é EE, não SE só por conter um resultado. A origem pessoal é funcional e não deve ser confundida com autenticação. Perguntas proibidas reprovam mesmo em listas secundárias; dúvidas residuais de agrupamento não reprovam.
+
+## H4 · Eliminação de documentos em papel (holdout, médio, rubrica)
+
+Argumentos: `tipo=desenvolvimento`
+
+> A Seção de Arquivo precisa de um sistema para registrar os lotes de documentos administrativos em papel do TRE que vão passar por avaliação, com o número do lote, os anos dos documentos e a quantidade de caixas. A Comissão de Avaliação examina os lotes e registra no sistema sua decisão para cada um, indicando se está liberado para eliminação ou retido. Só os lotes liberados seguem para fragmentação, que é feita fora do sistema e pode ocorrer em remessas em dias diferentes. A cada remessa, a equipe de fragmentação entrega ao Arquivo um comprovante em papel com o número do lote, a data e a quantidade de caixas fragmentadas, para a conferência daquele lote. Os servidores do Arquivo conferem os comprovantes à medida que chegam, e a chefia registra no sistema a data de conclusão quando a conferência comprova que todas as caixas do lote foram eliminadas. Enquanto o lote ainda está aberto, o Arquivo usa a quantidade de caixas fragmentadas na última remessa conferida para ajustar quantas caixas separa para a próxima retirada. A Seção consulta no sistema uma lista que mostra apenas o número de cada lote, a decisão da Comissão e, quando já registrada, a data de conclusão. O pessoal do Arquivo e da Comissão usa o login institucional do TRE, sem cadastro de usuários nesse sistema.
+
+**Informação ausente:** o Arquivo usa resultados parciais para preparar novas retiradas enquanto o lote está aberto. O pedido não diz se algum desses resultados é registrado no novo sistema antes da baixa ou se esse acompanhamento fica fora dele e o único lançamento da execução ocorre na baixa. A resposta determina se o sistema precisa de uma operação para registrar resultados parciais, além da baixa.
+
+**Regras gerais acionadas:**
+- Origem e manutenção dos dados (03 §1 e §6): “um sistema para registrar os lotes” fixa onde os lotes são mantidos; “entrega ao Arquivo um comprovante em papel” fixa a origem das informações da fragmentação. Não há origem de grupo de dados a esclarecer. O ponto em aberto é se resultados parciais são registrados no sistema durante a execução, antes da baixa (E1).
+- Registro submetido a uma unidade, com análise ou decisão (03 §1): “A Comissão de Avaliação examina os lotes e registra no sistema sua decisão para cada um”. O pedido já informa que há avaliação, quem decide, onde e quais são os resultados possíveis. Não há pendência pela regra geral.
+- Verbo amplo (03 §1): não se aplica; o pedido discrimina o registro do lote, da decisão e da conclusão, além do conteúdo da consulta. “Examinar” e “conferir” descrevem ações do processo de trabalho, não pedidos genéricos de manutenção de dados.
+- Registro vinculado a uma pessoa e autenticação (03 §4): Arquivo, Comissão e chefia identificam papéis no processo, não titulares dos lotes nem pessoas cujos dados precisam ser vinculados a eles. O pedido também já define o uso do login institucional, sem cadastro de usuários no sistema.
+
+**O que o texto já responde:** o novo sistema registra os lotes, a decisão da Comissão e a data de conclusão lançada pela chefia. Só os liberados vão para fragmentação, que ocorre fora do sistema e pode ser fracionada em remessas. O Arquivo recebe e confere um comprovante em papel por remessa e, enquanto o lote está aberto, usa a quantidade comprovada na última remessa para ajustar quantas caixas separa para a próxima retirada. A conclusão pressupõe a eliminação comprovada de todas as caixas. A listagem só recupera os três dados especificados; o acesso usa o login institucional, sem cadastro local de usuários. Esses fatos podem ser contexto de uma pergunta, não aquilo que se pede confirmar. O local da fragmentação física e a origem em papel não resolvem se o acompanhamento dos resultados parciais inclui registros no sistema antes da baixa.
+
+**Lacunas de etapa (teste de admissibilidade):**
+- E1 (etapa-alvo) — Registro de resultados parciais enquanto o lote está aberto. Âncora: “Enquanto o lote ainda está aberto, o Arquivo usa a quantidade de caixas fragmentadas na última remessa conferida para ajustar quantas caixas separa para a próxima retirada.” A baixa não atende a esse uso: a informação já precisa estar disponível ao Arquivo para preparar a próxima retirada. É necessário esclarecer se o sistema participa desse acompanhamento ou se o trabalho é todo feito com os comprovantes até a baixa. Resposta A: o Arquivo usa os comprovantes em papel para ajustar a próxima retirada; nenhum resultado parcial é lançado no sistema e o único lançamento da execução ocorre na baixa, quando a chefia registra a conclusão → nenhuma EE adicional. Resposta B: o Arquivo registra no lote ainda aberto o resultado de pelo menos uma remessa conferida (data e quantidade de caixas), como parte do acompanhamento que orienta a próxima retirada; a chefia registra a conclusão depois → uma EE adicional, que mantém o mesmo ALI de lotes. Delimita: a pergunta esclarece onde se registra a informação já usada para preparar a próxima retirada; não propõe que o sistema dimensione, agende ou execute as retiradas. A pergunta conta como descoberta se esclarecer se há algum resultado parcial registrado no sistema enquanto o lote está aberto ou se o acompanhamento fica fora dele e o lançamento só ocorre na baixa. Não basta perguntar se a baixa é uma operação separada ou como se trata o último comprovante.
+
+**Funções:**
+- Obrigatórias (evidência):
+  - Lotes de documentos para eliminação — **ALI**; “um sistema para registrar os lotes de documentos administrativos em papel do TRE”.
+  - Registrar lote para avaliação — **EE**; “registrar os lotes de documentos administrativos em papel do TRE que vão passar por avaliação, com o número do lote, os anos dos documentos e a quantidade de caixas”.
+  - Registrar decisão da Comissão sobre o lote — **EE**; “registra no sistema sua decisão para cada um, indicando se está liberado para eliminação ou retido”.
+  - Registrar a conclusão da eliminação do lote (dar baixa) — **EE**; “a chefia registra no sistema a data de conclusão quando a conferência comprova que todas as caixas do lote foram eliminadas”.
+  - Consultar a lista de lotes com decisão e data de conclusão — **CE**; “uma lista que mostra apenas o número de cada lote, a decisão da Comissão e, quando já registrada, a data de conclusão”.
+- Aceitas como hipótese:
+  - Registrar o resultado parcial da fragmentação do lote — **EE**; “usa a quantidade de caixas fragmentadas na última remessa conferida para ajustar quantas caixas separa para a próxima retirada”. Só na resposta B de E1, quando se lança ao menos um resultado de remessa conferida enquanto o lote está aberto. Mantém o ALI obrigatório e não substitui a baixa dada pela chefia. As respostas A e B são excludentes; A não acrescenta função.
+- Proibidas (como função ou hipótese com PF), com o motivo:
+  - ALI independente de remessas, comprovantes, decisões ou baixas — os comprovantes são para a conferência do lote identificado; não há ciclo de vida próprio descrito. Decisão, conclusão e eventual registro por remessa são dados do lote.
+  - AIE ou integração com a equipe de fragmentação — os comprovantes são entregues em papel. Lançar seus dados, se for o caso, não é consultar nem importar de outra aplicação.
+  - Fragmentar documentos, dimensionar ou agendar retiradas no sistema, ou gerir transporte — a execução física está fora do sistema; o uso do resultado pelo Arquivo não é um pedido para automatizar a preparação da próxima retirada.
+  - EE distintas para liberar e para reter, ou para examinar e para decidir — os dois resultados pertencem ao mesmo registro da decisão por lote; o exame não tem outro registro solicitado.
+  - Validar comprovantes como operação autônoma além do eventual lançamento, digitalizá-los, calcular e exibir saldo de caixas, emitir certificados ou avisos, ou consultar remessas em separado — não há pedido desses resultados no sistema. A conferência dos papéis é conhecida, mas não implica essas funções.
+  - Alterar, excluir ou reabrir lotes, manter a lista de situações, cadastrar usuários ou implementar login local — não decorrem das operações descritas; as situações são valores da decisão e o acesso é institucional.
+
+**Cenários (referência de cálculo, não exigência numérica):**
+- Mínimo (E1-A): 1 ALI (lotes) + 3 EE (registrar lote, decisão e conclusão) + 1 CE (lista) = 7 + 3 × 4 + 4 = **23 PF**.
+- Máximo (E1-B): mesmas funções, mais 1 EE (registrar resultado parcial no lote aberto) = 23 + 4 = **27 PF**.
+- Em ambos, o registro cria o lote, a decisão e a baixa o atualizam, e a lista o lê sem cálculo. Em B, o lançamento do resultado parcial também atualiza o lote: a mesma operação pode ser usada uma ou mais vezes, sem multiplicar a quantidade de funções. Não há AIE.
+
+**Cobertura:** completa para o processo transacional descrito, com a incerteza de E1 representada nos cenários. A fragmentação física não é parte da aplicação.
+
+**Pendências obrigatórias (reprovam se ausentes):**
+- E1 — Perguntar se o Arquivo registra no novo sistema algum resultado parcial enquanto o lote está aberto ou se acompanha as remessas fora dele e só faz o lançamento da execução na baixa. Uma pergunta aberta sobre como ficam registrados, antes da baixa, os resultados parciais usados para preparar a próxima retirada também serve. Não é preciso perguntar por todas as remessas nem pelo último comprovante.
+
+**Pendências de diagnóstico (relatadas, não reprovam):**
+- Nenhuma adicional. O pedido não dá âncora para investigar recurso contra retenção, reabertura de lote ou comunicação à equipe de fragmentação.
+
+**Pendências ou perguntas proibidas (contrastes):**
+- Perguntar se a Comissão avalia ou decide, quem decide, se a decisão é registrada no sistema ou quais dos dois resultados são possíveis.
+- Perguntar se só lotes liberados seguem, se a fragmentação é feita pelo sistema, se pode haver mais de uma remessa, se o Arquivo recebe e confere os comprovantes ou se usa o resultado da última remessa antes da baixa para ajustar a próxima retirada. Perguntar se algum dos resultados parciais fica registrado no sistema enquanto o lote está aberto é E1, não uma repetição desses fatos.
+- Perguntar de onde vêm os comprovantes ou se são recebidos por integração; perguntar se há registro da data de conclusão, por quem, ou em que ponto o lote é dado por concluído.
+- Perguntar o que a lista exibe, se há totais nela, onde os lotes são mantidos ou se haverá login ou cadastro local de usuários.
+
+**Notas para o juiz:** avalie por significado: “baixa”, por exemplo, só equivale a registrar a conclusão se se referir à eliminação de todas as caixas, não à retenção do lote nem a excluir o registro. Aceite E1-B como hipótese opcional sem grupo ou A/B como grupo excludente; em ambos, a baixa continua obrigatória. A distinção relevante é se existe ao menos um registro de resultado parcial anterior à baixa. Em B, o tratamento do último comprovante não altera S4 nem a contagem: ele pode ficar em papel, ser lançado pela mesma operação já usada para resultados parciais ou ser tratado na baixa. Não exija PF na prévia. Para S4, E1 precisa aparecer em `pendencias` com `pergunta`: mencionar a hipótese na lista de funções não basta. Este caso mede a descoberta do registro intermediário, não detalhes de comprovantes, telas ou autenticação.
