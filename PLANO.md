@@ -359,6 +359,29 @@ Marco experimental (D46), sem alegar aprovação; nenhuma execução que consome
 - `calib-5`: P5 acertou; parada no P6 (2 chamadas). S3 reprovado porque a rubrica do H3 descreve a conferência como grupo de duas alternativas e o dossiê a representa como hipótese opcional sem grupo (mesmos cenários); no P5, o juiz aceitara a mesma forma. Consulta 24: frase nova no S3 da prévia (equivalência semântica, só quando a alternativa incorpora uma atividade numa função obrigatória, sem restrições próprias); rubricas e dossiês mantidos; dois testes unitários de equivalência e de dependência (135 testes).
 - `calib-6` (`config_hash` `ca1eafd54650bb9c`): **8/8 acertos** com reprovação exata dos critérios-alvo (P5 e P6 aprovados em tudo; E8, E10 e E12 só no S4; E9 e E11 só no R, com o ID da pendência redundante nas medidas; E13 aprovado no v2 e reprovado só no `S4_antigo`). Consumo do Codex nas três: 5 h 89% → 80%; semanal 86% → 85%.
 
+## Rodada `curta-4` (17/11/2026): diagnóstico, reprovada
+
+Versão `ca1eafd54650bb9c` (skill de `451690d`, juiz de `bf2184c`). Autorizada com 22 exec e 14 juízes; parada no K3 do H3 (3ª execução); continuação autorizada **só como diagnóstico** (consulta 26), sem H3c, H1 e H1c (preservados), parada só por cota ou inválida; parada de novo na A01 (inválida). Executadas 17 e julgadas 11. Consumo: Claude 5 h 86% → 75%; Codex 5 h 80% → 70%.
+
+| Caso | K1, K2 | Juiz | Observação |
+|---|---|---|---|
+| H2 | ok | S3 ✗ | E2 perguntada; o registro posterior da entrega virou `sem-evidencia` (misturado com reenvio não pedido), sem hipótese; absorção do envio citada sem alternativa |
+| H2c | ok | S1 ✗ | "consultar a relação de locais para escolher o local" absorvida no registro; a rubrica exige CE (leitura do executor defensável, consulta 26 O3) |
+| H3 | ok | K3 ✗, S3 ✗ | Ocorrência como ALI afirmado, sem hipótese (rubrica: proibida); E3 perguntada e hipótese da conferência presente; cobertura completa indevida |
+| G04i | ok | S3 ✗ | S4 v2 ok e **S4 antigo ok** (cálculo e prestação de contas presentes); S3: a alternativa "mantidas aqui" exige a consulta (padrão do exemplo 3) e identificação do servidor fixada em premissa |
+| G07i | **K2 ✗** | tudo ok | o executor reescreveu o parágrafo inicial da prévia |
+| G08i | ok | tudo ok | 3 perguntas, nenhuma proibida |
+| A04, A14 | ok | — | |
+| L02 | **K2 ✗** | — | "parcial. o pedido" → "parcial. O pedido" (o script gera minúscula depois de ponto) |
+| G01, G04, G06, G08, G03b (não interativo) | ok | tudo ok | G04 com S4 antigo completo |
+| M03b | ok | — | |
+| A01 | inválida | — | arquivo de nome fixo no `/tmp` (`/tmp/apf_dir_portaria.txt`), mesma armadilha da iteração 1 |
+| A03, A05, A15 | não executadas | | |
+
+- Descoberta e contenção: S4 e R aprovados nas 6 julgadas da camada 1; nenhuma pergunta redundante, genérica ou sem efeito na contagem. A falha migrou para a **representação** da incerteza em volta das perguntas (S3/S1/K3) e para a **cópia literal da prévia** (K2).
+- Regressão do modo não interativo: nenhuma detectada (5 julgados e M03b), com 1 repetição.
+- H2, H2c e H3 foram expostos; H3c, H1 e H1c não.
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.
