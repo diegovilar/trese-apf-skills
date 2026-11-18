@@ -4,7 +4,7 @@ Para retomar o trabalho em outra sessão (humana ou de agente). Leia também o `
 
 ## Onde estamos
 
-**Iteração 2 encerrada em 18/11/2026, sem aprovação integral** (`RELATORIO-iteracao-2.md`; estado em `HANDOFF-iteracao-2.md`). A iteração 1 foi encerrada em 17/11/2026 como versão inicial (`38f562b`; `RELATORIO-iteracao-1.md`). Fases 4 e 5 concluídas em 18/11 (D68–D71). T5, relatório, `README.md` e `GUIA-DE-USO.md` concluídos. **Nada novo autorizado.** Nenhuma rodada de eval está autorizada. Deste arquivo valem as regras de operação, os comandos, a arquitetura e as armadilhas abaixo.
+**Iteração 2 encerrada em 18/11/2026, sem aprovação integral** (`RELATORIO-iteracao-2.md`; estado em `HANDOFF-iteracao-2.md`). A iteração 1 foi encerrada em 17/11/2026 como versão inicial (`38f562b`; `RELATORIO-iteracao-1.md`). Fases 4 e 5 concluídas em 18/11 (D68–D71). T5, relatório, `README.md` e `GUIA-DE-USO.md` concluídos. **Nenhuma rodada de eval nem trabalho novo está autorizado.** Deste arquivo valem as regras de operação, os comandos, a arquitetura e as armadilhas abaixo.
 
 - Testes unitários: `python3 -m unittest discover -s evals/unit` (154 passando).
 - Histórico das rodadas (iteração 1: curta-3, fumaça, completa-1 a -5, calib-1 a -3, diag-1, k2-aviso; iteração 2: calib-4 a -8, curta-4, k2-previa, ajuste-1, descoberta-1, sonda-c2, camada2-1, camada2-2; checagens manuais T1–T4 no OpenCode): `PLANO.md`.
