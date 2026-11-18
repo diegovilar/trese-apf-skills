@@ -471,6 +471,12 @@ Skill instalada pelo usuário no OpenCode/OpenChamber (link para o repositório)
 - Correção: resultado inteiro copiado no chat (31–38 PF) **antes** da pergunta de exportação; "Nenhum" sem arquivo; anteriores intactos.
 - Diferenças frente à T2/T3 (representação, S3): mesmo mínimo (35 PF), máximo 42 em vez de 50, porque as consultas da chefia e do financeiro viraram pendência (P7) em vez de hipóteses. Na correção, o executor **renumerou os IDs** das funções (F05→F04…), o que quebra referências do analista ao resultado anterior (a T3 manteve a lacuna). Achados para a camada 2 mínima, sem correção agora.
 
+Consulta 39: fase 2 encerrada nos critérios medidos (não estabilidade); próximo passo, camada 2 mínima; "mostrar só o que mudou" na correção vira trabalho próprio (exige IDs estáveis e decidir onde fica o resultado completo quando não se exporta); T5 manual no fim, com a versão final (lote, resposta livre, exportação, correção).
+
+| # | Decisão | Origem |
+|---|---------|--------|
+| D64 | **Legenda enxuta nos arquivos.** Os perfis `chat` e `arquivo` passam a ter a mesma legenda: só os termos que aparecem no resultado, com a definição completa (revoga a legenda completa da consulta 8: documento autônomo não exige explicar categorias ausentes). O `arquivo` é o `chat` sem a linha de correção. A aba *Legenda* do xlsx usa o perfil `planilha`: os mesmos termos mais os das colunas fixas da planilha (operação, fator, entrada nos cenários). 140 testes (perfis, CLI, xlsx). | Usuário; consulta 39 (B2 isolado) |
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.

@@ -10,7 +10,7 @@ Melhorar a **descoberta de lacunas de domínio** em pedidos vagos (o requisito n
 
 - **Variante adotada:** modo interativo (`interativo=sim|nao`, padrão `sim`), em que a skill mostra uma **prévia** sem PF (funções em termos de negócio, com o tipo APF entre parênteses) e pergunta em lotes de até 7 só o que muda a contagem; "não sei" vira pendência; "calcular" encerra. Lacunas geradas por um **roteiro do ciclo do processo** (03 §10), nos dois modos. Esquema canônico v3 (situação e lote das perguntas, esclarecimentos com IDs conferidos). Implementação: commit `451690d` (D40–D52).
 - Depois disso: D55 (ajustes de rubrica, só para rodadas futuras) e D56 (mitigação do K2 na renderização: "parcial: motivo" e abertura curta da prévia).
-- **Etapa 3B (revisão do modelo) foi testada e abandonada** (D57, D58): corrigiu parte da representação, mas induziu hipóteses sem apoio e não atingiu o critério. O `SKILL.md` foi revertido. Configuração dos evals na `descoberta-1`: `4eb6077f21f4f68d`; depois da D63: `20600eb43524d86f`.
+- **Etapa 3B (revisão do modelo) foi testada e abandonada** (D57, D58): corrigiu parte da representação, mas induziu hipóteses sem apoio e não atingiu o critério. O `SKILL.md` foi revertido. Configuração dos evals na `descoberta-1`: `4eb6077f21f4f68d`; depois da D64: `e78eab7bc75324b2`.
 - 140 testes unitários (`python3 -m unittest discover -s evals/unit`).
 
 ## Decisões (detalhes no `PLANO.md`)
@@ -26,7 +26,7 @@ Melhorar a **descoberta de lacunas de domínio** em pedidos vagos (o requisito n
 | D55–D56 | rubricas (H2/H2c aceitam consulta dos locais no registro; H3/H3c: ALI afirmado reprova S3, não K3; nota do G04i) e mitigação do K2 |
 | D57–D58 | Etapa 3B testada e abandonada; S3 vira limitação conhecida |
 | D59–D60 | S3 aceito como limitação (interativo padrão, experimental); ordem das fases restantes |
-| D61–D63 | canal único das perguntas, exportação múltipla, correções pós-resultado, prévia por canal, opções fiéis, `apf.py novo` (experimentais) |
+| D61–D64 | canal único das perguntas, exportação múltipla, correções pós-resultado, prévia por canal, opções fiéis, `apf.py novo`, legenda enxuta nos arquivos |
 
 ## O que os resultados mostram (e o que não mostram)
 

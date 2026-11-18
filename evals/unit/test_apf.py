@@ -439,11 +439,15 @@ class TestPerfis(unittest.TestCase):
         for e in (fx.g01(), fx.g02(), fx.g03a(), fx.g03b(), fx.g04(), fx.g05(), fx.g06()):
             c = apf.calcular(e)
             chat, arq = apf.render_md(e, c, "chat"), apf.render_md(e, c, "arquivo")
-            self.assertEqual(self.secoes_sem_legenda(chat), self.secoes_sem_legenda(arq))
-            self.assertLess(len(chat), len(arq) + 1)
-            self.assertEqual(apf.legenda(e, c, "arquivo"), list(apf.LEGENDA))
-            for t, d in apf.legenda(e, c, "chat"):
+            # D64: arquivo = chat sem a linha de correção (mesma legenda, só termos usados, definição completa)
+            self.assertEqual(chat.replace("\n" + apf.FECHO_CORRECAO + "\n", ""), arq)
+            self.assertEqual(apf.legenda(e, c, "arquivo"), apf.legenda(e, c, "chat"))
+            for t, d in apf.legenda(e, c, "planilha"):
                 self.assertIn((t, d), apf.LEGENDA)
+            plan = [t for t, _ in apf.legenda(e, c, "planilha")]
+            for t in ("Op. (I/A/E)", "Fator", "Cenário mínimo / máximo"):
+                self.assertIn(t, plan)
+            self.assertLessEqual(set(t for t, _ in apf.legenda(e, c, "chat")), set(plan))
 
     def test_fecho_de_correcao_so_no_chat(self):
         for e in (fx.g01(), fx.g03b(), fx.g04()):
@@ -481,7 +485,9 @@ class TestPerfis(unittest.TestCase):
             saida = os.path.join(d, "x.md")
             subprocess.run([sys.executable, SCRIPT, "render", ok, "--format", "md", "--out", saida], check=True, capture_output=True)
             with open(saida, encoding="utf-8") as fh:
-                self.assertIn("**PFM:**", fh.read())
+                arq = fh.read()
+            self.assertNotIn("**PFM:**", arq)  # D64: legenda só com os termos usados também no arquivo
+            self.assertEqual(r.stdout.replace("\n" + apf.FECHO_CORRECAO + "\n", ""), arq)
 
 
 class TestXlsx(unittest.TestCase):
@@ -509,6 +515,10 @@ class TestXlsx(unittest.TestCase):
         z = self.abrir(fx.g01())
         wb = z.read("xl/workbook.xml").decode()
         self.assertIn('name="Legenda"', wb)
+        xml = " ".join(z.read(n).decode() for n in z.namelist() if n.endswith(".xml"))
+        self.assertIn("Arquivo Lógico Interno", xml)
+        self.assertIn("Multiplicador do PF base", xml)  # coluna fixa de fator
+        self.assertNotIn("pontos de função de melhoria (EFPA", xml)  # PFM não se aplica ao G01
 
     def test_caracteres_especiais(self):
         e = fx.g01()

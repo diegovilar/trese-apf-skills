@@ -67,4 +67,4 @@ python3 evals/agente/runner.py preparar <rodada> calibracao --casos P5,P6       
 
 ## Para começar a próxima sessão
 
-Siga a seção "O que falta" do `HANDOFF-iteracao-2.md`. Antes, confira `python3 -m unittest discover -s evals/unit` (140 testes), `git log --oneline | head -3` e se a configuração dos evals continua `20600eb43524d86f` (D63; a anterior, `4eb6077f21f4f68d`, é a da `descoberta-1`) (`python3 -c "import sys; sys.path.insert(0,'evals/agente'); import runner; print(runner.config_hash())"`).
+Siga a seção "O que falta" do `HANDOFF-iteracao-2.md`. Antes, confira `python3 -m unittest discover -s evals/unit` (140 testes), `git log --oneline | head -3` e se a configuração dos evals continua `e78eab7bc75324b2` (D64; a anterior, `4eb6077f21f4f68d`, é a da `descoberta-1`) (`python3 -c "import sys; sys.path.insert(0,'evals/agente'); import runner; print(runner.config_hash())"`).

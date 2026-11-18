@@ -103,7 +103,7 @@ python3 <skill>/scripts/apf.py render ARQUIVO.json --format previa  # modo inter
 - Grave o JSON de trabalho no diretório criado por `apf.py novo` para a estimativa (SKILL.md, etapa 4), não no projeto do usuário.
 - Se `check` falhar, corrija o JSON e rode de novo. Nunca contorne o script calculando à mão.
 - O que se mostra ao usuário é a saída de `render --format md` **sem `--out`**, copiada integralmente para a sua mensagem, sem reescrever números nem palavras e sem reordenar linhas. A saída do comando, sozinha, não é vista pelo usuário.
-- **Perfis de renderização** (escolhidos pelo script, nunca pelo agente): sem `--out`, o perfil é `chat`, com a legenda só dos termos que aparecem no resultado. Com `--out`, o perfil é `arquivo`, com a legenda completa. Os dois perfis têm exatamente os mesmos números, seções, hipóteses, premissas e avisos; muda a legenda, e o perfil `chat` fecha com uma linha que explica como pedir correções (SKILL.md, 2C). A planilha sempre traz a legenda completa.
+- **Perfis de renderização** (escolhidos pelo script, nunca pelo agente): sem `--out`, o perfil é `chat`; com `--out`, `arquivo`. Os dois têm exatamente o mesmo conteúdo, inclusive a legenda, só com os termos que aparecem no resultado e a definição completa de cada um; só o `chat` fecha com uma linha que explica como pedir correções (SKILL.md, 2C). A aba *Legenda* da planilha traz também os termos das colunas fixas dela (operação, fator e entrada nos cenários).
 
 ## 3. Conteúdo das saídas
 
@@ -116,7 +116,7 @@ As três saídas têm as mesmas seções, nesta ordem:
 5. **Itens não contados:** item, categoria e justificativa.
 6. **Esclarecimentos do analista** (só se houver): pergunta e resposta de cada esclarecimento.
 7. **Dúvidas de requisito e pendências** (as resolvidas saem daqui; as perguntadas sem resposta trazem o lote). O script fecha a seção com um aviso fixo de que a lista não é exaustiva; ele faz parte da saída e deve ser copiado.
-8. **Legenda:** tipos de função, operação, complexidade, pesos, base, cenários, unidades (PF, PF de melhoria, PFM), fatores e esclarecimentos. No perfil `chat`, só os termos que aparecem no resultado; nos arquivos, completa.
+8. **Legenda:** tipos de função, operação, complexidade, pesos, base, cenários, unidades (PF, PF de melhoria, PFM), fatores e esclarecimentos. Só os termos que aparecem no resultado, com a definição completa (na planilha, também os das colunas fixas).
 
 **Prévia** (`--format previa`, modo interativo; nunca exportada): resumo sem total; funcionalidades identificadas em termos de negócio, com o tipo APF entre parênteses e a base (afirmada ou suposta), **sem PF nem complexidade**; suposições e alternativas; itens que não entram na contagem; esclarecimentos já recebidos; perguntas do lote atual, numeradas (com `--canal ferramenta`, só o anúncio do lote: as perguntas vão pela ferramenta, SKILL.md 2A e 2B); outras pendências; aviso de pendências não exaustivas; fecho com a instrução de resposta, válida tanto para resposta por texto quanto pela ferramenta de perguntas (SKILL.md, 2B). Copie-a inteira para a resposta, como o resultado final.
 

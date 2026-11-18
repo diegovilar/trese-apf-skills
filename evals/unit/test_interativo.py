@@ -305,7 +305,7 @@ class TestFinal(unittest.TestCase):
         e = fx.g01()
         md = apf.render_md(e, apf.calcular(e), "chat")
         self.assertNotIn("Esclarecimento", md)
-        self.assertIn("Esclarecimento (E1, E2…)", apf.render_md(e, apf.calcular(e), "arquivo"))
+        self.assertNotIn("Esclarecimento", apf.render_md(e, apf.calcular(e), "arquivo"))  # D64
 
     def test_xlsx_tem_esclarecimentos(self):
         import io

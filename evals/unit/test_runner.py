@@ -251,7 +251,7 @@ class TestBlocoPresente(unittest.TestCase):
         self.md = apf.render_md(est, apf.calcular(est))
 
     def test_quebra_suave_aceita(self):
-        linha = next(l for l in self.md.splitlines() if l.startswith("- **PFM:**"))
+        linha = next(l for l in self.md.splitlines() if l.startswith("- **SE:**"))
         corte = linha.index(" ", 60)
         quebrada = self.md.replace(linha, linha[:corte] + "\n" + linha[corte + 1:])
         self.assertTrue(V.bloco_presente(self.md, "Intro\n\n" + quebrada + "\n\nQuer exportar?"))

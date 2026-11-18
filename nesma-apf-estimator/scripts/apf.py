@@ -8,7 +8,7 @@ Uso:
     python3 apf.py check  ESTIMATIVA.json
     python3 apf.py calc   ESTIMATIVA.json            # JSON com os valores calculados
     python3 apf.py render ESTIMATIVA.json --format md|txt [--out ARQUIVO] [--perfil chat|arquivo]
-        (sem --out o padrão é 'chat': legenda só com os termos usados; com --out, 'arquivo': legenda completa)
+        (sem --out o padrão é 'chat', que fecha com a linha de correção; com --out, 'arquivo'; os dois com a legenda só dos termos usados)
     python3 apf.py render ESTIMATIVA.json --format xlsx --out ARQUIVO.xlsx
     python3 apf.py render ESTIMATIVA.json --format previa [--canal texto|ferramenta]
         (modo interativo: funções sem PF e o lote atual de perguntas; só imprime, nunca grava;
@@ -899,11 +899,10 @@ LEGENDA = [
 
 
 def legenda(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo") -> List[Tuple[str, str]]:
-    """Perfil 'arquivo': legenda completa (exigida na planilha e nos arquivos exportados).
-    Perfil 'chat': só os termos que aparecem neste resultado, para reduzir o texto que o agente
-    precisa copiar para a resposta. A seleção é determinística, feita aqui, nunca pelo agente."""
-    if perfil == "arquivo":
-        return list(LEGENDA)
+    """Só os termos que aparecem neste resultado, com a definição completa (D64), nos perfis 'chat' e
+    'arquivo'. Perfil 'planilha': também os termos das colunas fixas da memória de cálculo do xlsx
+    (operação, fator e entrada nos cenários), que existem em toda planilha. A seleção é determinística,
+    feita aqui, nunca pelo agente."""
     tipos = {ln["tipo"] for ln in calc["linhas"]}
     melhoria = est["tipo_projeto"] == "melhoria"
     nesma = calc["unidade"] == "PFM"
@@ -926,6 +925,8 @@ def legenda(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo") 
             usar.add("Faixa de fator")
     if est.get("esclarecimentos"):
         usar.add("Esclarecimento (E1, E2…)")
+    if perfil == "planilha":
+        usar |= {"Op. (I/A/E)", "Fator", "Cenário mínimo / máximo"}
     return [(t, d) for t, d in LEGENDA if t in usar]
 
 
@@ -1476,7 +1477,7 @@ def gerar_xlsx(est: Dict[str, Any], calc: Dict[str, Any]) -> bytes:
     # --- Legenda
     lg = _Planilha("Legenda", [24, 110])
     lg.add([_s("Termo", 1), _s("Significado", 1)])
-    for termo, desc in LEGENDA:
+    for termo, desc in legenda(est, calc, "planilha"):
         lg.add([_s(termo, 4), _s(desc)])
     planilhas.append(lg)
 
@@ -1549,7 +1550,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     sp.add_argument("--format", required=True, choices=("md", "txt", "xlsx", "previa"))
     sp.add_argument("--out")
     sp.add_argument("--perfil", choices=("chat", "arquivo"),
-                    help="padrão: 'chat' (legenda só com os termos usados) ao imprimir; 'arquivo' (legenda completa) com --out")
+                    help="padrão: 'chat' ao imprimir (fecha com a linha de correção); 'arquivo' com --out")
     sp.add_argument("--canal", choices=CANAIS_PREVIA,
                     help="só com --format previa: 'texto' (padrão; perguntas numeradas na prévia) ou 'ferramenta' "
                          "(a prévia só anuncia o lote; as perguntas vão pela ferramenta de perguntas)")
