@@ -10,7 +10,7 @@ Melhorar a **descoberta de lacunas de domínio** em pedidos vagos (o requisito n
 
 - **Variante adotada:** modo interativo (`interativo=sim|nao`, padrão `sim`), em que a skill mostra uma **prévia** sem PF (funções em termos de negócio, com o tipo APF entre parênteses) e pergunta em lotes de até 7 só o que muda a contagem; "não sei" vira pendência; "calcular" encerra. Lacunas geradas por um **roteiro do ciclo do processo** (03 §10), nos dois modos. Esquema canônico v3 (situação e lote das perguntas, esclarecimentos com IDs conferidos). Implementação: commit `451690d` (D40–D52).
 - Depois disso: D55 (ajustes de rubrica, só para rodadas futuras) e D56 (mitigação do K2 na renderização: "parcial: motivo" e abertura curta da prévia).
-- **Etapa 3B (revisão do modelo) foi testada e abandonada** (D57, D58): corrigiu parte da representação, mas induziu hipóteses sem apoio e não atingiu o critério. O `SKILL.md` foi revertido. Configuração dos evals na `descoberta-1`: `4eb6077f21f4f68d`; depois da D65: `7b4afe9f47b0aefd`.
+- **Etapa 3B (revisão do modelo) foi testada e abandonada** (D57, D58): corrigiu parte da representação, mas induziu hipóteses sem apoio e não atingiu o critério. O `SKILL.md` foi revertido. Configuração dos evals na `descoberta-1`: `4eb6077f21f4f68d`; depois da D66: `7e8335a7d2a80e11`.
 - 149 testes unitários (`python3 -m unittest discover -s evals/unit`).
 
 ## Decisões (detalhes no `PLANO.md`)

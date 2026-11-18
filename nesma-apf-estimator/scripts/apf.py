@@ -75,8 +75,8 @@ FATORES_PERMITIDOS_DADOS = sorted({f for _, f in TABELA_DADOS} | {FATOR_DADOS_AC
 FATORES_PERMITIDOS_TRANSACOES = sorted({f for linha in TABELA_TRANSACOES for f in linha})
 
 ROTULO_HIBRIDO = "estimativa híbrida: pesos NESMA estimada + fatores EFPA"
-FECHO_CORRECAO = ("Para corrigir algo, diga o item (ex.: F05, H1, P3) e a correção: a estimativa é recalculada e "
-                  "pode ser exportada de novo.")
+FECHO_CORRECAO = ("Para solicitar recálculo, informe o item (ID ou descrição) e a correção desejada. Depois, você pode "
+                  "exportar novamente.")
 AVISO_PENDENCIAS = ("A lista de pendências não é exaustiva. Revise os requisitos e fluxos específicos do domínio "
                     "antes de usar a estimativa na análise de viabilidade.")
 CATEGORIAS_NAO_CONTADOS = {
