@@ -537,6 +537,19 @@ Popper da sessão: `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 em diante). Pr
 |---|---------|--------|
 | D71 | **Fase 5 encerrada sem correção da skill nesta iteração; fase 6 começa pelo T5 (consultas 53 e 54), aceito pelo usuário.** Inflação por hipótese (H1c), contenção das perguntas (R) e S3 entram como limitações principais do relatório; iteração 3 não aberta agora (correção exige desenho próprio, não regra em prosa). T5 com a skill congelada (sem mudanças desde `0c5a3b3`), roteiro e critérios C1–C6 fixados antes em `evals/T5-roteiro.md` (G04 user story; identificação por resposta livre; pós-decisão "Não sei"; pausa antes da correção para registrar hashes e o estado anterior). Depois: relatório da iteração 2, README/RELATORIO, guia de uso. | Usuário; consultas 53 e 54 |
 
+**Checagem T5 (D71)**, sessão `ses_e0f8024bcffei2fNg5HrMY4Dbu` (OpenChamber, sessão limpa, `claude-sonnet-5-5` high; skill sem mudanças desde `0c5a3b3`), roteiro `evals/T5-roteiro.md`, lida do banco do OpenCode; pausa antes da correção com cópias e hashes em `/tmp/t5/pausa/`. **C1–C6 atendidos** (1 execução: sinal funcional, não estabilidade; não apaga as reprovações da fase 5).
+
+| # | Resultado |
+|---|---|
+| C1 canal | tipo pela ferramenta; prévia inteira copiada (42 e 46 linhas do render, nenhuma ausente) e, na mesma resposta, a ferramenta: lote 1 com as 7 perguntas e opções idênticas ao JSON; lote 2 com as 3 perguntas e opções idênticas, **em outra ordem** (P11 primeiro); nenhum PF antes de calcular |
+| C2 respostas | resposta livre (identificação) registrada literalmente em E3; **AIE "Servidor (RH)"** criada, ligada a E3, com uso declarado na própria justificativa ("lido… para identificar o servidor e preencher a solicitação"), não nas funções que a leem; P3 `resolvida`; "Não sei" em P4 e P6 → `sem-resposta`, sem função nem hipótese; nada reperguntado. O lote 2 foi encerrado com "Calcular" digitado no chat (ferramenta sem resposta); o executor marcou o lote como `sem-resposta` antes do render |
+| C3 diretório | `apf.py novo` uma vez (`/var/folders/.../T/apf-h429hkt7`), o mesmo caminho em todos os comandos, inclusive a correção; nenhum arquivo novo em `/tmp` na janela |
+| C4 chat | resultado e resultado corrigido copiados sem alteração (67 e 66 linhas, nenhuma ausente); linha de correção presente nos dois |
+| C5 exportação | ferramenta, seleção múltipla (.md, .xlsx); `.md` = resultado do chat sem a linha de correção; `.xlsx` abre no openpyxl (5 abas), totais 32/36 |
+| C6 correção | antes: F05 "Cancelar" EE confirmada nos dois extremos (32–36); depois: F05 retirada, **28–32 (−4 nos dois)**, F04 mantida com a restrição da chefia na justificativa, nenhuma outra mudança funcional, E2 atualizado no lugar; resultado inteiro no chat antes da pergunta de exportação; "Nenhum" sem arquivo novo; `.md` e `.xlsx` com os hashes da pausa; aviso final de que os arquivos anteriores estão desatualizados |
+
+- Observações (não reprovam): fronteira assumida sem perguntar; F08 "Consultar solicitações para decisão da chefia" como hipótese (H1) — a mesma família da inflação do H1c; P11 (quem é a chefia imediata) aberta no lote 2.
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.
