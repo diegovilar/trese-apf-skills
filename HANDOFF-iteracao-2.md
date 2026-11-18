@@ -25,6 +25,7 @@ Melhorar a **descoberta de lacunas de domínio** em pedidos vagos (o requisito n
 | D53–D54 | juiz da camada 1 (S4 só ausências com pergunta, critério R de perguntas indevidas, medidas, S4+R conjunto); G04i/G07i/G08i com o contrato fixado em `casos.py` |
 | D55–D56 | rubricas (H2/H2c aceitam consulta dos locais no registro; H3/H3c: ALI afirmado reprova S3, não K3; nota do G04i) e mitigação do K2 |
 | D57–D58 | Etapa 3B testada e abandonada; S3 vira limitação conhecida |
+| D59–D60 | S3 aceito como limitação (interativo padrão, experimental); ordem das fases restantes |
 
 ## O que os resultados mostram (e o que não mostram)
 
@@ -41,13 +42,16 @@ Melhorar a **descoberta de lacunas de domínio** em pedidos vagos (o requisito n
 - **Nunca executados: H3c, H1, H1c.** Preservá-los até haver uma decisão que dependa deles.
 - Para uma conclusão independente de generalização, usar esses e/ou holdouts novos, escritos por agente de contexto limpo com a variante congelada (D46), com rubrica aprovada pelo usuário antes de rodar.
 
-## O que falta (decisões a levar ao usuário, via popper)
+## O que falta (ordem aprovada: D59, D60 no `PLANO.md`)
 
-1. **Generalização da descoberta:** bloco com holdouts não expostos (H3c, H1, H1c e/ou novos), N = 5, critério fixado antes.
-2. **Camada 2:** diálogo completo (`claude -p --resume`, simulador que responde só a partir de um documento oculto e diz "não definido" ao resto; estimativa comparada com o que foi revelado; metamórfica "não sei" em tudo).
-3. **Caminho com ferramenta de perguntas:** checagem com o usuário num harness interativo (perguntas preservadas, resposta livre, calcular sem responder tudo).
-4. **S3:** decidir se a limitação fica declarada (como a revisão humana obrigatória da iteração 1) ou se vira trabalho próprio, com desenho testado contra controles e holdouts.
-5. **Encerramento:** relatório da iteração 2 e atualização do `RELATORIO`/README; tarefa pendente de guia de uso da skill (lista de tarefas do projeto).
+1. ~~**S3**~~: aceito como limitação conhecida (D59); `interativo=sim` segue padrão, marcado como experimental até a fase 3.
+2. **Caminho com ferramenta de perguntas:** checagem manual com a skill instalada pelo usuário no harness (perguntas preservadas, resposta livre, calcular sem responder tudo). Não bloqueia o resto.
+3. **Camada 2 mínima** (teste parcial, turnos roteirizados, `--resume` no runner): "não sei; calcular" × modo direto; incorporação dos fatos do H2c no H2 × gabarito do H2c; percurso de dois lotes.
+4. **Regressão ampliada do modo direto**, depois da fase 3: G02, G03a, G05, M01, M02, M03a, M04, G01, G06, M03b.
+5. **Holdouts** com a variante congelada: H1, H1c, H3c (regras gerais e contenção) e ao menos um holdout novo com etapa ausente obrigatória (descoberta de etapas), rubrica aprovada pelo usuário.
+6. **Encerramento:** relatório da iteração 2 e atualização do `RELATORIO`/README; guia de uso da skill (lista de tarefas do projeto).
+
+Cada fase precisa de critério e próxima decisão fixados e de autorização própria antes de executar.
 
 ## Lições da iteração 2 (somam-se às da iteração 1)
 

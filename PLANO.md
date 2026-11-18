@@ -417,6 +417,15 @@ Versão retomada (`config_hash` `4eb6077f21f4f68d`, igual à da `k2-previa`), H2
 - Medidas: no H2 r1–r2, uma pergunta genérica e uma sem efeito na contagem; nenhuma redundante no H2.
 - H2 e H3 estavam expostos: o bloco mede estabilidade da descoberta nestes casos, não generalização.
 
+## Plano de continuação da iteração 2 (consultas 32 a 34, 18/11/2026)
+
+Popper desta fase: `ses_e119daa1effePIY2FtgGWuHA2q` (consultas 32 em diante). Consultas 32 e 33: resumo da iteração 2 frente à `38f562b` (descoberta favorável nos casos medidos, sem ganho comparativo nem generalização demonstrados; caminho padrão sem eval ponta a ponta; roteiro do ciclo muda também o modo direto). O usuário aceita o risco de respostas imprecisas do analista (estimativa preliminar); a metamórfica "não sei" é mantida porque mede consistência da skill, não precisão do analista.
+
+| # | Decisão | Origem |
+|---|---------|--------|
+| D59 | **S3 aceito como limitação conhecida**, sem novo trabalho nesta iteração. A revisão humana obrigatória mitiga, não resolve; o usuário aceita o risco explicitamente. `interativo=sim` continua padrão, mas **experimental** até a camada 2 mínima (fase 3 da D60); o `SKILL.md` não muda por isso (o rótulo fica em PLANO, handoff e relatório, sem alterar o `config_hash`). | Usuário (consulta 34, O4) |
+| D60 | **Ordem das fases**, cada uma com critério e próxima decisão fixados e autorização própria antes de executar: (1) D59; (2) checagem manual do caminho com ferramenta de perguntas, com a skill instalada pelo usuário no harness (perguntas preservadas, resposta livre, "calcular" sem responder tudo); não bloqueia o resto; (3) camada 2 mínima com turnos roteirizados, sem simulador LLM, chamada de teste parcial: (a) "não sei para todas; calcular" × execução não interativa do mesmo caso, (b) incorporação: turno 2 com os fatos que H2c acrescenta ao H2, estimativa final × gabarito do H2c, (c) percurso de dois lotes (respostas sem "calcular", próximo lote, depois calcular); exige `--resume` no runner; simulador completo da D44 só se isso não bastar; (4) regressão ampliada do modo direto depois das mudanças da fase 3: G02, G03a, G05, M01, M02, M03a, M04 **e** G01, G06, M03b (o comparador exige os dois membros de cada relação M01–M05 na rodada); (5) holdouts com a variante congelada, em blocos separados por escopo: H1, H1c, H3c medem regras gerais e contenção, não descoberta de etapas; para transferência da descoberta de etapas, ao menos um holdout **novo** com etapa ausente obrigatória ancorada, redigido por agente de contexto limpo, rubrica aprovada pelo usuário; (6) relatório, README/RELATORIO, guia de uso. Holdouts por último por serem irreversíveis, apesar de serem o passo mais simples. | Usuário (consulta 34, O1–O3, O5) |
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.

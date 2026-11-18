@@ -8,14 +8,14 @@ Para retomar o trabalho em outra sessão (humana ou de agente). Leia também o `
 
 - Testes unitários: `python3 -m unittest discover -s evals/unit` (136 passando).
 - Histórico das rodadas (iteração 1: curta-3, fumaça, completa-1 a -5, calib-1 a -3, diag-1, k2-aviso; iteração 2: calib-4 a -7, curta-4, k2-previa, ajuste-1, descoberta-1): `PLANO.md`.
-- Poppers: iteração 1, `ses_e15628079ffehR54kQzwIQFPNZ` (consultas 9 a 18); iteração 2, `ses_e141aaae0ffeuGbrEAhpELk1I3` (consultas 19 a 31). Numa sessão nova, abra outro e numere a partir da consulta 32.
+- Poppers: iteração 1, `ses_e15628079ffehR54kQzwIQFPNZ` (consultas 9 a 18); iteração 2, `ses_e141aaae0ffeuGbrEAhpELk1I3` (consultas 19 a 31) e `ses_e119daa1effePIY2FtgGWuHA2q` (consultas 32 em diante). Numa sessão nova, abra outro e continue a numeração a partir da última registrada no `PLANO.md`.
 
 ## Regras que valem (combinadas com o usuário)
 
 1. **Não executar nada que consuma cota sem o ok do usuário para a fase.** Nenhuma fase está autorizada depois do encerramento da iteração 1.
 2. **Antes de cada tarefa que consome cota, ler a cota** (ferramenta de uso do OpenChamber, `providerId` `claude` para o executor e `codex` para o juiz). Se qualquer janela (5 h ou semanal) estiver **abaixo de 15%**, ou a leitura falhar, **parar** e avisar o usuário. Esta sessão de orquestração também consome a cota do Claude.
 3. **Uma tarefa por chamada** (`proxima` → ler cota → `executar`).
-4. Recomendações e decisões com consequência passam pelo **popper** (subagente de segunda opinião) antes de chegar ao usuário. Um popper só funciona a partir da sessão que o abriu: **abra um novo** (`/use-popper`, padrão com proposta), mande na abertura o objetivo, o `PLANO.md`, este arquivo e o `HANDOFF-iteracao-2.md`, e numere as consultas a partir de 32. O usuário prefere ver só a posição final, depois do retorno do popper, com o bloco "Revisão do popper" ao fim.
+4. Recomendações e decisões com consequência passam pelo **popper** (subagente de segunda opinião) antes de chegar ao usuário. Um popper só funciona a partir da sessão que o abriu: **abra um novo** (`/use-popper`, padrão com proposta), mande na abertura o objetivo, o `PLANO.md`, este arquivo e o `HANDOFF-iteracao-2.md`, e continue a numeração das consultas a partir da última registrada no `PLANO.md`. O usuário prefere ver só a posição final, depois do retorno do popper, com o bloco "Revisão do popper" ao fim.
 5. Respostas ao usuário em português, curtas, sem concordar por reflexo.
 
 ## Comandos
