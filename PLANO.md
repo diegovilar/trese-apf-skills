@@ -354,6 +354,11 @@ Marco experimental (D46), sem alegar aprovação; nenhuma execução que consome
 - Calibração delta preparada (8 dossiês, acerto exato dos critérios-alvo): P5 (H2 correto, perguntas complementares e contexto citado), P6 (H3 correto, pergunta mista só de contexto), E8 (H2 sem E2 → S4), E10 (H3 com E3 só em `nao_contados` → S4), E12 (E2 sem pergunta → S4), E9 (H2 com repetição efetiva → R), E11 (H2c perguntando a origem dos locais → R), E13 (G04i correto no v2 → só `S4_antigo`). **Não executada**: pede ok do usuário (8 chamadas do Codex).
 - 133 testes unitários.
 
+**Calibração delta da camada 1 (`calib-4`, `-5`, `-6`), autorizada pelo usuário:**
+- `calib-4`: parada no P5 (1 chamada). S3 reprovado por defeito real do dossiê: pergunta sobre a autonomia do envio sem hipótese correspondente (a pendência não substitui a hipótese) e erros de envio sem processo que os grave. Dossiê corrigido, com as leituras dos AIE explicitadas nas justificativas.
+- `calib-5`: P5 acertou; parada no P6 (2 chamadas). S3 reprovado porque a rubrica do H3 descreve a conferência como grupo de duas alternativas e o dossiê a representa como hipótese opcional sem grupo (mesmos cenários); no P5, o juiz aceitara a mesma forma. Consulta 24: frase nova no S3 da prévia (equivalência semântica, só quando a alternativa incorpora uma atividade numa função obrigatória, sem restrições próprias); rubricas e dossiês mantidos; dois testes unitários de equivalência e de dependência (135 testes).
+- `calib-6` (`config_hash` `ca1eafd54650bb9c`): **8/8 acertos** com reprovação exata dos critérios-alvo (P5 e P6 aprovados em tudo; E8, E10 e E12 só no S4; E9 e E11 só no R, com o ID da pendência redundante nas medidas; E13 aprovado no v2 e reprovado só no `S4_antigo`). Consumo do Codex nas três: 5 h 89% → 80%; semanal 86% → 85%.
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.
