@@ -4,7 +4,7 @@ Para quem retomar a iteração 2. Estado em 18/11/2026, fim da sessão que fez a
 
 ## Próximo passo
 
-**T5 concluído (C1–C6 atendidos, sessão `ses_e0f8024bcffei2fNg5HrMY4Dbu`; ver PLANO.md).** **Iteração 2 encerrada em 18/11/2026, sem aprovação integral** (D71, consulta 56): relatório (`RELATORIO-iteracao-2.md`), `README.md` e `GUIA-DE-USO.md` prontos. Modo interativo continua experimental. Nenhuma rodada nem trabalho novo autorizado; uma iteração 3 (contenção, representação da incerteza) exige desenho próprio e decisão do usuário. Popper da sessão de 18/11 (tarde): `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 a 56); numa sessão nova, abra outro e continue da **consulta 57**.
+**T5 concluído (C1–C6 atendidos, sessão `ses_e0f8024bcffei2fNg5HrMY4Dbu`; ver PLANO.md).** **Iteração 2 encerrada em 18/11/2026, sem aprovação integral** (D71, consulta 56): relatório (`RELATORIO-iteracao-2.md`), `README.md` e `GUIA-DE-USO.md` prontos. Modo interativo continua experimental. Decisão do usuário (D72): **parar aqui**. Nenhuma rodada nem trabalho novo autorizado. Opções futuras registradas: piloto curto em paralelo ao fluxo habitual (recomendado na consulta 57) e iteração 3 (contenção, representação da incerteza), com desenho próprio. Popper da sessão de 18/11 (tarde): `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 a 57); numa sessão nova, abra outro e continue da **consulta 58**.
 
 Feito nesta sessão (detalhes no `PLANO.md`, seções "Rodada `regressao-1`" em diante):
 - **Fase 4 (`regressao-1`)**: sem regressão grosseira nos casos cobertos (N = 1; G02 reposto pela D69; G07 lacuna declarada).

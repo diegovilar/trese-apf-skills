@@ -552,6 +552,10 @@ Popper da sessão: `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 em diante). Pr
 
 **Encerramento da iteração 2 (fase 6; consultas 55 e 56), 18/11/2026.** `RELATORIO-iteracao-2.md`, `README.md` (raiz) e `GUIA-DE-USO.md` (para o analista: instalação, acionamento por ambiente, argumentos, prévia e perguntas, exportação, correção, leitura do resultado e revisão obrigatória, com as limitações medidas traduzidas). **Iteração 2 encerrada, sem aprovação integral**; modo interativo experimental (D59, D67); nenhuma rodada autorizada.
 
+| # | Decisão | Origem |
+|---|---------|--------|
+| D72 | **Parar aqui (consulta 57).** Recomendação levada ao usuário: piloto curto em paralelo ao fluxo habitual (tempo de revisão, hipóteses retiradas, perguntas inúteis, lacunas acrescentadas), com política de dados confirmada antes e casos de ajuste separados dos de avaliação, antes de decidir uma iteração 3. O usuário escolheu **parar**: a skill fica como está, com o guia e o relatório. Piloto e iteração 3 ficam como opções futuras, sem autorização. | Usuário; consulta 57 |
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.
