@@ -1172,7 +1172,6 @@ TIPO_NEGOCIO = {
     "CE": "consulta sem cálculo",
 }
 OPERACAO_NEGOCIO = {"I": "nova", "A": "alterada", "E": "excluída"}
-PREVIA_INTRO = "Prévia sem pontos de função: confira a lista e responda no fim."
 PREVIA_FECHO_PERGUNTAS = ("Responda às perguntas; por texto, use o número (ex.: \"1: sim; 3: não sei\"). Observações são "
                           "bem-vindas. \"Não sei\" é aceito: a dúvida fica registrada como pendência. Para calcular com o "
                           "que já se sabe, responda \"calcular\". Se algo na lista estiver errado ou faltando, diga também.")
@@ -1198,7 +1197,7 @@ def render_previa(est: Dict[str, Any], canal: str = "texto") -> str:
         raise ValueError(f"canal da prévia: {canal!r}")
     p = est["projeto"]
     melhoria = est["tipo_projeto"] == "melhoria"
-    out: List[str] = [f"# Prévia da estimativa: {_md(p['titulo'])}", "", PREVIA_INTRO, ""]
+    out: List[str] = [f"# Prévia da estimativa: {_md(p['titulo'])}", ""]
     metodo = "NESMA estimada" if est["metodo"] == "estimada" else "NESMA indicativa"
     out.append(f"- **Tipo de projeto:** {est['tipo_projeto']}")
     if melhoria:

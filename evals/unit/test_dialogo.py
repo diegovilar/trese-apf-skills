@@ -234,3 +234,43 @@ class TestJuizDoDialogo(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestK2PorCategorias(unittest.TestCase):
+    """D67: conteúdo literal; orientação de uso com o sentido correto; sem introdução redundante."""
+
+    def setUp(self):
+        e = calibracao.g01_correto()
+        self.md = apf.render_md(e, apf.calcular(e), "chat")
+        self.previa = apf.render_previa(calibracao.g04i_correto_v2())
+
+    def test_final_literal(self):
+        r = V.k2_por_categorias(self.md, "Segue.\n\n" + self.md + "\nQuer exportar?")
+        self.assertTrue(r["conteudo_literal"] and r["orientacao"])
+
+    def test_final_orientacao_reescrita_com_sentido(self):
+        resp = self.md.replace(apf.FECHO_CORRECAO, "Se algo estiver errado, diga o item e a correção: recalculo e você pode exportar de novo.")
+        r = V.k2_por_categorias(self.md, resp)
+        self.assertTrue(r["conteudo_literal"] and r["orientacao"], r)
+
+    def test_final_orientacao_omitida_reprova(self):
+        r = V.k2_por_categorias(self.md, self.md.replace(apf.FECHO_CORRECAO, ""))
+        self.assertTrue(r["conteudo_literal"])
+        self.assertFalse(r["orientacao"])
+
+    def test_final_conteudo_alterado_reprova(self):
+        r = V.k2_por_categorias(self.md, self.md.replace("**Total:** 45 PF", "**Total:** 46 PF"))
+        self.assertFalse(r["conteudo_literal"])
+
+    def test_previa(self):
+        self.assertIn(apf.PREVIA_FECHO_PERGUNTAS, self.previa)
+        ok = V.k2_por_categorias(self.previa, "Esta é a prévia.\n\n" + self.previa)
+        self.assertTrue(ok["conteudo_literal"] and ok["orientacao"])
+        reescrita = self.previa.replace(apf.PREVIA_FECHO_PERGUNTAS,
+                                        "Responda pelo número; pode dizer \"não sei\" ou pedir para calcular com o que já sabe.")
+        r = V.k2_por_categorias(self.previa, reescrita)
+        self.assertTrue(r["conteudo_literal"] and r["orientacao"], r)
+        sem = V.k2_por_categorias(self.previa, self.previa.replace(apf.PREVIA_FECHO_PERGUNTAS, "Responda."))
+        self.assertFalse(sem["orientacao"])
+        tirou_pergunta = V.k2_por_categorias(self.previa, self.previa.replace("**(P3)**", "**(P9)**"))
+        self.assertFalse(tirou_pergunta["conteudo_literal"])

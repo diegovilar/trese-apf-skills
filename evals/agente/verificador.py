@@ -111,6 +111,38 @@ def bloco_presente(md: str, resposta: str) -> bool:
     return all(any(l == r for r in it) for l in tabela_md)
 
 
+# K2 por categorias (D67, consulta 43): conteúdo técnico e avisos obrigatórios exigem cópia literal; as frases
+# fixas de orientação de uso (como responder, como pedir correção) exigem presença com o sentido correto: a frase
+# literal, ou, no trecho da resposta depois do último bloco de conteúdo, os termos que carregam o sentido (cada grupo:
+# alguma das alternativas). Introdução redundante não existe mais no script. Vale para frente; reprovações
+# anteriores continuam reprovações.
+ORIENTACAO = {
+    apf.FECHO_CORRECAO: (("recálcul", "recalcul", "corrig", "correç"), ("export",)),
+    apf.PREVIA_FECHO_PERGUNTAS: (("não sei",), ("calcular",)),
+    apf.PREVIA_FECHO_FERRAMENTA: (("não sei",), ("calcular",)),
+    apf.PREVIA_FECHO_SEM_PERGUNTAS: (("confirm",),),
+}
+
+
+def k2_por_categorias(render: str, resposta: str) -> Dict[str, Any]:
+    linhas = render.splitlines()
+    orientacao = [l.strip() for l in linhas if l.strip() in ORIENTACAO]
+    conteudo = "\n".join(l for l in linhas if l.strip() not in ORIENTACAO)
+    r: Dict[str, Any] = {"conteudo_literal": bloco_presente(conteudo, resposta)}
+    ultima = next((l for l in reversed(conteudo.splitlines()) if l.strip()), "")
+    cr, cu = compacto(resposta), compacto(ultima)
+    i = cr.rfind(cu) if cu else -1
+    cauda = (cr[i + len(cu):] if i >= 0 else "").casefold()
+    detalhe = {}
+    for frase in orientacao:
+        literal = compacto(frase) in cr
+        sentido = all(any(k in cauda for k in grupo) for grupo in ORIENTACAO[frase])
+        detalhe[frase[:40]] = "literal" if literal else ("sentido" if sentido else "ausente")
+    r["orientacao"] = all(v != "ausente" for v in detalhe.values())
+    r["orientacao_detalhe"] = detalhe
+    return r
+
+
 def comeca_com_alerta(texto: str) -> bool:
     linhas = [l.strip() for l in texto.strip().splitlines() if l.strip() and not l.strip().startswith("```")]
     return bool(linhas) and linhas[0].upper().startswith("ALERTA")
@@ -396,7 +428,7 @@ def verificar_snapshot(c: Dict[str, Any], saida: Path) -> Dict[str, Any]:
     est = json.loads(caminho_json.read_text(encoding="utf-8"))
     calc = apf.calcular(est)
     md = apf.render_md(est, calc, "chat")  # o que o agente deve mostrar na resposta
-    k2: Dict[str, Any] = {"bloco_literal": bloco_presente(md, texto)}
+    k2: Dict[str, Any] = k2_por_categorias(md, texto)
     exporta = c.get("exporta")
     exportados = [p for p in arquivos_criados(arquivos) if Path(p).suffix in (".md", ".txt", ".xlsx") and not p.startswith("tmp/")]
     if exporta:
@@ -460,8 +492,8 @@ def _verificar_previa(c: Dict[str, Any], v: Dict[str, Any], snap: Path, tr: Dict
         return v
     v["json"] = str(caminho_json.relative_to(snap))
     est = json.loads(caminho_json.read_text(encoding="utf-8"))
-    crit["K2"] = {"previa_literal": bloco_presente(apf.render_previa(est), texto)}
-    crit["K2"]["ok"] = crit["K2"]["previa_literal"]
+    crit["K2"] = k2_por_categorias(apf.render_previa(est), texto)
+    crit["K2"]["ok"] = crit["K2"]["conteudo_literal"] and crit["K2"]["orientacao"]
     esp = c.get("espera", {})
     if esp:
         crit["config"] = {k: est.get(k) == val for k, val in esp.items()}
