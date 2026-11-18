@@ -10,6 +10,9 @@ tipos de caso:
   alerta2      erro de estágio 2: só ALERTA, leitura permitida, sem script, sem arquivos
   nl_confirma  prosa com pedido de configuração: só pede confirmação, sem script, sem arquivos
   nl_executa   prosa só com descrição: executa com os padrões, sem pedir confirmação
+
+"previa": True  o caso usa o padrão interativo=sim e deve terminar na prévia (D52): check, render --format
+                previa copiado, nenhum PF na resposta, nada exportado. Os demais casos fixam interativo=nao.
 """
 from decimal import Decimal as D
 
@@ -107,44 +110,44 @@ def _ms(*pares):
 
 CASOS = {
     # ---------------------------------------------------------------- contagem
-    "G01": {"tipo": "contagem", "secao": "G01", "args": "tipo=desenvolvimento", "subsidio": G01,
+    "G01": {"tipo": "contagem", "secao": "G01", "args": "tipo=desenvolvimento interativo=nao", "subsidio": G01,
             "tipos": _ms(("ALI", None, 1), ("AIE", None, 1), ("EE", None, 6), ("CE", None, 1), ("SE", None, 1)),
             "totais": [(D(45), D(45))]},
-    "G02": {"tipo": "contagem", "secao": "G02", "args": "tipo=melhoria", "subsidio": G02,
+    "G02": {"tipo": "contagem", "secao": "G02", "args": "tipo=melhoria interativo=nao", "subsidio": G02,
             "tipos": _ms(("ALI", "A", 1), ("AIE", "I", 1), ("EE", "A", 1), ("CE", "A", 1)),
             "totais": [(D(20), D(20))], "unidade": "PF de melhoria"},
-    "G03a": {"tipo": "contagem", "secao": "G03a", "args": "tipo=melhoria melhoria=nesma", "subsidio": G02,
+    "G03a": {"tipo": "contagem", "secao": "G03a", "args": "tipo=melhoria melhoria=nesma interativo=nao", "subsidio": G02,
              "tipos": _ms(("ALI", "A", 1), ("AIE", "I", 1), ("EE", "A", 2), ("CE", "A", 1)),
              "totais": [(D("14.75"), D("14.75"))], "unidade": "PFM"},
-    "G03b": {"tipo": "contagem", "secao": "G03b", "args": "tipo=melhoria melhoria=nesma", "subsidio": G03B,
+    "G03b": {"tipo": "contagem", "secao": "G03b", "args": "tipo=melhoria melhoria=nesma interativo=nao", "subsidio": G03B,
              "tipos": None, "totais": None, "unidade": "PFM", "cobertura": "parcial"},
-    "G04": {"tipo": "contagem", "secao": "G04", "args": "tipo=desenvolvimento", "subsidio": G04,
+    "G04": {"tipo": "contagem", "secao": "G04", "args": "tipo=desenvolvimento interativo=nao", "subsidio": G04,
             "tipos": None, "totais": None, "cobertura": "parcial"},
-    "G05": {"tipo": "contagem", "secao": "G05", "args": "modo=indicativa", "subsidio": G05,
+    "G05": {"tipo": "contagem", "secao": "G05", "args": "modo=indicativa interativo=nao", "subsidio": G05,
             "tipos": _ms(("ALI", None, 2), ("AIE", None, 2)), "totais": [(D(100), D(100))]},
-    "G06": {"tipo": "contagem", "secao": "G06", "args": "tipo=desenvolvimento", "subsidio": G06,
+    "G06": {"tipo": "contagem", "secao": "G06", "args": "tipo=desenvolvimento interativo=nao", "subsidio": G06,
             "tipos": _ms(("ALI", None, 2), ("EE", None, 5), ("CE", None, 2), ("SE", None, 1)),
             "totais": [(D(47), D(47))]},
-    "G07": {"tipo": "contagem", "secao": "G07", "args": "tipo=desenvolvimento", "subsidio": G07,
+    "G07": {"tipo": "contagem", "secao": "G07", "args": "tipo=desenvolvimento interativo=nao", "subsidio": G07,
             "tipos": None, "totais": None, "cobertura": "parcial"},
-    "G08": {"tipo": "contagem", "secao": "G08", "args": "tipo=desenvolvimento", "subsidio": G08,
+    "G08": {"tipo": "contagem", "secao": "G08", "args": "tipo=desenvolvimento interativo=nao", "subsidio": G08,
             "tipos": None, "totais": None},
     # ---------------------------------------------------------------- metamórficos (variantes)
-    "M01": {"tipo": "contagem", "secao": "G01", "args": "tipo=desenvolvimento", "subsidio": G01_PARAFRASE,
+    "M01": {"tipo": "contagem", "secao": "G01", "args": "tipo=desenvolvimento interativo=nao", "subsidio": G01_PARAFRASE,
             "tipos": "G01", "totais": "G01", "nota_juiz": "Subsídio parafraseado do G01: o gabarito do G01 vale integralmente."},
-    "M02": {"tipo": "contagem", "secao": "G01", "args": "tipo=desenvolvimento", "subsidio": G01_REPETIDO,
+    "M02": {"tipo": "contagem", "secao": "G01", "args": "tipo=desenvolvimento interativo=nao", "subsidio": G01_REPETIDO,
             "tipos": "G01", "totais": "G01", "nota_juiz": "G01 com uma frase repetida: nenhuma função pode ser duplicada."},
-    "M03a": {"tipo": "contagem", "secao": "G01", "args": "tipo=desenvolvimento saida=md", "subsidio": G01,
+    "M03a": {"tipo": "contagem", "secao": "G01", "args": "tipo=desenvolvimento saida=md interativo=nao", "subsidio": G01,
              "tipos": "G01", "totais": "G01", "exporta": "md", "sem_juiz": True},
-    "M03b": {"tipo": "contagem", "secao": "G01", "args": "tipo=desenvolvimento saida=txt", "subsidio": G01,
+    "M03b": {"tipo": "contagem", "secao": "G01", "args": "tipo=desenvolvimento saida=txt interativo=nao", "subsidio": G01,
              "tipos": "G01", "totais": "G01", "exporta": "txt", "sem_juiz": True},
-    "M04": {"tipo": "contagem", "secao": "G06", "args": "tipo=desenvolvimento", "subsidio": G06_SEM_MENU,
+    "M04": {"tipo": "contagem", "secao": "G06", "args": "tipo=desenvolvimento interativo=nao", "subsidio": G06_SEM_MENU,
             "tipos": "G06", "totais": "G06", "nota_juiz": "G06 sem as frases do menu e da mensagem de confirmação: o gabarito do G06 vale integralmente."},
     # ---------------------------------------------------------------- argumentos
-    "A01": {"tipo": "valido", "args": "modo=estimada saida=md", "subsidio": CURTO, "espera": {"metodo": "estimada"}, "exporta": "md"},
-    "A02": {"tipo": "valido", "args": "modo=estimativa", "subsidio": CURTO, "espera": {"metodo": "estimada"}, "pergunta_formato": True},
-    "A03": {"tipo": "valido", "args": "saida=excel", "subsidio": CURTO, "espera": {"metodo": "estimada"}, "exporta": "xlsx"},
-    "A04": {"tipo": "valido", "args": None, "subsidio": CURTO, "espera": {"metodo": "estimada", "tipo_projeto": "desenvolvimento"}, "pergunta_formato": True},
+    "A01": {"tipo": "valido", "args": "modo=estimada saida=md interativo=nao", "subsidio": CURTO, "espera": {"metodo": "estimada"}, "exporta": "md"},
+    "A02": {"tipo": "valido", "args": "modo=estimativa interativo=nao", "subsidio": CURTO, "espera": {"metodo": "estimada"}, "pergunta_formato": True},
+    "A03": {"tipo": "valido", "args": "saida=excel interativo=nao", "subsidio": CURTO, "espera": {"metodo": "estimada"}, "exporta": "xlsx"},
+    "A04": {"tipo": "valido", "args": None, "subsidio": CURTO, "espera": {"metodo": "estimada", "tipo_projeto": "desenvolvimento"}, "previa": True},
     "A05": {"tipo": "alerta1", "args": "modo=detalhada", "subsidio": CURTO},
     "A06": {"tipo": "alerta1", "args": "modo indicativa", "subsidio": CURTO},
     "A07": {"tipo": "alerta1", "args": "modo=estimada modo=indicativa", "subsidio": CURTO},
@@ -155,13 +158,13 @@ CASOS = {
     "A12": {"tipo": "alerta2", "args": None, "subsidio": None, "arquivo_inexistente": "./nao-existe.pdf"},
     "A13a": {"tipo": "alerta1", "args": "melhoria=nesma tipo=desenvolvimento", "subsidio": CURTO},
     "A13b": {"tipo": "alerta2", "args": "melhoria=nesma", "subsidio": CURTO},
-    "A14": {"tipo": "valido", "args": None, "subsidio": CURTO_COM_TEXTO_DE_ARGUMENTO, "inline": True, "espera": {"metodo": "estimada"}, "pergunta_formato": True},
-    "A15": {"tipo": "valido", "args": "", "subsidio": CURTO_TOKEN_INICIAL, "inline": True, "espera": {"metodo": "estimada"}, "pergunta_formato": True},
+    "A14": {"tipo": "valido", "args": None, "subsidio": CURTO_COM_TEXTO_DE_ARGUMENTO, "inline": True, "espera": {"metodo": "estimada"}, "previa": True},
+    "A15": {"tipo": "valido", "args": "interativo=nao", "subsidio": CURTO_TOKEN_INICIAL, "inline": True, "espera": {"metodo": "estimada"}, "pergunta_formato": True},
     # ---------------------------------------------------------------- linguagem natural
     "L01": {"tipo": "nl_confirma", "prosa": "Estime os pontos de função do pedido que está em ./pedido.md e gere o resultado em planilha.",
             "subsidio": CURTO, "espera_invocacao": "saida=xlsx"},
     "L02": {"tipo": "nl_executa", "prosa": "Preciso estimar o tamanho funcional, em pontos de função, deste pedido de sistema: " + CURTO,
-            "subsidio": None, "espera": {"metodo": "estimada", "tipo_projeto": "desenvolvimento"}, "pergunta_formato": True},
+            "subsidio": None, "espera": {"metodo": "estimada", "tipo_projeto": "desenvolvimento"}, "previa": True},
 }
 
 # Relações metamórficas entre casos (verificadas sobre os JSONs, sem juiz).

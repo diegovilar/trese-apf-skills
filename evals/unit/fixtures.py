@@ -15,7 +15,7 @@ def _f(fid, tipo, nome, op=None, hip=None, efpa=None):
 
 
 def base(metodo="estimada", tipo="desenvolvimento", regime=None, titulo="caso"):
-    return {"versao_esquema": 2, "metodo": metodo, "tipo_projeto": tipo, "regime_melhoria": regime,
+    return {"versao_esquema": 3, "metodo": metodo, "tipo_projeto": tipo, "regime_melhoria": regime,
             "projeto": _proj(titulo), "cobertura": {"status": "completa", "motivo": None},
             "funcoes": [], "hipoteses": [], "premissas": [], "pendencias": [], "nao_contados": []}
 

@@ -14,7 +14,7 @@ def _f(fid, tipo, nome, requisito, justificativa, op=None, hip=None):
 
 
 def _base(titulo, fronteira, tipo="desenvolvimento"):
-    return {"versao_esquema": 2, "metodo": "estimada", "tipo_projeto": tipo, "regime_melhoria": None,
+    return {"versao_esquema": 3, "metodo": "estimada", "tipo_projeto": tipo, "regime_melhoria": None,
             "projeto": {"titulo": titulo, "fronteira": fronteira, "origem_subsidio": "arquivo ./pedido.md", "data": "2026-11-17"},
             "cobertura": {"status": "completa", "motivo": None}, "avisos": [],
             "funcoes": [], "hipoteses": [], "premissas": [], "pendencias": [], "nao_contados": []}

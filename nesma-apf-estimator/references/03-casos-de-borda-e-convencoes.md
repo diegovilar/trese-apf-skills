@@ -108,3 +108,28 @@ Desempenho, disponibilidade, segurança, acessibilidade, responsividade, migraç
 Coberto: desenvolvimento e melhoria de sistemas transacionais administrativos e judiciais, com cadastros, consultas, relatórios, painéis simples, integrações e cargas.
 
 Não coberto (registre a limitação nas premissas e não improvise regra): Data Warehouse e Data Lake (ETL, cubos), inteligência artificial e chatbots, geoprocessamento, aplicativos multiplataforma com contagem por plataforma, manutenção corretiva, apuração especial, páginas estáticas de portal. O SISP 3.0 tem capítulos próprios para alguns desses casos, mas esta skill não os incorporou. Quando o pedido cair nessas áreas, conte apenas a parte transacional que as regras de 01 cobrem e declare o restante como fora da cobertura.
+
+## 10. Roteiro do ciclo do processo (lacunas e perguntas)
+
+[convenção da skill]
+
+Antes de fechar as pendências, nos dois modos, percorra as etapas do processo que o pedido descreve ou implica. Em cada etapa, pergunte-se: o pedido responde? Se sim, não há o que registrar. Se não, e a resposta pode mudar a contagem, registre uma pendência (sem PF, C1). No modo interativo, essa pendência ganha `pergunta` (SKILL.md, 2A).
+
+| Etapa | O que verificar |
+|---|---|
+| a. Entrada | como o registro nasce e quem o apresenta; quem mantém os dados (§1, origem não afirmada; §4, registro vinculado a uma pessoa) |
+| b. Dados de terceiros | pessoas, unidades e outros sistemas que o processo lê ou alimenta (§4, §6) |
+| c. Análise ou decisão | se alguém confere, aprova, defere ou homologa o registro, e quem (§1, registros submetidos) |
+| d. Depois da decisão ou da conclusão | o que acontece em seguida com o registro, quando houver: por exemplo, execução, efeitos financeiros, comprovação ou prestação de contas, arquivamento, recurso, cancelamento |
+| e. Cálculos e valores | valores, prazos ou indicadores que o sistema calcula, e não só exibe |
+| f. Consultas e relatórios | consultas, relatórios ou painéis além dos que o pedido cita |
+| g. Avisos e prazos | avisos ou ações disparados por data ou prazo, sem comando do usuário (01 §4) |
+| h. Dados existentes | carga inicial ou migração de dados de outro sistema ou planilha (01 §6) |
+
+Regras:
+
+- **Só as etapas ligadas ao processo descrito.** Uma etapa que não tem relação com o pedido é ignorada, sem pergunta. Os exemplos da etapa d são possibilidades a considerar, não uma lista a perguntar em todo pedido.
+- **"Muda a contagem"** quer dizer: muda a identificação ou a classificação de uma função (inclusive CE × SE), a operação em melhoria, o fator EFPA, os cenários ou a cobertura. Não pergunte detalhe que a contagem estimada não usa (campos, telas, layout, regras de validação), salvo TDs e ARs quando o regime `nesma` precisar deles.
+- **Pergunta aberta quando não há base para uma específica.** Se uma etapa relevante não tem nenhum indício no pedido, prefira uma pergunta aberta sobre ela ("o que acontece com a solicitação depois de aprovada?") a uma lista de possibilidades. Pergunte de forma específica quando o pedido sugerir a possibilidade.
+- **Não pergunte o que o pedido responde.** Se o pedido descreve a etapa, não pergunte se ela existe; perguntas sobre um detalhe dela que mude a contagem continuam possíveis.
+- **O roteiro não cria função nem hipótese.** Ele só gera pendências e perguntas. Hipótese continua exigindo um trecho do pedido que a implique (§1).

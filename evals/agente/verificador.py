@@ -276,15 +276,17 @@ def snapshot_integro(snap: Path) -> bool:
 
 # --------------------------------------------------------------------------- procedência do JSON
 
-def recuperar_json(snap: Path, tr: Dict[str, Any]) -> Tuple[Optional[Path], str]:
+def recuperar_json(snap: Path, tr: Dict[str, Any], formato: str = "md") -> Tuple[Optional[Path], str]:
     """Escolhe o JSON canônico pelo CONTEÚDO: o render confiável dele precisa ser igual à saída do
-    `apf.py render --format md` registrada no trace. Ambiguidade (dois JSONs diferentes que batem) para."""
+    `apf.py render --format md` (ou `--format previa`) registrada no trace. Ambiguidade (dois JSONs
+    diferentes que batem) para."""
+    titulo = "# Prévia da estimativa" if formato == "previa" else "# Estimativa de tamanho funcional"
     renders = [f["saida"] for f in chamadas_apf(tr["ferramentas"])
-               if " render " in f" {f['entrada'].get('command', '')} " and "--format md" in f["entrada"].get("command", "")]
+               if " render " in f" {f['entrada'].get('command', '')} " and f"--format {formato}" in f["entrada"].get("command", "")]
     # A saída pode vir precedida por outros comandos encadeados (echo, check): exige-se CONTER o render.
-    renders = [compacto(r) for r in renders if r and "# Estimativa de tamanho funcional" in r]
+    renders = [compacto(r) for r in renders if r and titulo in r]
     if not renders:
-        return None, "o trace não tem saída de 'apf.py render --format md'"
+        return None, f"o trace não tem saída de 'apf.py render --format {formato}'"
     alvo = renders[-1]
     candidatos = []
     for p in sorted(snap.rglob("*.json")):
@@ -295,6 +297,13 @@ def recuperar_json(snap: Path, tr: Dict[str, Any]) -> Tuple[Optional[Path], str]
         except Exception:
             continue
         if not isinstance(est, dict) or est.get("versao_esquema") != apf.VERSAO_ESQUEMA or apf.validar(est):
+            continue
+        if formato == "previa":
+            if apf.validar_previa(est) or compacto(apf.render_previa(est)) not in alvo:
+                continue
+            candidatos.append(p)
+            continue
+        if apf.validar_final(est):
             continue
         calc = apf.calcular(est)
         if any(compacto(apf.render_md(est, calc, perfil)) in alvo for perfil in ("chat", "arquivo")):
@@ -359,6 +368,8 @@ def verificar_snapshot(c: Dict[str, Any], saida: Path) -> Dict[str, Any]:
         return v
 
     cmds = [f["entrada"].get("command", "") for f in apf_cmds]
+    if c.get("previa"):
+        return _verificar_previa(c, v, snap, tr, texto, cmds, arquivos)
     k1 = {"sem_alerta": not comeca_com_alerta(texto),
           "check": any(" check " in f" {x} " for x in cmds),
           "render": any(" render " in f" {x} " for x in cmds)}
@@ -412,4 +423,39 @@ def verificar_snapshot(c: Dict[str, Any], saida: Path) -> Dict[str, Any]:
     if c.get("totais"):
         par = (calc["total_min"], calc["total_max"])
         crit["S2"] = {"ok": par in c["totais"], "obtido": [str(x) for x in par]}
+    return v
+
+
+def _verificar_previa(c: Dict[str, Any], v: Dict[str, Any], snap: Path, tr: Dict[str, Any], texto: str,
+                      cmds: List[str], arquivos: Path) -> Dict[str, Any]:
+    """Execução com interativo=sim que deve terminar na prévia (D51, D52): JSON válido, prévia do script
+    copiada literalmente, nenhum resultado numérico e nada exportado antes da confirmação."""
+    crit = v["criterios"]
+    finais = [x for x in cmds if " render " in f" {x} " and re.search(r"--format\s+(md|txt|xlsx)\b", x)]
+    exportados = [p for p in arquivos_criados(arquivos) if Path(p).suffix in (".md", ".txt", ".xlsx")]
+    k1 = {"sem_alerta": not comeca_com_alerta(texto),
+          "check": any(" check " in f" {x} " for x in cmds),
+          "previa": any(" render " in f" {x} " and "--format previa" in x for x in cmds),
+          "sem_render_final": not finais,
+          "sem_exportacao": not exportados,
+          "sem_pf_na_resposta": not re.search(r"\d+(,\d+)?\s*(PF|PFM)\b", texto)}
+    k1["ok"] = all(k1.values())
+    crit["K1"] = k1
+    caminho_json, procedencia = recuperar_json(snap, tr, "previa")
+    v["tem_json"] = caminho_json is not None
+    v["procedencia"] = procedencia
+    if caminho_json is None:
+        crit["K2"] = {"ok": False, "motivo": procedencia}
+        return v
+    v["json"] = str(caminho_json.relative_to(snap))
+    est = json.loads(caminho_json.read_text(encoding="utf-8"))
+    crit["K2"] = {"previa_literal": bloco_presente(apf.render_previa(est), texto)}
+    crit["K2"]["ok"] = crit["K2"]["previa_literal"]
+    esp = c.get("espera", {})
+    if esp:
+        crit["config"] = {k: est.get(k) == val for k, val in esp.items()}
+        crit["config"]["ok"] = all(crit["config"].values())
+    n, perguntas, abertas = apf.lote_atual(est)
+    v["lote"] = {"numero": n, "perguntas": len(perguntas), "abertas_restantes": abertas,
+                 "pendencias": len(est.get("pendencias", []))}
     return v

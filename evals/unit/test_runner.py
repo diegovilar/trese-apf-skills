@@ -56,7 +56,7 @@ class Base(unittest.TestCase):
 class TestInvocacao(unittest.TestCase):
     def test_todas_as_invocacoes(self):
         esperado = {
-            "G01": ("/nesma-apf-estimator tipo=desenvolvimento -- ./pedido.md", True),
+            "G01": ("/nesma-apf-estimator tipo=desenvolvimento interativo=nao -- ./pedido.md", True),
             "A04": ("/nesma-apf-estimator ./pedido.md", True),
             "A06": ("/nesma-apf-estimator modo indicativa -- ./pedido.md", True),
             "A11": ("/nesma-apf-estimator modo=indicativa ./pedido.md", True),
@@ -65,7 +65,7 @@ class TestInvocacao(unittest.TestCase):
         for cid, (prompt, arq) in esperado.items():
             self.assertEqual(R.montar_invocacao(C.resolver(cid)), (prompt, arq), cid)
         p, arq = R.montar_invocacao(C.resolver("A15"))
-        self.assertTrue(p.startswith("/nesma-apf-estimator -- tipo=SEI"))
+        self.assertTrue(p.startswith("/nesma-apf-estimator interativo=nao -- tipo=SEI"))
         self.assertFalse(arq)
         p, _ = R.montar_invocacao(C.resolver("A14"))
         self.assertTrue(p.startswith("/nesma-apf-estimator Sistema novo"))
@@ -176,6 +176,64 @@ class TestVerificacao(Base):
     def test_nl_confirma(self):
         v = self.rodar("L01", [("tool", ("Read", {"file_path": "pedido.md"}, "x"))], "Entendi `saida=xlsx -- ./pedido.md`. Confirma?")
         self.assertTrue(v["criterios"]["K1"]["ok"])
+
+
+class TestVerificacaoPrevia(Base):
+    """Casos que usam o padrão interativo=sim e devem terminar na prévia (D52)."""
+
+    def _curto(self):
+        est = fx.base(titulo="Portaria")
+        est["funcoes"] = [
+            {"id": "F01", "requisito": "registra a entrada do visitante", "nome": "Visita", "tipo": "ALI", "operacao": None,
+             "hipotese": None, "justificativa": "mantida aqui"},
+            {"id": "F02", "requisito": "registra a entrada", "nome": "Registrar entrada", "tipo": "EE", "operacao": None,
+             "hipotese": None, "justificativa": "mantém Visita"},
+        ]
+        est["pendencias"] = [{"id": "P1", "descricao": "relatórios", "pergunta": "Há relatórios de visitas?",
+                              "situacao": "perguntada", "lote": 1}]
+        return est
+
+    def _eventos(self, est, previa):
+        (self.ws / "tmp" / "d").mkdir()
+        (self.ws / "tmp" / "d" / "e.json").write_text(json.dumps(est, ensure_ascii=False), encoding="utf-8")
+        return [("tool", ("Read", {"file_path": "pedido.md"}, "texto")),
+                ("tool", ("Bash", {"command": "python3 s/apf.py check tmp/d/e.json"}, "OK")),
+                ("tool", ("Bash", {"command": "python3 s/apf.py render tmp/d/e.json --format previa"}, previa))]
+
+    def test_previa_correta(self):
+        est = self._curto()
+        previa = apf.render_previa(est)
+        v = self.rodar("A04", self._eventos(est, previa), previa)
+        self.assertIsNone(v["invalido"])
+        for k in ("K1", "K2", "config"):
+            self.assertTrue(v["criterios"][k]["ok"], (k, v["criterios"][k]))
+        self.assertEqual(v["lote"], {"numero": 1, "perguntas": 1, "abertas_restantes": 0, "pendencias": 1})
+
+    def test_previa_com_pf_ou_render_final_reprova(self):
+        est = self._curto()
+        previa = apf.render_previa(est)
+        v = self.rodar("A04", self._eventos(est, previa), previa + "\nPor alto, dá uns 11 PF.")
+        self.assertFalse(v["criterios"]["K1"]["sem_pf_na_resposta"])
+        self.assertFalse(v["criterios"]["K1"]["ok"])
+
+    def test_render_final_antes_da_confirmacao_reprova(self):
+        est = self._curto()
+        previa = apf.render_previa(est)
+        eventos = self._eventos(est, previa) + [("tool", ("Bash", {"command": "python3 s/apf.py render tmp/d/e.json --format md"}, "x"))]
+        v = self.rodar("L02", eventos, previa)
+        self.assertFalse(v["criterios"]["K1"]["sem_render_final"])
+
+    def test_previa_reescrita_reprova_k2(self):
+        est = self._curto()
+        previa = apf.render_previa(est)
+        v = self.rodar("A14", self._eventos(est, previa), previa.replace("| F02 |", "| F2 |"))
+        self.assertFalse(v["criterios"]["K2"]["ok"])
+
+    def test_sem_previa_no_trace(self):
+        est = self._curto()
+        v = self.rodar("A04", self._eventos(est, "")[:2], apf.render_previa(est))
+        self.assertFalse(v["criterios"]["K1"]["previa"])
+        self.assertFalse(v["criterios"]["K2"]["ok"])
 
 
 class TestBlocoPresente(unittest.TestCase):

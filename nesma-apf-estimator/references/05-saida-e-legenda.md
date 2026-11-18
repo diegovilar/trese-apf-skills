@@ -2,11 +2,11 @@
 
 O agente **não** calcula pesos, fatores nem totais e **não** escreve a tabela final à mão. Ele monta o JSON canônico, e o script `scripts/apf.py` valida, calcula e gera as saídas `.md`, `.txt` e `.xlsx`. Assim, os três formatos mostram sempre os mesmos números.
 
-## 1. Esquema (versão 1)
+## 1. Esquema (versão 3)
 
 ```json
 {
-  "versao_esquema": 2,
+  "versao_esquema": 3,
   "metodo": "estimada | indicativa",
   "tipo_projeto": "desenvolvimento | melhoria",
   "regime_melhoria": "sem-fatores | nesma | null",
@@ -27,17 +27,24 @@ O agente **não** calcula pesos, fatores nem totais e **não** escreve a tabela 
       "operacao": "I | A | E | null",
       "hipotese": "H1 | null",
       "justificativa": "por que é esta função e este tipo",
-      "efpa": null
+      "efpa": null,
+      "esclarecimentos": ["E1"]
     }
   ],
   "hipoteses": [
     {"id": "H1", "descricao": "...", "trecho": "palavra ou frase que a implica | null", "grupo": "nome do grupo de alternativas | null", "requer": ["H3"]}
   ],
   "premissas": [{"id": "PR1", "descricao": "..."}],
-  "pendencias": [{"id": "P1", "descricao": "..."}],
+  "pendencias": [
+    {"id": "P1", "descricao": "..."},
+    {"id": "P2", "descricao": "...", "pergunta": "pergunta ao analista", "opcoes": ["...", "..."], "situacao": "aberta | perguntada | sem-resposta | resolvida", "lote": 1}
+  ],
+  "esclarecimentos": [{"id": "E1", "pendencia": "P2 | null", "pergunta": "... | null", "resposta": "o que o analista respondeu", "lote": 1}],
   "nao_contados": [{"item": "...", "categoria": "absorvido | dado-de-codigo | fora-do-escopo | sem-evidencia", "justificativa": "...", "pendencias": ["P1"]}]
 }
 ```
+
+Os campos `pergunta`, `opcoes`, `situacao`, `lote`, a lista `esclarecimentos` e o campo `esclarecimentos` de funções e hipóteses são do modo interativo (SKILL.md, seção 2A). São opcionais: omita-os quando não houver pergunta nem resposta.
 
 Regras que o script verifica (ele recusa o JSON e lista os erros):
 
@@ -53,6 +60,16 @@ Regras que o script verifica (ele recusa o JSON e lista os erros):
 - IDs únicos: `F1`/`F01`…, `H1`…, `PR1`…, `P1`…. As listas `funcoes`, `hipoteses`, `premissas`, `pendencias` e `nao_contados` são obrigatórias, mesmo vazias.
 - Item de `nao_contados` com categoria `sem-evidencia` exige `pendencias`: a lista (não vazia, sem repetição) dos IDs das pendências que o cobrem. Nas outras categorias o campo é opcional. Uma pendência pode cobrir vários itens. O script confere só os IDs: cabe a você garantir que as pendências apontadas tratem de **todos** os assuntos do item (ex.: um item "cálculo do valor e prestação de contas" precisa de pendências que perguntem pelos dois). O render acrescenta "(ver P1, P2)" à justificativa; não escreva isso à mão.
 - `funcoes` pode ficar vazia só se `nao_contados` explicar o porquê (ex.: pedido só cosmético no regime `sem-fatores`).
+
+**Campos do modo interativo** (o script confere a estrutura e os IDs; o significado é responsabilidade sua):
+
+- **`pergunta`**: só em pendência cuja resposta pode mudar a contagem (SKILL.md, 2A). Pendência sem `pergunta` continua só pendência. `opcoes` (2 a 5 textos curtos) é opcional e só existe com `pergunta`.
+- **`situacao`**, obrigatória quando há `pergunta`: `aberta` (ainda não apresentada, sem `lote`); `perguntada` (no lote atual, com `lote`); `sem-resposta` (o analista não soube ou pediu para calcular; mantém o `lote`); `resolvida` (respondida; precisa de um esclarecimento que aponte para ela). A pendência resolvida **continua na lista**: o resultado final a mostra na seção de esclarecimentos, não nas pendências.
+- **`lote`**: número do lote em que a pergunta foi apresentada. No máximo 7 perguntas por lote. `perguntada` só pode existir no último lote: antes de abrir um lote novo, registre a resposta de todas as anteriores.
+- **`esclarecimentos`**: uma entrada por resposta do analista (`resposta` obrigatória; `pendencia` aponta a pendência respondida, ou `null` se a informação veio sem pergunta). "Não sei" também é registrado, com a pendência em `sem-resposta`.
+- **`esclarecimentos` em funções e hipóteses**: os IDs das respostas que sustentam a função ou a hipótese. O render mostra "(ver E1)" na base da função e na hipótese; não escreva isso à mão.
+- Item `sem-evidencia` não pode apontar só pendências resolvidas: depois da resposta, ele virou função, foi descartado ou depende de outra pendência.
+- A prévia (`--format previa`) recusa o JSON se houver perguntas `aberta` e nenhuma no lote atual. O resultado final (`md`, `txt`, `xlsx`) recusa se ainda houver pergunta `perguntada`.
 
 ### Campo `efpa` (só em melhoria, regime `nesma`, operação `A`)
 
@@ -80,6 +97,7 @@ python3 <skill>/scripts/apf.py render ARQUIVO.json --format md    # imprime a ta
 python3 <skill>/scripts/apf.py render ARQUIVO.json --format txt --out ARQUIVO.txt
 python3 <skill>/scripts/apf.py render ARQUIVO.json --format md  --out ARQUIVO.md
 python3 <skill>/scripts/apf.py render ARQUIVO.json --format xlsx --out ARQUIVO.xlsx
+python3 <skill>/scripts/apf.py render ARQUIVO.json --format previa  # modo interativo: prévia sem PF, só impressa
 ```
 
 - Grave o JSON de trabalho num diretório temporário (ex.: `mktemp -d`), não no projeto do usuário.
@@ -96,8 +114,11 @@ As três saídas têm as mesmas seções, nesta ordem:
 3. **Hipóteses e cenários:** cada hipótese com trecho, grupo e efeito; cenário mínimo e máximo, com as hipóteses de cada um.
 4. **Premissas assumidas.**
 5. **Itens não contados:** item, categoria e justificativa.
-6. **Dúvidas de requisito e pendências.** O script fecha a seção com um aviso fixo de que a lista não é exaustiva; ele faz parte da saída e deve ser copiado.
-7. **Legenda:** tipos de função, operação, complexidade, pesos, base, cenários, unidades (PF, PF de melhoria, PFM) e fatores. No perfil `chat`, só os termos que aparecem no resultado; nos arquivos, completa.
+6. **Esclarecimentos do analista** (só se houver): pergunta e resposta de cada esclarecimento.
+7. **Dúvidas de requisito e pendências** (as resolvidas saem daqui; as perguntadas sem resposta trazem o lote). O script fecha a seção com um aviso fixo de que a lista não é exaustiva; ele faz parte da saída e deve ser copiado.
+8. **Legenda:** tipos de função, operação, complexidade, pesos, base, cenários, unidades (PF, PF de melhoria, PFM), fatores e esclarecimentos. No perfil `chat`, só os termos que aparecem no resultado; nos arquivos, completa.
+
+**Prévia** (`--format previa`, modo interativo; nunca exportada): resumo sem total; funcionalidades identificadas em termos de negócio, com o tipo APF entre parênteses e a base (afirmada ou suposta), **sem PF nem complexidade**; suposições e alternativas; itens que não entram na contagem; esclarecimentos já recebidos; perguntas do lote atual, numeradas; outras pendências; aviso de pendências não exaustivas; fecho com a instrução de resposta. Copie-a inteira para a resposta, como o resultado final.
 
 Particularidades:
 
@@ -115,7 +136,7 @@ Particularidades:
 
 ```json
 {
-  "versao_esquema": 2,
+  "versao_esquema": 3,
   "metodo": "estimada",
   "tipo_projeto": "desenvolvimento",
   "regime_melhoria": null,

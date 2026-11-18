@@ -9,6 +9,8 @@ Uso:
     python3 apf.py render ESTIMATIVA.json --format md|txt [--out ARQUIVO] [--perfil chat|arquivo]
         (sem --out o padrão é 'chat': legenda só com os termos usados; com --out, 'arquivo': legenda completa)
     python3 apf.py render ESTIMATIVA.json --format xlsx --out ARQUIVO.xlsx
+    python3 apf.py render ESTIMATIVA.json --format previa
+        (modo interativo: funções sem PF e o lote atual de perguntas; só imprime, nunca grava)
 
 O agente monta o JSON canônico (ver references/05-saida-e-legenda.md). Este script
 valida o JSON, calcula pesos, fatores e totais com aritmética decimal exata e gera
@@ -29,7 +31,11 @@ from decimal import Decimal
 from fractions import Fraction
 from typing import Any, Dict, List, Optional, Tuple
 
-VERSAO_ESQUEMA = 2
+VERSAO_ESQUEMA = 3
+
+# Modo interativo (D47): situação das pendências que têm pergunta.
+SITUACOES = ("aberta", "perguntada", "sem-resposta", "resolvida")
+MAX_PERGUNTAS_LOTE = 7
 
 TIPOS_DADOS = ("ALI", "AIE")
 TIPOS_TRANSACAO = ("EE", "SE", "CE")
@@ -139,6 +145,90 @@ def _just_nc(item: Dict[str, Any]) -> str:
     """Justificativa de um item não contado, com as pendências que o cobrem."""
     refs = item.get("pendencias") or []
     return item["justificativa"] + (f" (ver {', '.join(refs)})" if refs else "")
+
+
+def _validar_pendencias_v3(pendencias: List[Dict[str, Any]], erros: List[str]) -> Dict[str, str]:
+    """Campos do modo interativo nas pendências (D47, D50). Retorna {id: situação} das que têm situação."""
+    situacao_de: Dict[str, str] = {}
+    por_lote: Dict[int, int] = {}
+    perguntadas: List[Tuple[str, int]] = []
+    for p in pendencias:
+        pid = p.get("id")
+        onde = f"pendencias[{pid}]"
+        tem_pergunta = p.get("pergunta") is not None
+        _texto(p, "pergunta", onde, erros, opcional=True)
+        opcoes = p.get("opcoes")
+        if opcoes is not None:
+            if not tem_pergunta:
+                erros.append(f"{onde}.opcoes: só existe junto com 'pergunta'")
+            elif (not isinstance(opcoes, list) or not 2 <= len(opcoes) <= 5
+                  or not all(_e_texto(o) for o in opcoes)):
+                erros.append(f"{onde}.opcoes: lista de 2 a 5 textos curtos, ou omita o campo")
+        sit = p.get("situacao")
+        lote = p.get("lote")
+        if sit is None:
+            if tem_pergunta:
+                erros.append(f"{onde}.situacao: obrigatória quando há 'pergunta' ({', '.join(SITUACOES)})")
+            if lote is not None:
+                erros.append(f"{onde}.lote: só existe junto com 'situacao'")
+            continue
+        if sit not in SITUACOES:
+            erros.append(f"{onde}.situacao: uma de {', '.join(SITUACOES)}")
+            continue
+        if sit in ("aberta", "perguntada", "sem-resposta") and not tem_pergunta:
+            erros.append(f"{onde}.situacao: '{sit}' exige 'pergunta'")
+        if isinstance(pid, str):
+            situacao_de[pid] = sit
+        if lote is not None and (not _e_inteiro(lote) or lote < 1):
+            erros.append(f"{onde}.lote: inteiro >= 1")
+            continue
+        if sit == "aberta" and lote is not None:
+            erros.append(f"{onde}.lote: pergunta 'aberta' ainda não foi apresentada; retire 'lote'")
+        elif sit in ("perguntada", "sem-resposta") and lote is None:
+            erros.append(f"{onde}.lote: obrigatório para situação '{sit}' (número do lote em que foi perguntada)")
+        if lote is not None and sit != "aberta":
+            por_lote[lote] = por_lote.get(lote, 0) + 1
+            if sit == "perguntada":
+                perguntadas.append((str(pid), lote))
+    for lote, n in sorted(por_lote.items()):
+        if n > MAX_PERGUNTAS_LOTE:
+            erros.append(f"pendencias: o lote {lote} tem {n} perguntas; o máximo é {MAX_PERGUNTAS_LOTE}")
+    if por_lote:
+        ultimo = max(por_lote)
+        for pid, lote in perguntadas:
+            if lote != ultimo:
+                erros.append(f"pendencias[{pid}]: ainda 'perguntada' no lote {lote}, mas já existe o lote {ultimo}; "
+                             "registre a resposta ('resolvida' ou 'sem-resposta')")
+    return situacao_de
+
+
+def lote_atual(est: Dict[str, Any]) -> Tuple[Optional[int], List[Dict[str, Any]], int]:
+    """(número do lote atual, perguntas do lote, quantas perguntas ainda abertas)."""
+    pend = est.get("pendencias", [])
+    perguntadas = [p for p in pend if p.get("situacao") == "perguntada"]
+    abertas = sum(1 for p in pend if p.get("situacao") == "aberta")
+    if not perguntadas:
+        return None, [], abertas
+    n = max(p["lote"] for p in perguntadas)
+    return n, [p for p in perguntadas if p["lote"] == n], abertas
+
+
+def validar_previa(est: Dict[str, Any]) -> List[str]:
+    """Regras da prévia, além da validação geral."""
+    n, perguntas, abertas = lote_atual(est)
+    if abertas and not perguntas:
+        return [f"pendencias: há {abertas} pergunta(s) 'aberta' e nenhuma no lote atual; marque as próximas "
+                f"(até {MAX_PERGUNTAS_LOTE}) como 'perguntada', com o número do novo lote"]
+    return []
+
+
+def validar_final(est: Dict[str, Any]) -> List[str]:
+    """Regras do resultado final (md, txt, xlsx): nenhuma pergunta à espera de resposta."""
+    pend = [p.get("id") for p in est.get("pendencias", []) if p.get("situacao") == "perguntada"]
+    if pend:
+        return [f"pendencias: {', '.join(map(str, pend))} ainda 'perguntada'; antes do resultado final, registre "
+                "a resposta ('resolvida' com esclarecimento, ou 'sem-resposta' se o analista não soube ou pediu para calcular)"]
+    return []
 
 
 def _validar_estrutura(est: Any) -> List[str]:
@@ -251,6 +341,60 @@ def _validar_estrutura(est: Any) -> List[str]:
                 vistos.append(iid)
             _texto(item, "descricao", onde, erros)
 
+    pendencias = [p for p in lista("pendencias") if isinstance(p, dict)]
+    situacao_de = _validar_pendencias_v3(pendencias, erros)
+
+    # Esclarecimentos (respostas do analista no modo interativo)
+    ids_escl: List[str] = []
+    escl_por_pend: Dict[str, int] = {}
+    for i, e in enumerate(lista("esclarecimentos")):
+        onde = f"esclarecimentos[{i}]"
+        if not isinstance(e, dict):
+            erros.append(f"{onde}: deve ser objeto")
+            continue
+        eid = e.get("id")
+        if not isinstance(eid, str) or not re.fullmatch(r"E\d+", eid):
+            erros.append(f"{onde}.id: formato E1, E2…")
+        elif eid in ids_escl:
+            erros.append(f"{onde}.id: '{eid}' repetido")
+        else:
+            ids_escl.append(eid)
+            onde = f"esclarecimentos[{eid}]"
+        _texto(e, "resposta", onde, erros)
+        _texto(e, "pergunta", onde, erros, opcional=True)
+        lote = e.get("lote")
+        if lote is not None and (not _e_inteiro(lote) or lote < 1):
+            erros.append(f"{onde}.lote: inteiro >= 1 ou null")
+        pid = e.get("pendencia")
+        if pid is None:
+            continue
+        if not isinstance(pid, str) or pid not in ids_pend:
+            erros.append(f"{onde}.pendencia: {pid!r} não existe em 'pendencias' (use null para informação dada sem pergunta)")
+            continue
+        escl_por_pend[pid] = escl_por_pend.get(pid, 0) + 1
+        if situacao_de.get(pid) not in ("resolvida", "sem-resposta"):
+            erros.append(f"{onde}.pendencia: '{pid}' tem resposta registrada, então sua situação deve ser 'resolvida' ou 'sem-resposta'")
+    for pid, sit in situacao_de.items():
+        if sit == "resolvida" and not escl_por_pend.get(pid):
+            erros.append(f"pendencias[{pid}]: situação 'resolvida' exige um esclarecimento que aponte para ela")
+
+    def refs_escl(obj: Dict[str, Any], onde: str) -> None:
+        refs = obj.get("esclarecimentos")
+        if refs is None:
+            return
+        if not isinstance(refs, list) or not refs or not all(isinstance(r, str) for r in refs):
+            erros.append(f"{onde}.esclarecimentos: lista não vazia de IDs de esclarecimentos, ou omita o campo")
+            return
+        if len(set(refs)) != len(refs):
+            erros.append(f"{onde}.esclarecimentos: ID repetido")
+        for r in refs:
+            if r not in ids_escl:
+                erros.append(f"{onde}.esclarecimentos: '{r}' não existe em 'esclarecimentos'")
+
+    for h in hipoteses:
+        if isinstance(h, dict):
+            refs_escl(h, f"hipoteses[{h.get('id')}]")
+
     nao_contados = lista("nao_contados", obrigatoria=True)
     for i, item in enumerate(nao_contados):
         onde = f"nao_contados[{i}]"
@@ -273,6 +417,10 @@ def _validar_estrutura(est: Any) -> List[str]:
                 for r in refs:
                     if r not in ids_pend:
                         erros.append(f"{onde}.pendencias: '{r}' não existe em 'pendencias'")
+                if (item.get("categoria") == "sem-evidencia" and refs and all(r in ids_pend for r in refs)
+                        and all(situacao_de.get(r) == "resolvida" for r in refs)):
+                    erros.append(f"{onde}: todas as pendências apontadas foram resolvidas; atualize o item "
+                                 "(virou função, foi descartado pela resposta ou tem outra pendência em aberto)")
 
     # Funções
     funcoes = lista("funcoes", obrigatoria=True)
@@ -295,6 +443,7 @@ def _validar_estrutura(est: Any) -> List[str]:
             onde = f"funcoes[{fid}]"
         for chave in ("requisito", "nome", "justificativa"):
             _texto(f, chave, onde, erros)
+        refs_escl(f, onde)
         tipo = f.get("tipo")
         if not isinstance(tipo, str) or tipo not in TIPOS:
             erros.append(f"{onde}.tipo: um de {', '.join(TIPOS)}")
@@ -676,6 +825,44 @@ AVISO_INDICATIVA = ("na pesquisa da NESMA (cerca de 100 aplicações), a contage
                     "da contagem detalhada em alguns casos. É uma observação da pesquisa, não um limite garantido de erro.")
 
 
+def _ver_escl(obj: Dict[str, Any]) -> str:
+    refs = obj.get("esclarecimentos") or []
+    return f" (ver {', '.join(refs)})" if refs else ""
+
+
+def _base(f: Dict[str, Any]) -> str:
+    """Base da função na memória de cálculo: evidência ou hipótese, com os esclarecimentos que a sustentam."""
+    return (f.get("hipotese") or "evidência") + _ver_escl(f)
+
+
+def _desc_hip(h: Dict[str, Any]) -> str:
+    return h["descricao"] + _ver_escl(h)
+
+
+def _pendencias_visiveis(est: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Pendências ainda em aberto (as resolvidas aparecem nos esclarecimentos)."""
+    saida = []
+    for p in est.get("pendencias", []):
+        if p.get("situacao") == "resolvida":
+            continue
+        desc = p["descricao"]
+        if p.get("situacao") == "sem-resposta":
+            desc += f" (perguntada no lote {p['lote']}, sem resposta)"
+        saida.append({"id": p["id"], "descricao": desc})
+    return saida
+
+
+def _texto_escl(e: Dict[str, Any]) -> str:
+    origem = []
+    if e.get("pendencia"):
+        origem.append(e["pendencia"])
+    if e.get("lote"):
+        origem.append(f"lote {e['lote']}")
+    pre = f"({', '.join(origem)}) " if origem else ""
+    perg = f"Pergunta: {e['pergunta']} " if e.get("pergunta") else ""
+    return f"{pre}{perg}Resposta: {e['resposta']}"
+
+
 def _faixa(a: Decimal, b: Decimal, casas: Optional[int]) -> str:
     return num(a, casas) if a == b else f"{num(a, casas)}–{num(b, casas)}"
 
@@ -702,6 +889,7 @@ LEGENDA = [
     ("PFM", "Regime 'nesma': pontos de função de melhoria (EFPA 2.2.1), unidade distinta de PF. Fatores: incluída 1,00; excluída 0,40; alterada pela tabela 1 (dados) ou 2 (transações); só cosmética 0,25; só mudança de tipo AIE↔ALI 0,40."),
     ("Fator", "Multiplicador do PF base. Fora do regime 'nesma' é sempre 1,00."),
     ("Faixa de fator", "Fator de função alterada sem dados suficientes (TDs/ARs) no pedido: apresentado como intervalo, sem valor central."),
+    ("Esclarecimento (E1, E2…)", "Resposta do analista a uma pergunta da prévia (modo interativo), usada como fonte junto com o pedido."),
 ]
 
 
@@ -731,6 +919,8 @@ def legenda(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo") 
         usar |= {"PFM", "Fator"}
         if calc["tem_faixa_de_fator"]:
             usar.add("Faixa de fator")
+    if est.get("esclarecimentos"):
+        usar.add("Esclarecimento (E1, E2…)")
     return [(t, d) for t, d in LEGENDA if t in usar]
 
 
@@ -769,7 +959,7 @@ def render_md(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo"
     funcoes = {f["id"]: f for f in est["funcoes"]}
     for ln in calc["linhas"]:
         f = funcoes[ln["id"]]
-        base = ln["hipotese"] or "evidência"
+        base = _base(f)
         linha = [ln["id"], _md(f["requisito"]), _md(f["nome"]), ln["tipo"], ln["operacao"] or "—", ln["complexidade"]]
         if nesma:
             linha += [num(ln["peso"]), _faixa(ln["fator_min"], ln["fator_max"], 2), _faixa(ln["valor_min"], ln["valor_max"], 2)]
@@ -796,7 +986,7 @@ def render_md(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo"
         for h in hipoteses:
             ef = calc["efeito_hipoteses"][h["id"]]
             exige = ", ".join(h.get("requer") or []) or "—"
-            out.append(f"| {h['id']} | {_md(h['descricao'])} | {_md(h.get('trecho')) or '—'} | {_md(h.get('grupo')) or '—'} | {exige} | +{_faixa(ef['min'], ef['max'], casas)} {calc['unidade']} |")
+            out.append(f"| {h['id']} | {_md(_desc_hip(h))} | {_md(h.get('trecho')) or '—'} | {_md(h.get('grupo')) or '—'} | {exige} | +{_faixa(ef['min'], ef['max'], casas)} {calc['unidade']} |")
         out.append("")
         ativ_min = ", ".join(calc["hipoteses_cenario_min"]) or "nenhuma"
         ativ_max = ", ".join(calc["hipoteses_cenario_max"]) or "nenhuma"
@@ -825,7 +1015,13 @@ def render_md(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo"
         for item in nao:
             out.append(f"| {_md(item['item'])} | {CATEGORIAS_NAO_CONTADOS[item['categoria']]} | {_md(_just_nc(item))} |")
     out.append("")
-    secao("Dúvidas de requisito e pendências", est.get("pendencias", []))
+    if est.get("esclarecimentos"):
+        out.append("## Esclarecimentos do analista")
+        out.append("")
+        for e in est["esclarecimentos"]:
+            out.append(f"- **{e['id']}.** {_md(_texto_escl(e))}")
+        out.append("")
+    secao("Dúvidas de requisito e pendências", _pendencias_visiveis(est))
     out.append(f"**Aviso:** {AVISO_PENDENCIAS}")
     out.append("")
     out.append("## Legenda")
@@ -899,7 +1095,7 @@ def render_txt(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo
         linha = [ln["id"], nome, ln["tipo"], ln["operacao"] or "—", ln["complexidade"], num(ln["peso"])]
         if nesma:
             linha += [_faixa(ln["fator_min"], ln["fator_max"], 2), _faixa(ln["valor_min"], ln["valor_max"], 2)]
-        linha += [ln["hipotese"] or "evidência"]
+        linha += [_base(f)]
         linhas.append(linha)
     total = ["", "TOTAL"] + [""] * (len(cab) - 2)
     total[7 if nesma else 5] = _faixa(calc["total_min"], calc["total_max"], casas)
@@ -922,7 +1118,7 @@ def render_txt(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo
             grupo = f" [alternativas: {_md(h['grupo'])}]" if h.get("grupo") else ""
             if h.get("requer"):
                 grupo += f" [exige: {', '.join(h['requer'])}]"
-            out += _quebrar(f"{h['id']}{grupo} (+{_faixa(ef['min'], ef['max'], casas)} {calc['unidade']}): {_md(h['descricao'])}", recuo="  ")
+            out += _quebrar(f"{h['id']}{grupo} (+{_faixa(ef['min'], ef['max'], casas)} {calc['unidade']}): {_md(_desc_hip(h))}", recuo="  ")
             if h.get("trecho"):
                 out += _quebrar(f"Trecho: {_md(h['trecho'])}", recuo="      ")
         out.append("")
@@ -943,12 +1139,129 @@ def render_txt(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo
         out.append("  Nenhum.")
     for item in nao:
         out += _quebrar(f"- {_md(item['item'])} ({CATEGORIAS_NAO_CONTADOS[item['categoria']]}): {_md(_just_nc(item))}", recuo="  ")
-    secao("DÚVIDAS DE REQUISITO E PENDÊNCIAS", est.get("pendencias", []))
+    if est.get("esclarecimentos"):
+        out += ["", "ESCLARECIMENTOS DO ANALISTA", ""]
+        for e in est["esclarecimentos"]:
+            out += _quebrar(f"{e['id']}. {_md(_texto_escl(e))}", recuo="  ")
+    secao("DÚVIDAS DE REQUISITO E PENDÊNCIAS", _pendencias_visiveis(est))
     out.append("")
     out.extend(_quebrar(f"Aviso: {AVISO_PENDENCIAS}", recuo="  "))
     out += ["", "LEGENDA", ""]
     for termo, desc in legenda(est, calc, perfil):
         out += _quebrar(f"{termo}: {desc}", recuo="  ")
+    out.append("")
+    return "\n".join(out)
+
+
+# --------------------------------------------------------------------------- prévia (modo interativo)
+
+TIPO_NEGOCIO = {
+    "ALI": "dados mantidos pelo sistema",
+    "AIE": "dados lidos de outro sistema",
+    "EE": "entrada ou atualização de dados",
+    "SE": "saída com cálculo ou dado derivado",
+    "CE": "consulta sem cálculo",
+}
+OPERACAO_NEGOCIO = {"I": "nova", "A": "alterada", "E": "excluída"}
+PREVIA_INTRO = ("Nada foi calculado ainda. Esta é a lista do que identifiquei no pedido, sem pontos de função. "
+                "Confira, corrija o que estiver errado ou faltando e responda às perguntas.")
+PREVIA_FECHO_PERGUNTAS = ("Responda pelo número da pergunta (ex.: \"1: sim; 3: não sei\"); observações são bem-vindas. "
+                          "\"Não sei\" é aceito: a dúvida fica registrada como pendência. Para calcular com o que já se "
+                          "sabe, responda \"calcular\". Se algo na lista estiver errado ou faltando, diga também.")
+PREVIA_FECHO_SEM_PERGUNTAS = ("Não identifiquei perguntas adicionais. Confirma a lista para calcular? "
+                              "Se algo estiver errado ou faltando, diga.")
+
+
+def render_previa(est: Dict[str, Any]) -> str:
+    """Prévia do modo interativo (D51): sem PF, sem complexidade, sem totais."""
+    p = est["projeto"]
+    melhoria = est["tipo_projeto"] == "melhoria"
+    out: List[str] = [f"# Prévia da estimativa: {_md(p['titulo'])}", "", PREVIA_INTRO, ""]
+    metodo = "NESMA estimada" if est["metodo"] == "estimada" else "NESMA indicativa"
+    out.append(f"- **Tipo de projeto:** {est['tipo_projeto']}")
+    if melhoria:
+        out.append(f"- **Regime de melhoria:** {est['regime_melhoria']}")
+    out.append(f"- **Método:** {metodo}")
+    out.append(f"- **Fronteira da aplicação:** {_md(p['fronteira'])}")
+    out.append(f"- **Origem do subsídio:** {_md(p['origem_subsidio'])}")
+    cob = est["cobertura"]
+    if cob.get("status") == "parcial":
+        out.append(f"- **Cobertura:** parcial. {_md(cob.get('motivo'))}")
+    else:
+        out.append("- **Cobertura:** completa em relação ao pedido analisado")
+    out.append("")
+
+    out.append("## Funcionalidades identificadas")
+    out.append("")
+    if not est["funcoes"]:
+        out.append("Nenhuma.")
+    else:
+        cab = ["ID", "Funcionalidade", "Tipo"] + (["Situação"] if melhoria else []) + ["Base", "Trecho do pedido"]
+        out.append("| " + " | ".join(cab) + " |")
+        out.append("|" + "|".join("---" for _ in cab) + "|")
+        for f in est["funcoes"]:
+            base = (f"suposta ({f['hipotese']})" if f.get("hipotese") else "afirmada") + _ver_escl(f)
+            linha = [f["id"], _md(f["nome"]), f"{TIPO_NEGOCIO[f['tipo']]} ({f['tipo']})"]
+            if melhoria:
+                linha.append(OPERACAO_NEGOCIO[f["operacao"]])
+            linha += [base, _md(f["requisito"])]
+            out.append("| " + " | ".join(linha) + " |")
+    out.append("")
+
+    hipoteses = est.get("hipoteses", [])
+    if hipoteses:
+        out.append("## Suposições e alternativas")
+        out.append("")
+        out.append("| ID | Suposição | Trecho do pedido | Alternativas (grupo) | Exige |")
+        out.append("|---|---|---|---|---|")
+        for h in hipoteses:
+            exige = ", ".join(h.get("requer") or []) or "—"
+            out.append(f"| {h['id']} | {_md(_desc_hip(h))} | {_md(h.get('trecho')) or '—'} | {_md(h.get('grupo')) or '—'} | {exige} |")
+        out.append("")
+
+    nao = est.get("nao_contados", [])
+    if nao:
+        out.append("## Itens que não entram na contagem")
+        out.append("")
+        out.append("| Item | Motivo | Justificativa |")
+        out.append("|---|---|---|")
+        for item in nao:
+            out.append(f"| {_md(item['item'])} | {CATEGORIAS_NAO_CONTADOS[item['categoria']]} | {_md(_just_nc(item))} |")
+        out.append("")
+
+    if est.get("esclarecimentos"):
+        out.append("## Esclarecimentos já recebidos")
+        out.append("")
+        for e in est["esclarecimentos"]:
+            out.append(f"- **{e['id']}.** {_md(_texto_escl(e))}")
+        out.append("")
+
+    n, perguntas, abertas = lote_atual(est)
+    em_lote = {q["id"] for q in perguntas}
+    if perguntas:
+        out.append(f"## Perguntas (lote {n})")
+        out.append("")
+        for i, q in enumerate(perguntas, start=1):
+            out.append(f"{i}. **({q['id']})** {_md(q['pergunta'])}")
+            if q.get("opcoes"):
+                out.append(f"   Opções: {'; '.join(_md(o) for o in q['opcoes'])}.")
+        out.append("")
+        if abertas:
+            out.append(f"Ainda {'falta' if abertas == 1 else 'faltam'} {abertas} "
+                       f"{'pergunta, que vem' if abertas == 1 else 'perguntas, que vêm'} no próximo lote.")
+            out.append("")
+
+    outras = [q for q in _pendencias_visiveis(est) if q["id"] not in em_lote]
+    out.append("## Outras pendências registradas")
+    out.append("")
+    if not outras:
+        out.append("Nenhuma.")
+    for q in outras:
+        out.append(f"- **{q['id']}.** {_md(q['descricao'])}")
+    out.append("")
+    out.append(f"**Aviso:** {AVISO_PENDENCIAS}")
+    out.append("")
+    out.append(PREVIA_FECHO_PERGUNTAS if perguntas else PREVIA_FECHO_SEM_PERGUNTAS)
     out.append("")
     return "\n".join(out)
 
@@ -1066,7 +1379,7 @@ def gerar_xlsx(est: Dict[str, Any], calc: Dict[str, Any]) -> bytes:
             just += " Faixa de fator: " + f["efpa"]["faixa"]["justificativa"]
         mem.add([_s(ln["id"], 0), _s(f["requisito"]), _s(f["nome"]), _s(ln["tipo"], 0), _s(ln["operacao"] or "—", 0),
                  _s(ln["complexidade"], 0), _n(ln["peso"], 6), _n(ln["fator_min"]), _n(ln["fator_max"]),
-                 _n(ln["valor_min"]), _n(ln["valor_max"]), _s(ln["hipotese"] or "evidência", 0),
+                 _n(ln["valor_min"]), _n(ln["valor_max"]), _s(_base(f), 0),
                  _n(Decimal(int(ln["entra_min"])), 6), _n(Decimal(int(ln["entra_max"])), 6), _s(just)])
     ultima = primeira + len(calc["linhas"]) - 1
     faixa_min, faixa_max = f"J{primeira}:J{ultima}", f"K{primeira}:K{ultima}"
@@ -1111,7 +1424,7 @@ def gerar_xlsx(est: Dict[str, Any], calc: Dict[str, Any]) -> bytes:
         hp.add([_s(c, 1) for c in ("ID", "Hipótese", "Trecho do pedido", "Alternativas (grupo)", "Exige", f"Efeito mín. ({u})", f"Efeito máx. ({u})")])
         for h in hipoteses:
             ef = calc["efeito_hipoteses"][h["id"]]
-            hp.add([_s(h["id"], 0), _s(h["descricao"]), _s(h.get("trecho") or "—"), _s(h.get("grupo") or "—"),
+            hp.add([_s(h["id"], 0), _s(_desc_hip(h)), _s(h.get("trecho") or "—"), _s(h.get("grupo") or "—"),
                     _s(", ".join(h.get("requer") or []) or "—", 0), _n(ef["min"]), _n(ef["max"])])
         hp.add([])
         hp.add([_s("Cenário mínimo", 4), _s("Hipóteses: " + (", ".join(calc["hipoteses_cenario_min"]) or "nenhuma"))])
@@ -1123,7 +1436,9 @@ def gerar_xlsx(est: Dict[str, Any], calc: Dict[str, Any]) -> bytes:
     pp.add([_s(c, 1) for c in ("ID", "Seção", "Descrição")])
     for item in est.get("premissas", []):
         pp.add([_s(item["id"], 0), _s("Premissa assumida"), _s(item["descricao"])])
-    for item in est.get("pendencias", []):
+    for e in est.get("esclarecimentos", []):
+        pp.add([_s(e["id"], 0), _s("Esclarecimento do analista"), _s(_texto_escl(e))])
+    for item in _pendencias_visiveis(est):
         pp.add([_s(item["id"], 0), _s("Dúvida / pendência"), _s(item["descricao"])])
     pp.add([_s("—", 0), _s("Aviso"), _s(AVISO_PENDENCIAS)])
     for item in est.get("nao_contados", []):
@@ -1203,7 +1518,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         sp.add_argument("json")
     sp = sub.add_parser("render")
     sp.add_argument("json")
-    sp.add_argument("--format", required=True, choices=("md", "txt", "xlsx"))
+    sp.add_argument("--format", required=True, choices=("md", "txt", "xlsx", "previa"))
     sp.add_argument("--out")
     sp.add_argument("--perfil", choices=("chat", "arquivo"),
                     help="padrão: 'chat' (legenda só com os termos usados) ao imprimir; 'arquivo' (legenda completa) com --out")
@@ -1225,6 +1540,22 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.cmd == "check":
         print("OK")
         return 0
+    if args.cmd == "render":
+        if args.format == "previa":
+            if args.out:
+                print("ERRO: a prévia só é impressa; não use --out (nada é exportado antes do cálculo)", file=sys.stderr)
+                return 2
+            erros = validar_previa(est)
+        else:
+            erros = validar_final(est)
+        if erros:
+            print("JSON INVÁLIDO:", file=sys.stderr)
+            for e in erros:
+                print(f"- {e}", file=sys.stderr)
+            return 1
+        if args.format == "previa":
+            sys.stdout.write(render_previa(est))
+            return 0
     calc = calcular(est)
     if args.cmd == "calc":
         print(json.dumps(_para_json(calc), ensure_ascii=False, indent=2))

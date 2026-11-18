@@ -67,6 +67,13 @@ K3 (nenhuma função proibida contada), S1 nome a nome (e por rubrica em G03b e 
   - M04 (G06 sem as frases do menu e da mensagem): mesmo multiconjunto e mesmo total.
   - M05 (G02 × G03a): mesmo inventário de funções; G03a acrescenta só Cancelar (EE, A); G02 = 20 PF de melhoria; G03a = 14,75 PFM.
 
+### Modo interativo (iteração 2, D40–D52)
+
+- O padrão da skill passou a ser `interativo=sim`. Os casos que testam contagem, metamórficos e argumentos explícitos fixam `interativo=nao`; os casos de alerta ficam como estavam.
+- A04, A14 e L02 testam o padrão e terminam na **prévia** (`"previa": True` em `casos.py`). K1: `check` e `render --format previa` no trace, nenhum render final, nada exportado, nenhum número de PF na resposta. K2: a prévia confiável, gerada do JSON escolhido pelo conteúdo, aparece literalmente na resposta. O verificador registra o lote (número, perguntas, abertas restantes).
+- **Camada 1** (holdouts e G04/G07/G08 com `interativo=sim`): um turno, o executor sem ferramenta de perguntas, termina na prévia. O juiz avalia as lacunas obrigatórias sobre **todas** as pendências do JSON (não só as do primeiro lote), os contrastes, a redundância e o tamanho do lote. Rubrica e calibração delta ainda por fazer (D43).
+- Ainda não implementados: camada 2 (diálogo com `--resume` e demandante simulado), relação metamórfica não interativo ≡ interativo com "não sei" sobre execuções reais, checagem do caminho com ferramenta (com o usuário). A relação metamórfica tem só a versão no nível do script, nos testes unitários.
+
 ### Rodadas
 
 1. **Sondagens:** perfil do executor (1 execução curta) e nome do modelo do juiz (1 chamada mínima).
