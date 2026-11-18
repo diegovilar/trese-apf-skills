@@ -10,8 +10,8 @@ Melhorar a **descoberta de lacunas de domínio** em pedidos vagos (o requisito n
 
 - **Variante adotada:** modo interativo (`interativo=sim|nao`, padrão `sim`), em que a skill mostra uma **prévia** sem PF (funções em termos de negócio, com o tipo APF entre parênteses) e pergunta em lotes de até 7 só o que muda a contagem; "não sei" vira pendência; "calcular" encerra. Lacunas geradas por um **roteiro do ciclo do processo** (03 §10), nos dois modos. Esquema canônico v3 (situação e lote das perguntas, esclarecimentos com IDs conferidos). Implementação: commit `451690d` (D40–D52).
 - Depois disso: D55 (ajustes de rubrica, só para rodadas futuras) e D56 (mitigação do K2 na renderização: "parcial: motivo" e abertura curta da prévia).
-- **Etapa 3B (revisão do modelo) foi testada e abandonada** (D57, D58): corrigiu parte da representação, mas induziu hipóteses sem apoio e não atingiu o critério. O `SKILL.md` foi revertido. Configuração dos evals na `descoberta-1`: `4eb6077f21f4f68d`; depois da D64: `e78eab7bc75324b2`.
-- 140 testes unitários (`python3 -m unittest discover -s evals/unit`).
+- **Etapa 3B (revisão do modelo) foi testada e abandonada** (D57, D58): corrigiu parte da representação, mas induziu hipóteses sem apoio e não atingiu o critério. O `SKILL.md` foi revertido. Configuração dos evals na `descoberta-1`: `4eb6077f21f4f68d`; depois da D65: `7b4afe9f47b0aefd`.
+- 149 testes unitários (`python3 -m unittest discover -s evals/unit`).
 
 ## Decisões (detalhes no `PLANO.md`)
 
@@ -47,7 +47,7 @@ Melhorar a **descoberta de lacunas de domínio** em pedidos vagos (o requisito n
 
 1. ~~**S3**~~: aceito como limitação conhecida (D59); `interativo=sim` segue padrão, marcado como experimental até a fase 3.
 2. **Caminho com ferramenta de perguntas:** primeira checagem manual reprovada (lote e exportação em texto); corrigido experimentalmente na D61 (canal único 2B, exportação múltipla, correções pós-resultado 2C); na T2, exportação ok, correção parcial (resultado não copiado), lote de novo em texto; na T3 (D62) o lote veio pela ferramenta, mas com opções criadas e, de novo, sem o resultado da correção no chat; na T4 (D63), todos os critérios atendidos (1 execução). Achados laterais registrados no `PLANO.md` (fase 2) para a camada 2 mínima.
-3. **Camada 2 mínima** (teste parcial, turnos roteirizados, `--resume` no runner): "não sei; calcular" × modo direto; incorporação dos fatos do H2c no H2 × gabarito do H2c; percurso de dois lotes.
+3. **Camada 2 mínima** (D65): infraestrutura implementada (149 testes); faltam sondagem de retomada (D2a), calibração P7/E14 e a rodada N = 3, cada uma com autorização. Comandos: `preparar <rodada> dialogo --casos D2a --reps 1`, `comparar`, `limpar-sessoes`.
 4. **Regressão ampliada do modo direto**, depois da fase 3: G02, G03a, G05, M01, M02, M03a, M04, G01, G06, M03b.
 5. **Holdouts** com a variante congelada: H1, H1c, H3c (regras gerais e contenção) e ao menos um holdout novo com etapa ausente obrigatória (descoberta de etapas), rubrica aprovada pelo usuário.
 6. **Encerramento:** relatório da iteração 2 e atualização do `RELATORIO`/README; guia de uso da skill (lista de tarefas do projeto).

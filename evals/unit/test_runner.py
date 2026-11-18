@@ -310,7 +310,7 @@ class TestJuizECalibracao(unittest.TestCase):
 
     def test_dossies_da_previa_validos_e_rastreaveis(self):
         for did, caso, est, alvo in calibracao.dossies():
-            if did not in calibracao.CALIBRACAO_EXATA:
+            if did not in calibracao.CALIBRACAO_EXATA or caso in C.DIALOGOS:
                 continue
             self.assertTrue(C.CASOS[caso].get("previa"), did)
             self.assertEqual(apf.validar_previa(est), [], did)

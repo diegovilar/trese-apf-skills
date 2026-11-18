@@ -65,10 +65,17 @@ def preparar_ws(nome: str, subsidio: Optional[str]) -> Path:
     return ws
 
 
-def rodar_claude(ws: Path, prompt: str, saida: Path) -> Dict[str, Any]:
+def rodar_claude(ws: Path, prompt: str, saida: Path, sessao: Optional[str] = None, retomar: bool = False) -> Dict[str, Any]:
+    """Um turno do executor. Sem `sessao`, execução isolada e sem persistência. Com `sessao` (camada 2): o primeiro
+    turno cria a sessão com esse UUID (`--session-id`) e os seguintes a retomam (`--resume`); a persistência é
+    necessária para retomar."""
     cfg = CONFIG
+    if sessao is None:
+        persistencia = ["--no-session-persistence"]
+    else:
+        persistencia = ["--resume", sessao] if retomar else ["--session-id", sessao]
     cmd = [cfg["cmd"], "-p", prompt, "--model", cfg["modelo"], "--effort", cfg["esforco"],
-           "--output-format", "stream-json", "--verbose", "--no-session-persistence"] + cfg["perfil"]
+           "--output-format", "stream-json", "--verbose"] + persistencia + cfg["perfil"]
     env = dict(os.environ, TMPDIR=str(ws / "tmp"))
     inicio = dt.datetime.now()
     try:

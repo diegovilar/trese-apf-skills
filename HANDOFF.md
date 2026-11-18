@@ -6,7 +6,7 @@ Para retomar o trabalho em outra sessão (humana ou de agente). Leia também o `
 
 **Iteração 2 em andamento** (estado e próximos passos: `HANDOFF-iteracao-2.md`). A iteração 1 foi encerrada em 17/11/2026 como versão inicial (`38f562b`; `RELATORIO-iteracao-1.md`). **Nenhuma fase que consome cota está autorizada** depois do bloco `descoberta-1`. Deste arquivo valem as regras de operação, os comandos, a arquitetura e as armadilhas abaixo.
 
-- Testes unitários: `python3 -m unittest discover -s evals/unit` (140 passando).
+- Testes unitários: `python3 -m unittest discover -s evals/unit` (149 passando).
 - Histórico das rodadas (iteração 1: curta-3, fumaça, completa-1 a -5, calib-1 a -3, diag-1, k2-aviso; iteração 2: calib-4 a -7, curta-4, k2-previa, ajuste-1, descoberta-1): `PLANO.md`.
 - Poppers: iteração 1, `ses_e15628079ffehR54kQzwIQFPNZ` (consultas 9 a 18); iteração 2, `ses_e141aaae0ffeuGbrEAhpELk1I3` (consultas 19 a 31) e `ses_e119daa1effePIY2FtgGWuHA2q` (consultas 32 em diante). Numa sessão nova, abra outro e continue a numeração a partir da última registrada no `PLANO.md`.
 
@@ -67,4 +67,4 @@ python3 evals/agente/runner.py preparar <rodada> calibracao --casos P5,P6       
 
 ## Para começar a próxima sessão
 
-Siga a seção "O que falta" do `HANDOFF-iteracao-2.md`. Antes, confira `python3 -m unittest discover -s evals/unit` (140 testes), `git log --oneline | head -3` e se a configuração dos evals continua `e78eab7bc75324b2` (D64; a anterior, `4eb6077f21f4f68d`, é a da `descoberta-1`) (`python3 -c "import sys; sys.path.insert(0,'evals/agente'); import runner; print(runner.config_hash())"`).
+Siga a seção "O que falta" do `HANDOFF-iteracao-2.md`. Antes, confira `python3 -m unittest discover -s evals/unit` (149 testes), `git log --oneline | head -3` e se a configuração dos evals continua `7b4afe9f47b0aefd` (D65; a anterior, `4eb6077f21f4f68d`, é a da `descoberta-1`) (`python3 -c "import sys; sys.path.insert(0,'evals/agente'); import runner; print(runner.config_hash())"`).

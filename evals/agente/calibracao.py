@@ -218,6 +218,38 @@ def h2c_correto():
     return e
 
 
+def d2b_correto():
+    """Diálogo D2b (camada 2): prévia do H2 respondida com as duas frases do H2c e calculada. Pendências do lote 1
+    resolvidas ficam como histórico (proibidas como pergunta no H2c, mas resolvidas aqui); envio autônomo (a)."""
+    e = h2c_correto()
+    e["projeto"]["fronteira"] = "novo sistema do cartório; cadastro eleitoral e sistema de locais são externos"
+    msg_locais = "A relação de locais de votação é mantida no sistema de locais da Justiça Eleitoral."
+    msg_retorno = ("O serviço de comunicação avisará o sistema quando houver devolução do e-mail ou confirmação de entrega, "
+                   "e essas respostas devem atualizar a situação da convocação na nomeação.")
+    for f in e["funcoes"]:
+        if f["id"] == "F03":
+            f["requisito"] = "mantida no sistema de locais da Justiça Eleitoral (resposta do analista)"
+            f["esclarecimentos"] = ["E1"]
+        if f["id"] == "F07":
+            f["requisito"] = "O serviço de comunicação avisará o sistema quando houver devolução do e-mail ou confirmação de entrega"
+            f["esclarecimentos"] = ["E2"]
+    e["pendencias"] = [
+        _p("P1", "Quem mantém a relação de locais de votação.",
+           "Essa relação é mantida neste novo sistema ou em outro sistema, do qual seria só lida?", "resolvida", 1,
+           ["mantida neste sistema", "lida de outro sistema"]),
+        _p("P2", "Como o resultado da entrega chega ao sistema.",
+           "Como o sistema fica sabendo dos problemas de entrega: ele mesmo detecta no envio, o serviço de e-mail avisa depois, ou alguém do cartório registra?",
+           "resolvida", 1),
+        _p("P5", "Correção, cancelamento ou substituição de nomeações não foram mencionados."),
+        _p("P6", "Autenticação de quem opera o sistema não foi descrita."),
+    ]
+    e["esclarecimentos"] = [
+        {"id": "E1", "pendencia": "P1", "pergunta": e["pendencias"][0]["pergunta"], "resposta": msg_locais, "lote": 1},
+        {"id": "E2", "pendencia": "P2", "pergunta": e["pendencias"][1]["pergunta"], "resposta": msg_retorno, "lote": 1},
+    ]
+    return e
+
+
 def g04i_correto_v2():
     """G04 na camada 1, correto no contrato v2 e sem cálculo nem prestação de contas (reprova só no S4 antigo)."""
     e = g04_correto()
@@ -304,7 +336,14 @@ def dossies():
     out.append(("E11", "H2c", e, ["R"]))
 
     out.append(("E13", "G04i", g04i_correto_v2(), ["S4_antigo"]))
+
+    # Calibração do juiz final em diálogo (camada 2, consulta 40): histórico resolvido × pendência reaberta.
+    out.append(("P7", "D2b", d2b_correto(), []))
+    e = d2b_correto()  # E14: pergunta de novo a origem dos locais, que o analista respondeu
+    e["pendencias"].append(_p("P7", "Origem dos locais de votação.",
+                              "A relação de locais é mantida neste sistema ou lida de outro?", "aberta"))
+    out.append(("E14", "D2b", e, ["S4"]))
     return [(i, c, copy.deepcopy(j), alvo) for i, c, j, alvo in out]
 
 
-CALIBRACAO_EXATA = ("P5", "P6", "E8", "E9", "E10", "E11", "E12", "E13")
+CALIBRACAO_EXATA = ("P5", "P6", "E8", "E9", "E10", "E11", "E12", "E13", "P7", "E14")

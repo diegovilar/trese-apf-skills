@@ -52,6 +52,13 @@ Em `medidas` (relatadas, não reprovam): `n_perguntas` = número de pendências 
 Em `observacoes`, registre qualquer outro problema relevante que você notar (não afeta os critérios).
 """
 
+INSTRUCOES_DIALOGO = """Esta execução é um DIÁLOGO do modo interativo (camada 2): o agente mostrou uma prévia, o analista respondeu com as mensagens transcritas abaixo e o agente calculou. Avalie o resultado final pelos critérios acima, com estas regras:
+- A fonte da verdade é o subsídio original MAIS as mensagens do analista. O gabarito indicado já descreve esse conjunto. Para S5, um trecho que exista no subsídio ou numa mensagem do analista é válido; os esclarecimentos (`esclarecimentos`) devem refletir fielmente o que o analista escreveu.
+- Pendências com `situacao: "resolvida"` são histórico do diálogo (o que foi perguntado e respondido), não dúvidas abertas: não as conte como pendências proibidas do gabarito.
+- Qualquer outra pendência (sem situação, `aberta`, `perguntada` ou `sem-resposta`) que peça de novo, no todo ou em parte, o que o analista respondeu é pendência proibida e reprova S4. Uma pendência `sem-resposta` sobre algo que o analista disse não saber é legítima.
+- Em S4, as pendências obrigatórias são as do gabarito indicado (depois das respostas); as que o analista respondeu não são exigidas.
+"""
+
 CRITERIOS = ("K3", "S1", "S3", "S4", "S5")
 CRITERIOS_PREVIA = CRITERIOS + ("R",)
 
@@ -86,6 +93,23 @@ def montar_dossie(caso_id: str, invocacao: str, subsidio: str, est: Dict[str, An
     partes += ["## Convenções\n\n" + secao_convencoes(),
                f"## {rotulo_json}\n\n```json\n" + json.dumps(est, ensure_ascii=False, indent=2) + "\n```",
                f"## {rotulo_resp}\n\n" + resposta]
+    return "\n\n".join(partes)
+
+
+def montar_dossie_dialogo(invocacao: str, subsidio: str, mensagens: list, secao: str, est: Dict[str, Any],
+                          resposta: str, nota: str = "") -> str:
+    """Dossiê do juiz final para um turno de diálogo (camada 2): fonte = subsídio + mensagens reais do analista."""
+    conversa = "\n\n".join(f"**Mensagem {i} do analista:**\n\n> {m}" for i, m in enumerate(mensagens, start=1))
+    partes = [INSTRUCOES_JUIZ, INSTRUCOES_DIALOGO,
+              "## Invocação exata (primeiro turno)\n\n" + invocacao,
+              "## Subsídio original (fonte da verdade para S5, com as mensagens do analista)\n\n" + subsidio,
+              "## Mensagens do analista depois da prévia, na ordem\n\n" + conversa,
+              "## Gabarito aplicável ao resultado final\n\n" + secao_gabarito(secao)]
+    if nota:
+        partes.append("## Nota sobre este diálogo\n\n" + nota)
+    partes += ["## Convenções\n\n" + secao_convencoes(),
+               "## JSON canônico produzido pelo agente no último turno\n\n```json\n" + json.dumps(est, ensure_ascii=False, indent=2) + "\n```",
+               "## Resposta do agente no último turno\n\n" + resposta]
     return "\n\n".join(partes)
 
 

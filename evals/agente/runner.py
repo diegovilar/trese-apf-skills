@@ -8,7 +8,9 @@ O orquestrador lê a cota antes de cada uma e só então chama `executar`.
     python3 evals/agente/runner.py proxima  <rodada>          # próxima tarefa pendente (JSON)
     python3 evals/agente/runner.py executar <rodada> <tarefa> # roda UMA tarefa
     python3 evals/agente/runner.py status   <rodada>          # resumo
-    python3 evals/agente/runner.py comparar <rodada>          # relações metamórficas (sem cota)
+    python3 evals/agente/runner.py comparar <rodada>          # relações metamórficas e de diálogo (sem cota)
+    python3 evals/agente/runner.py preparar <rodada> dialogo [--casos D2a,...] [--reps N]   # camada 2
+    python3 evals/agente/runner.py limpar-sessoes <rodada>    # camada 2: guarda e apaga as sessões do Claude
 
 Resultados em evals/agente/resultados/<rodada>/.
 """
@@ -24,6 +26,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import uuid
 import zipfile
 from collections import Counter
 from decimal import Decimal
@@ -148,6 +151,22 @@ def preparar(rodada: str, tipo: str, reps: int, so: Optional[List[str]]) -> None
         tarefas["sonda-exec-skill"] = {"tipo": "sonda-exec", "variante": "skill", "consome": "claude"}
         tarefas["sonda-exec-contexto"] = {"tipo": "sonda-exec", "variante": "contexto", "consome": "claude"}
         tarefas["sonda-juiz"] = {"tipo": "sonda-juiz", "consome": "codex"}
+    elif tipo == "dialogo":
+        for r in range(1, reps + 1):
+            for did in so or list(C.DIALOGOS):
+                d = C.DIALOGOS[did]
+                sessao = str(uuid.uuid4())
+                anterior = None
+                for k in range(1, len(d["turnos"]) + 2):
+                    tid = f"exec-{did}-r{r}-t{k}"
+                    tarefas[tid] = {"tipo": "exec", "caso": did, "dialogo": did, "turno": k, "rep": r,
+                                    "sessao": sessao, "consome": "claude"}
+                    if anterior:
+                        tarefas[tid]["depende"] = anterior
+                    if k > 1 and d["turnos"][k - 2].get("juiz"):
+                        tarefas[f"juiz-{did}-r{r}-t{k}"] = {"tipo": "juiz", "caso": did, "dialogo": did, "turno": k,
+                                                            "rep": r, "consome": "codex", "depende": tid}
+                    anterior = tid
     elif tipo == "calibracao":
         for did, caso, _, alvo in calibracao.dossies():
             if so and did not in so:
@@ -196,24 +215,53 @@ def proxima(rodada: str) -> Dict[str, Any]:
 # --------------------------------------------------------------------------- executor
 
 from verificador import (chamadas_apf, congelar, hash_verificador, ler_trace, multiconjunto,  # noqa: E402
-                         sha_arquivo, verificar_snapshot)
+                         relacao_correcao, relacao_preservacao, relacao_segundo_lote, sha_arquivo,
+                         verificar_snapshot)
 
 
-def executar_exec(rodada: str, tid: str, t: Dict[str, Any]) -> Dict[str, Any]:
-    c = C.resolver(t["caso"])
+def caso_da_tarefa(t: Dict[str, Any]) -> Dict[str, Any]:
+    return C.caso_do_turno(t["dialogo"], t["turno"]) if t.get("dialogo") else C.resolver(t["caso"])
+
+
+def herdados_do_dialogo(rodada: str, estado: Dict[str, Any], t: Dict[str, Any]) -> List[str]:
+    """Temporários criados nos turnos anteriores do mesmo diálogo (continuam permitidos e são recopiados)."""
+    out: List[str] = []
+    for k in range(1, t["turno"]):
+        m = dir_rodada(rodada) / f"exec-{t['dialogo']}-r{t['rep']}-t{k}" / "snapshot" / "manifesto.json"
+        if m.exists():
+            for p in json.loads(m.read_text(encoding="utf-8"))["temporarios"].values():
+                if p not in out:
+                    out.append(p)
+    return out
+
+
+def executar_exec(rodada: str, tid: str, t: Dict[str, Any], estado: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    c = caso_da_tarefa(t)
     saida = dir_rodada(rodada) / tid
     saida.mkdir(exist_ok=True)
-    prompt, precisa_arquivo = montar_invocacao(c)
-    ws = preparar_ws(tid, c["subsidio"] if precisa_arquivo else None)
+    herdados: List[str] = []
+    if t.get("dialogo") and t["turno"] > 1:  # camada 2: mesmo workspace e mesma sessão do turno anterior
+        anterior = estado["tarefas"][t["depende"]]
+        ws = Path(anterior["ws"])
+        prompt = C.DIALOGOS[t["dialogo"]]["turnos"][t["turno"] - 2]["msg"]
+        herdados = herdados_do_dialogo(rodada, estado, t)
+    else:
+        prompt, precisa_arquivo = montar_invocacao(c)
+        ws = preparar_ws(tid, c["subsidio"] if precisa_arquivo else None)
     hash_antes = sha_arvore(ws / ".claude" / "skills" / "nesma-apf-estimator")
     desde = dt.datetime.now().timestamp() - 1
     t.update({"ws": str(ws), "prompt": prompt, "inicio": agora(), "hash_skill": hash_antes})
-    r = rodar_claude(ws, prompt, saida)
+    if t.get("dialogo"):
+        r = rodar_claude(ws, prompt, saida, sessao=t["sessao"], retomar=t["turno"] > 1)
+    else:
+        r = rodar_claude(ws, prompt, saida)
     ate = dt.datetime.now().timestamp() + 1
     t.update({"fase": "executado", "codigo": r["codigo"], "segundos": r["segundos"], "janela": [desde, ate]})
     tr = ler_trace(saida / "trace.jsonl")
     (saida / "resposta_final.md").write_text(tr["texto_final"] or "", encoding="utf-8")
-    congelar(ws, saida, desde, ate, hash_antes)
+    congelar(ws, saida, desde, ate, hash_antes, herdados)
+    if t.get("dialogo") and (tr["init"] or {}).get("session_id") not in (None, t["sessao"]):
+        t["sessao_observada"] = tr["init"].get("session_id")
     aplicar_verificacao(c, saida, t)
     t.update({"custo_usd": (tr["result"] or {}).get("total_cost_usd"), "uso": (tr["result"] or {}).get("usage"),
               "init": {k: tr["init"].get(k) for k in ("model", "apiKeySource", "permissionMode", "tools", "skills", "cwd")}})
@@ -258,11 +306,24 @@ def executar_sonda_exec(rodada: str, tid: str, t: Dict[str, Any]) -> Dict[str, A
 
 # --------------------------------------------------------------------------- juiz
 
+def mensagens_do_dialogo(did: str, ate_turno: int) -> Tuple[str, List[str]]:
+    """(invocação do turno 1, mensagens do analista nos turnos 2..ate_turno)."""
+    d = C.DIALOGOS[did]
+    invocacao, _ = montar_invocacao(C.resolver(d["base"]))
+    return invocacao, [d["turnos"][k - 2]["msg"] for k in range(2, ate_turno + 1)]
+
+
 def dossie_da_tarefa(rodada: str, t: Dict[str, Any], estado: Dict[str, Any]) -> str:
     dep = estado["tarefas"][t["depende"]]
     pasta_exec = dir_rodada(rodada) / t["depende"]
     est = json.loads((pasta_exec / "estimativa.json").read_text(encoding="utf-8"))
     resposta = (pasta_exec / "resposta_final.md").read_text(encoding="utf-8")
+    if t.get("dialogo"):
+        d = C.DIALOGOS[t["dialogo"]]
+        invocacao, mensagens = mensagens_do_dialogo(t["dialogo"], t["turno"])
+        cfg = d["turnos"][t["turno"] - 2]["juiz"]
+        return J.montar_dossie_dialogo(invocacao, C.CASOS[d["base"]]["subsidio"], mensagens, cfg["secao"],
+                                       est, resposta, cfg.get("nota", ""))
     c = C.CASOS[t["caso"]]
     return montar_dossie(t["caso"], dep["prompt"], c["subsidio"], est, resposta, c.get("nota_juiz", ""))
 
@@ -272,8 +333,9 @@ def executar_juiz(rodada: str, tid: str, t: Dict[str, Any], estado: Dict[str, An
     saida.mkdir(exist_ok=True)
     dossie = dossie_da_tarefa(rodada, t, estado)
     t["hash_dossie"] = hashlib.sha256(dossie.encode()).hexdigest()[:16]
-    r = rodar_codex(dossie, saida, schema=J.schema_de(t["caso"]))
-    v = interpretar_veredito(r["texto"], previa=J.e_previa(t["caso"]))
+    previa = False if t.get("dialogo") else J.e_previa(t["caso"])
+    r = rodar_codex(dossie, saida, schema=J.schema_de(None if t.get("dialogo") else t["caso"]))
+    v = interpretar_veredito(r["texto"], previa=previa)
     if r["acoes"]:
         t.update({"fase": "invalido", "motivo": "juiz usou ferramentas: " + ", ".join(sorted(set(r["acoes"])))})
     elif v is None:
@@ -283,9 +345,39 @@ def executar_juiz(rodada: str, tid: str, t: Dict[str, Any], estado: Dict[str, An
     return t
 
 
+def executar_calib_dialogo(rodada: str, tid: str, t: Dict[str, Any], did: str, est: Dict[str, Any],
+                           alvo: List[str]) -> Dict[str, Any]:
+    """Calibração do juiz final em diálogo: dossiê do primeiro turno com juiz do diálogo."""
+    erros = apf.validar(est) or apf.validar_final(est)
+    if erros:
+        t.update({"fase": "invalido", "motivo": "dossiê de calibração inválido: " + "; ".join(erros)})
+        return t
+    d = C.DIALOGOS[did]
+    k = next(i + 2 for i, x in enumerate(d["turnos"]) if x.get("juiz"))
+    invocacao, mensagens = mensagens_do_dialogo(did, k)
+    cfg = d["turnos"][k - 2]["juiz"]
+    resposta = apf.render_md(est, apf.calcular(est), "chat")
+    saida = dir_rodada(rodada) / tid
+    saida.mkdir(exist_ok=True)
+    r = rodar_codex(J.montar_dossie_dialogo(invocacao, C.CASOS[d["base"]]["subsidio"], mensagens, cfg["secao"],
+                                            est, resposta, cfg.get("nota", "")), saida, schema=J.schema_de(None))
+    v = interpretar_veredito(r["texto"], previa=False)
+    if r["acoes"]:
+        t.update({"fase": "invalido", "motivo": "juiz usou ferramentas: " + ", ".join(sorted(set(r["acoes"])))})
+    elif v is None:
+        t.update({"fase": "invalido", "motivo": f"veredito ilegível (código {r['codigo']}): {r['stderr'][-300:]}"})
+    else:
+        reprovados = reprovados_do_veredito(v, False)
+        t.update({"fase": "julgado", "veredito": v, "reprovados": reprovados,
+                  "acertou": sorted(reprovados) == sorted(alvo)})
+    return t
+
+
 def executar_calib(rodada: str, tid: str, t: Dict[str, Any]) -> Dict[str, Any]:
     dossies = {d[0]: d for d in calibracao.dossies()}
     _, caso, est, alvo = dossies[t["dossie"]]
+    if caso in C.DIALOGOS:
+        return executar_calib_dialogo(rodada, tid, t, caso, est, alvo)
     previa = J.e_previa(caso)
     erros = apf.validar(est) or (apf.validar_previa(est) if previa else apf.validar_final(est))
     if erros:
@@ -347,7 +439,7 @@ def executar(rodada: str, tid: str) -> None:
     t["inicio"] = agora()
     try:
         if t["tipo"] == "exec":
-            executar_exec(rodada, tid, t)
+            executar_exec(rodada, tid, t, estado)
         elif t["tipo"] == "juiz":
             executar_juiz(rodada, tid, t, estado)
         elif t["tipo"] == "calib":
@@ -425,9 +517,10 @@ def reverificar(rodada: str, migrar_de: Optional[str]) -> None:
                 continue
             ini = dt.datetime.fromisoformat(t["inicio"]).timestamp() - 2
             fim = dt.datetime.fromisoformat(t["fim"]).timestamp() + 2
-            congelar(ws, saida, ini, fim, t.get("hash_skill") or sha_arvore(SKILL))
+            congelar(ws, saida, ini, fim, t.get("hash_skill") or sha_arvore(SKILL),
+                     herdados_do_dialogo(rodada, estado, t) if t.get("dialogo") else None)
         antes = (t["fase"], t.get("tem_json"))
-        aplicar_verificacao(C.resolver(t["caso"]), saida, t)
+        aplicar_verificacao(caso_da_tarefa(t), saida, t)
         relatorio[tid] = {"antes": antes[0], "depois": t["fase"], "criterios": {k: x.get("ok") for k, x in t["criterios"].items()}}
     for tid, t in estado["tarefas"].items():
         if t["tipo"] != "juiz":
@@ -482,7 +575,7 @@ def comparar(rodada: str) -> None:
     estado = carregar_estado(rodada)
     out = {}
     for nome, (a, b, rel) in C.PARES.items():
-        for r in sorted({t["rep"] for t in estado["tarefas"].values() if t["tipo"] == "exec"}):
+        for r in sorted({t["rep"] for t in estado["tarefas"].values() if t["tipo"] == "exec" and not t.get("dialogo")}):
             pa, pb = dir_rodada(rodada) / f"exec-{a}-r{r}" / "estimativa.json", dir_rodada(rodada) / f"exec-{b}-r{r}" / "estimativa.json"
             if not (pa.exists() and pb.exists()):
                 out[f"{nome}-r{r}"] = {"ok": None, "motivo": "faltam resultados"}
@@ -498,8 +591,32 @@ def comparar(rodada: str) -> None:
                 ok = ma == mb and (ca["total_min"], ca["total_max"]) == (cb["total_min"], cb["total_max"])
             out[f"{nome}-r{r}"] = {"ok": ok, "relacao": rel,
                                    "a": [str(ca["total_min"]), str(ca["total_max"])], "b": [str(cb["total_min"]), str(cb["total_max"])]}
+    out.update(comparar_dialogos(rodada, estado))
     (dir_rodada(rodada) / "metamorficos.json").write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(out, ensure_ascii=False, indent=1))
+
+RELACOES_DIALOGO = {  # relação -> (turno A, turno B, função)
+    "preservacao": (1, 2, relacao_preservacao),
+    "segundo_lote": (1, 2, relacao_segundo_lote),
+    "correcao": (2, 3, relacao_correcao),
+}
+
+
+def comparar_dialogos(rodada: str, estado: Dict[str, Any]) -> Dict[str, Any]:
+    """Relações entre turnos da camada 2, sobre os JSONs congelados de cada turno (sem cota)."""
+    out: Dict[str, Any] = {}
+    reps = sorted({(t["dialogo"], t["rep"]) for t in estado["tarefas"].values() if t.get("dialogo")})
+    for did, r in reps:
+        nome = C.DIALOGOS[did]["relacao"]
+        ka, kb, f = RELACOES_DIALOGO[nome]
+        pa = dir_rodada(rodada) / f"exec-{did}-r{r}-t{ka}" / "estimativa.json"
+        pb = dir_rodada(rodada) / f"exec-{did}-r{r}-t{kb}" / "estimativa.json"
+        if not (pa.exists() and pb.exists()):
+            out[f"{did}-r{r}"] = {"ok": None, "relacao": nome, "motivo": "faltam resultados"}
+            continue
+        out[f"{did}-r{r}"] = {"relacao": nome, **f(json.loads(pa.read_text()), json.loads(pb.read_text()))}
+    return out
+
 
 def repetir(rodada: str, tid: str) -> None:
     """Repete uma execução inválida numa repetição nova do mesmo caso (README: inválidas são
@@ -512,6 +629,9 @@ def repetir(rodada: str, tid: str) -> None:
         sys.exit(f"só se repete execução inválida; {tid} é '{t['tipo']}' em '{t['fase']}'")
     if t.get("repetida_por"):
         sys.exit(f"{tid} já foi repetida por {t['repetida_por']}")
+    if t.get("dialogo"):
+        sys.exit("turno de diálogo não se repete (retomaria uma sessão já avançada); registre a inválida e "
+                 "prepare uma repetição nova do diálogo inteiro")
     cid = t["caso"]
     r = 1 + max(x["rep"] for x in estado["tarefas"].values() if x["tipo"] == "exec" and x.get("caso") == cid)
     novo = f"exec-{cid}-r{r}"
@@ -525,15 +645,40 @@ def repetir(rodada: str, tid: str) -> None:
     print(json.dumps({"repete": tid, "nova": novo}, ensure_ascii=False))
 
 
+def limpar_sessoes(rodada: str) -> None:
+    """Camada 2: guarda no último turno de cada diálogo a transcrição da sessão do Claude (evidência) e apaga só as
+    sessões desta rodada em ~/.claude/projects. Rode depois de todos os turnos e de `comparar`."""
+    estado = carregar_estado(rodada)
+    projetos = Path.home() / ".claude" / "projects"
+    ultimos: Dict[str, str] = {}
+    for tid, t in estado["tarefas"].items():
+        if t.get("dialogo") and t["tipo"] == "exec" and t["fase"] != "pendente":
+            if t["sessao"] not in ultimos or t["turno"] > estado["tarefas"][ultimos[t["sessao"]]]["turno"]:
+                ultimos[t["sessao"]] = tid
+    relatorio = {}
+    for sessao, tid in ultimos.items():
+        achados = list(projetos.glob(f"*/{sessao}.jsonl")) + [p for p in projetos.glob(f"*/{sessao}") if p.is_dir()]
+        for p in achados:
+            destino = dir_rodada(rodada) / tid / ("sessao.jsonl" if p.is_file() else "sessao")
+            if p.is_file():
+                shutil.copy2(p, destino)
+                p.unlink()
+            else:
+                shutil.copytree(p, destino, dirs_exist_ok=True)
+                shutil.rmtree(p)
+        relatorio[sessao] = {"turno_final": tid, "removidos": [str(p) for p in achados]}
+    print(json.dumps(relatorio, ensure_ascii=False, indent=1))
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     sp = sub.add_parser("preparar")
     sp.add_argument("rodada")
-    sp.add_argument("tipo", choices=("sondas", "calibracao", "curta", "completa"))
+    sp.add_argument("tipo", choices=("sondas", "calibracao", "curta", "completa", "dialogo"))
     sp.add_argument("--casos", help="lista separada por vírgula")
     sp.add_argument("--reps", type=int, help="repetições (padrão: 5 na completa, 1 nas demais)")
-    for nome in ("proxima", "status", "comparar"):
+    for nome in ("proxima", "status", "comparar", "limpar-sessoes"):
         sub.add_parser(nome).add_argument("rodada")
     sp = sub.add_parser("reverificar")
     sp.add_argument("rodada")
@@ -558,6 +703,8 @@ def main() -> None:
         status(a.rodada)
     elif a.cmd == "comparar":
         comparar(a.rodada)
+    elif a.cmd == "limpar-sessoes":
+        limpar_sessoes(a.rodada)
     elif a.cmd == "reverificar":
         reverificar(a.rodada, a.migrar_de)
 

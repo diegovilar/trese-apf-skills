@@ -232,3 +232,50 @@ def resolver(caso_id):
         if isinstance(c.get(chave), str):
             c[chave] = CASOS[c[chave]][chave]
     return c
+
+
+# ---------------------------------------------------------------- camada 2 mínima (D60 item 3; consultas 40 e 41)
+# Diálogos roteirizados, sem simulador: cada turno depois do primeiro é uma mensagem fixa do analista.
+# O primeiro turno é a invocação do caso-base (camada 1, termina na prévia). "espera" diz o que o turno deve
+# produzir: "previa" (nova prévia, sem PF) ou "final" (resultado calculado). Testes parciais: não substituem o
+# diálogo da D44 nem a equivalência entre modos, que continua pendente.
+
+D2B_FATOS = ("A relação de locais de votação é mantida no sistema de locais da Justiça Eleitoral. O serviço de comunicação "
+             "avisará o sistema quando houver devolução do e-mail ou confirmação de entrega, e essas respostas devem "
+             "atualizar a situação da convocação na nomeação. Não sei o resto. calcular")
+D2D_CORRECAO = "Correção: não haverá lista de mesários ausentes por local."
+D2C_PARCIAL = ("As solicitações são registradas e guardadas neste sistema. O servidor pode registrar, alterar, cancelar e "
+               "consultar as próprias solicitações. A chefia imediata aprova ou devolve a solicitação, e o sistema registra "
+               "a decisão. Não sei como o servidor é identificado nem de onde vêm os dados dele.")
+
+NOTA_D2B = ("Diálogo D2b: o pedido original é o do H2; a mensagem do analista acrescenta exatamente as duas frases que o H2c "
+            "tem a mais (origem dos locais e retorno da entrega). Avalie o resultado final pelo gabarito do H2c, inclusive as "
+            "decomposições alternativas que ele aceita (envio autônomo ou absorvido; consulta dos locais própria ou absorvida). "
+            "A autonomia do envio não foi respondida e pode continuar como hipótese.")
+
+DIALOGOS = {
+    "D2a": {"base": "G04i", "relacao": "preservacao",
+            "turnos": [{"msg": "Não sei para todas. calcular", "espera": "final"}]},
+    "D2b": {"base": "H2", "relacao": "correcao",
+            "turnos": [{"msg": D2B_FATOS, "espera": "final", "juiz": {"secao": "H2c", "nota": NOTA_D2B},
+                        # Totais aceitos pelo gabarito do H2c: decomposições (a)/(b) e consulta dos locais própria ou
+                        # absorvida; com a autonomia do envio como hipótese, o máximo fica 5 PF acima do mínimo.
+                        "totais": [(37, 37), (41, 41), (42, 42), (46, 46), (37, 42), (41, 46)]},
+                       {"msg": D2D_CORRECAO, "espera": "final"}]},  # D2d: correção depois do resultado
+    "D2c": {"base": "G04i", "relacao": "segundo_lote",
+            "turnos": [{"msg": D2C_PARCIAL, "espera": "previa"}, {"msg": "calcular", "espera": "final"}]},
+}
+
+
+def caso_do_turno(did, k):
+    """Caso efetivo para verificar o turno k (1 = invocação do caso-base) de um diálogo."""
+    d = DIALOGOS[did]
+    c = resolver(d["base"])
+    if k == 1:
+        return c
+    turno = d["turnos"][k - 2]
+    c["previa"] = turno["espera"] == "previa"
+    c.pop("nota_juiz", None)
+    if turno.get("totais"):
+        c["totais"] = [(D(a), D(b)) for a, b in turno["totais"]]
+    return c

@@ -232,8 +232,11 @@ def arquivos_criados(arquivos: Path) -> List[str]:
 
 # --------------------------------------------------------------------------- snapshot
 
-def congelar(ws: Path, saida: Path, desde: float, ate: float, hash_skill_antes: str) -> Dict[str, Any]:
-    """Copia o diretório da execução (sem a skill) e os temporários criados na janela para o snapshot."""
+def congelar(ws: Path, saida: Path, desde: float, ate: float, hash_skill_antes: str,
+             herdados: Optional[List[str]] = None) -> Dict[str, Any]:
+    """Copia o diretório da execução (sem a skill) e os temporários criados na janela para o snapshot.
+    `herdados` (camada 2): temporários criados em turnos anteriores do mesmo diálogo; são copiados de novo no estado
+    deste turno e continuam permitidos na auditoria."""
     snap = saida / "snapshot"
     if snap.exists():
         shutil.rmtree(snap)
@@ -253,6 +256,12 @@ def congelar(ws: Path, saida: Path, desde: float, ate: float, hash_skill_antes: 
     alvo_saida = str(saida.resolve())
     novos = [t for t in temporarios_novos(desde, ate)
              if not (alvo_saida + "/").startswith(str(t.resolve()) + "/")]  # nunca a própria pasta de saída
+    vistos = {str(t) for t in novos}
+    for h in herdados or []:
+        if h not in vistos and Path(h).exists():
+            novos.append(Path(h))
+            vistos.add(h)
+    manifesto["herdados"] = list(herdados or [])
     for i, t in enumerate(sorted(novos, key=str)):
         destino = snap / "tmp" / str(i)
         manifesto["temporarios"][str(i)] = str(t)
@@ -461,3 +470,80 @@ def _verificar_previa(c: Dict[str, Any], v: Dict[str, Any], snap: Path, tr: Dict
     v["lote"] = {"numero": n, "perguntas": len(perguntas), "abertas_restantes": abertas,
                  "pendencias": len(est.get("pendencias", []))}
     return v
+
+
+# --------------------------------------------------------------------------- camada 2: relações entre turnos
+
+def _norm(t: Optional[str]) -> str:
+    return re.sub(r"\s+", " ", (t or "").casefold()).strip()
+
+
+def _modelo(est: Dict[str, Any]) -> Dict[str, Any]:
+    """Modelo funcional independente de IDs: funções por (tipo, operação, nome) com a hipótese de que dependem
+    (pela descrição), e hipóteses por descrição, com grupo e exigências também pela descrição."""
+    hip = {h["id"]: h for h in est.get("hipoteses", [])}
+    desc = {hid: _norm(h.get("descricao")) for hid, h in hip.items()}
+    funcoes = sorted((f["tipo"], f.get("operacao") or "", _norm(f["nome"]), desc.get(f.get("hipotese"), ""))
+                     for f in est["funcoes"])
+    hipoteses = sorted((desc[hid], _norm(h.get("grupo")), tuple(sorted(desc.get(r, r) for r in h.get("requer") or [])))
+                       for hid, h in hip.items())
+    return {"funcoes": funcoes, "hipoteses": hipoteses}
+
+
+def relacao_preservacao(previa: Dict[str, Any], final: Dict[str, Any]) -> Dict[str, Any]:
+    """D2a: depois de "não sei" em tudo, o resultado final tem o mesmo modelo da prévia (mesmas funções, hipóteses,
+    vínculos, cenários e cobertura), tolerando renumeração; as perguntas do lote viram `sem-resposta`."""
+    mp, mf = _modelo(previa), _modelo(final)
+    cp, cf = apf.calcular(previa), apf.calcular(final)
+    lote = {p["id"] for p in previa.get("pendencias", []) if p.get("situacao") == "perguntada"}
+    situacao_final = {p["id"]: p.get("situacao") for p in final.get("pendencias", [])}
+    r = {"funcoes_iguais": mp["funcoes"] == mf["funcoes"],
+         "hipoteses_iguais": mp["hipoteses"] == mf["hipoteses"],
+         "totais_iguais": (cp["total_min"], cp["total_max"]) == (cf["total_min"], cf["total_max"]),
+         "cobertura_igual": previa["cobertura"].get("status") == final["cobertura"].get("status"),
+         "lote_sem_resposta": all(situacao_final.get(pid) == "sem-resposta" for pid in lote),
+         "totais": [str(cp["total_min"]), str(cp["total_max"]), str(cf["total_min"]), str(cf["total_max"])]}
+    if not r["funcoes_iguais"]:
+        r["so_na_previa"] = [x for x in mp["funcoes"] if x not in mf["funcoes"]]
+        r["so_no_final"] = [x for x in mf["funcoes"] if x not in mp["funcoes"]]
+    r["ok"] = all(r[k] for k in ("funcoes_iguais", "hipoteses_iguais", "totais_iguais", "cobertura_igual", "lote_sem_resposta"))
+    return r
+
+
+def relacao_segundo_lote(previa1: Dict[str, Any], previa2: Dict[str, Any]) -> Dict[str, Any]:
+    """D2c, turno 2 (respostas parciais, sem "calcular"): a nova prévia registra as respostas, não repete pergunta
+    do lote 1 e traz o lote 2 ou o pedido de confirmação. Sem lote 2, o percurso fica registrado como não exercitado."""
+    lote1 = {p["id"] for p in previa1.get("pendencias", []) if p.get("situacao") == "perguntada"}
+    p2 = {p["id"]: p for p in previa2.get("pendencias", [])}
+    n, perguntas, _ = apf.lote_atual(previa2)
+    repetidas = sorted(pid for pid in lote1 if p2.get(pid, {}).get("situacao") == "perguntada")
+    r = {"lote1_fechado": all(p2.get(pid, {}).get("situacao") in ("resolvida", "sem-resposta") for pid in lote1 if pid in p2),
+         "sem_repeticao": not repetidas, "repetidas": repetidas,
+         "com_esclarecimentos": bool(previa2.get("esclarecimentos")),
+         "com_sem_resposta": any(p.get("situacao") == "sem-resposta" for p in p2.values()),
+         "segundo_lote": bool(perguntas) and n >= 2, "lote": n if perguntas else None}
+    r["percurso"] = "segundo lote" if r["segundo_lote"] else "confirmação (segundo lote não exercitado)"
+    r["ok"] = all(r[k] for k in ("lote1_fechado", "sem_repeticao", "com_esclarecimentos", "com_sem_resposta"))
+    return r
+
+
+def relacao_correcao(antes: Dict[str, Any], depois: Dict[str, Any]) -> Dict[str, Any]:
+    """D2d: a correção "não haverá lista de mesários ausentes por local" retira exatamente uma CE e 4 PF nos dois
+    extremos, sem mexer no resto do modelo."""
+    ca, cd = apf.calcular(antes), apf.calcular(depois)
+    fa, fd = _modelo(antes)["funcoes"], _modelo(depois)["funcoes"]
+    restantes = list(fd)
+    retiradas = []
+    for x in fa:
+        if x in restantes:
+            restantes.remove(x)
+        else:
+            retiradas.append(x)
+    r = {"menos_4_nos_dois_extremos": (ca["total_min"] - cd["total_min"], ca["total_max"] - cd["total_max"]) == (4, 4),
+         "uma_ce_retirada": len(retiradas) == 1 and retiradas[0][0] == "CE",
+         "retirada_e_a_lista_de_ausentes": len(retiradas) == 1 and "ausent" in retiradas[0][2],
+         "nada_acrescentado": not restantes, "retiradas": retiradas, "acrescentadas": restantes,
+         "totais": [str(ca["total_min"]), str(ca["total_max"]), str(cd["total_min"]), str(cd["total_max"])]}
+    r["ok"] = all(r[k] for k in ("menos_4_nos_dois_extremos", "uma_ce_retirada", "retirada_e_a_lista_de_ausentes",
+                                 "nada_acrescentado"))
+    return r
