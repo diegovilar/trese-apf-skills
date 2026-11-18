@@ -445,6 +445,17 @@ class TestPerfis(unittest.TestCase):
             for t, d in apf.legenda(e, c, "chat"):
                 self.assertIn((t, d), apf.LEGENDA)
 
+    def test_fecho_de_correcao_so_no_chat(self):
+        for e in (fx.g01(), fx.g03b(), fx.g04()):
+            c = apf.calcular(e)
+            chat = apf.render_md(e, c, "chat")
+            self.assertTrue(chat.rstrip().endswith(apf.FECHO_CORRECAO))
+            self.assertNotIn(apf.FECHO_CORRECAO, apf.render_md(e, c, "arquivo"))
+            for perfil in ("chat", "arquivo"):
+                self.assertNotIn(apf.FECHO_CORRECAO, apf.render_txt(e, c, perfil))
+            z = zipfile.ZipFile(io.BytesIO(apf.gerar_xlsx(e, c)))
+            self.assertFalse(any(apf.FECHO_CORRECAO in z.read(n).decode("utf-8") for n in z.namelist()))
+
     def test_cli_padrao_por_perfil(self):
         with tempfile.TemporaryDirectory() as d:
             ok = os.path.join(d, "ok.json")

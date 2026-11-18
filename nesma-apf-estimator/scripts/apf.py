@@ -72,6 +72,8 @@ FATORES_PERMITIDOS_DADOS = sorted({f for _, f in TABELA_DADOS} | {FATOR_DADOS_AC
 FATORES_PERMITIDOS_TRANSACOES = sorted({f for linha in TABELA_TRANSACOES for f in linha})
 
 ROTULO_HIBRIDO = "estimativa híbrida: pesos NESMA estimada + fatores EFPA"
+FECHO_CORRECAO = ("Para corrigir algo, diga o item (ex.: F05, H1, P3) e a correção: a estimativa é recalculada e "
+                  "pode ser exportada de novo.")
 AVISO_PENDENCIAS = ("A lista de pendências não é exaustiva. Revise os requisitos e fluxos específicos do domínio "
                     "antes de usar a estimativa na análise de viabilidade.")
 CATEGORIAS_NAO_CONTADOS = {
@@ -1029,6 +1031,9 @@ def render_md(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo"
     for termo, desc in legenda(est, calc, perfil):
         out.append(f"- **{termo}:** {desc}")
     out.append("")
+    if perfil == "chat":
+        out.append(FECHO_CORRECAO)
+        out.append("")
     return "\n".join(out)
 
 
@@ -1164,9 +1169,9 @@ TIPO_NEGOCIO = {
 }
 OPERACAO_NEGOCIO = {"I": "nova", "A": "alterada", "E": "excluída"}
 PREVIA_INTRO = "Prévia sem pontos de função: confira a lista e responda no fim."
-PREVIA_FECHO_PERGUNTAS = ("Responda pelo número da pergunta (ex.: \"1: sim; 3: não sei\"); observações são bem-vindas. "
-                          "\"Não sei\" é aceito: a dúvida fica registrada como pendência. Para calcular com o que já se "
-                          "sabe, responda \"calcular\". Se algo na lista estiver errado ou faltando, diga também.")
+PREVIA_FECHO_PERGUNTAS = ("Responda às perguntas; por texto, use o número (ex.: \"1: sim; 3: não sei\"). Observações são "
+                          "bem-vindas. \"Não sei\" é aceito: a dúvida fica registrada como pendência. Para calcular com o "
+                          "que já se sabe, responda \"calcular\". Se algo na lista estiver errado ou faltando, diga também.")
 PREVIA_FECHO_SEM_PERGUNTAS = ("Não identifiquei perguntas adicionais. Confirma a lista para calcular? "
                               "Se algo estiver errado ou faltando, diga.")
 

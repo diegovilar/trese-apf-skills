@@ -109,7 +109,7 @@ Sem pedido explícito de configuração, trate a mensagem inteira como subsídio
 **Etapa 5: memória de cálculo e premissas.** Rode `apf.py render --format md`, sem `--out` (o script usa o perfil de chat, com a legenda só dos termos que aparecem no resultado), e **copie a saída inteira para a sua resposta**, exatamente como o script a imprimiu: resumo executivo, memória de cálculo, hipóteses e cenários, premissas, itens não contados, pendências e legenda. A saída de um comando não chega ao usuário por si só (fica recolhida no resultado da ferramenta); só o que está na sua mensagem é lido. Não resuma, não reescreva números nem palavras (nem para "corrigir" a concordância) e não diga "veja acima". Depois:
 
 - se `saida` foi informado, exporte nesse formato (antes ou depois de mostrar a tabela; o que não pode faltar é a tabela na sua mensagem);
-- senão, pergunte: "Quer exportar? `.md`, `.txt`, `.xlsx` ou nenhum." e exporte o que for escolhido;
+- senão, pergunte pelo canal (2B), com seleção múltipla: "Quer exportar? `.md`, `.txt`, `.xlsx` ou nenhum." As opções são `.md`, `.txt`, `.xlsx` e "Nenhum", que não se combina com as outras. Exporte cada formato escolhido, todos do mesmo JSON; com "Nenhum", não exporte;
 - exporte com `apf.py render --format <fmt> --out <arquivo>` (nome e local: 05 §4) e informe o caminho. O script nunca sobrescreve: se sair com código 3, use o próximo sufixo `-2`, `-3`….
 
 ## 2A. Modo interativo (`interativo=sim`, padrão)
@@ -118,16 +118,30 @@ Quem responde é o analista de TI que faz a análise de viabilidade. Ele não pr
 
 1. **Monte o JSON** das etapas 1 a 3A e dê `pergunta` (e, se ajudar, `opcoes`) só às pendências cuja resposta pode mudar a contagem (03 §10). Todas começam com `situacao: "aberta"`. Pendência sem efeito na contagem fica sem pergunta.
 2. **Escolha o lote:** as próximas perguntas abertas, até 7, cada uma sobre um único assunto, na ordem do roteiro (fronteira e origem dos dados primeiro). Marque-as `perguntada` com o número do lote. Não invente perguntas para preencher o lote.
-3. **Mostre a prévia:** rode `apf.py check` e depois `apf.py render --format previa`, e copie a saída inteira para a sua resposta, sem reescrever (como na etapa 5). A prévia não tem PF: **não mostre números de pontos de função, totais nem cenários, e não exporte nada** antes de o analista confirmar ou pedir para calcular. Encerre a mensagem na prévia e espere a resposta.
+3. **Mostre a prévia e pergunte:** rode `apf.py check` e depois `apf.py render --format previa`, e copie a saída inteira para a sua resposta, sem reescrever (como na etapa 5). A prévia não tem PF: **não mostre números de pontos de função, totais nem cenários, e não exporte nada** antes de o analista confirmar ou pedir para calcular. Depois da prévia, faça as perguntas do lote pelo canal da seção 2B e só então espere a resposta.
 4. **Registre as respostas:** para cada pergunta do lote, crie um esclarecimento (`E1`…) com a resposta e marque a pendência `resolvida`, ou `sem-resposta` se ele disse "não sei" ou não respondeu. Incorpore **só o que foi respondido**: "sim, há pagamento" sem dizer se este sistema o executa não cria função; gera uma pendência mais estreita. Uma resposta pode confirmar ou retirar hipóteses, criar funções (com `esclarecimentos: ["E1"]`) ou abrir perguntas novas. Correções do analista à lista também viram esclarecimentos. Rode `check` de novo: ele revalida grupos e `requer`.
 5. **Próximo lote:** se ainda houver perguntas abertas e o analista não pediu para calcular, volte ao passo 2. Pergunta `sem-resposta` não é repetida, a menos que uma resposta nova a torne respondível (então crie outra pendência). Sem perguntas restantes, a prévia fecha pedindo confirmação da lista.
 6. **Calcular:** quando o analista confirmar ou disser "calcular", marque as perguntas ainda `perguntada` como `sem-resposta` e siga as etapas 4 e 5. As abertas que nunca foram apresentadas continuam como pendências.
 
-**Ferramenta de perguntas:** se esta execução tiver uma ferramenta própria para perguntar ao usuário, use-a para as perguntas do lote, depois de mostrar a prévia; se ela tiver limite de perguntas por chamada, divida o mesmo lote em chamadas seguidas, sem criar, juntar nem cortar perguntas. Sem essa ferramenta, as perguntas numeradas da prévia bastam: o analista responde na mensagem seguinte. A lista de funcionalidades vai sempre em texto, na prévia.
+## 2B. Canal das perguntas
+
+Vale para toda pergunta ao analista: tipo e fronteira (etapa 1), lotes da prévia (2A), exportação (etapa 5) e correção ambígua (2C). A mensagem segue sempre esta ordem:
+
+1. **Texto primeiro:** o que o analista precisa ler para responder (a prévia ou o resultado, copiados), quando houver. Perguntas de tipo e fronteira vêm antes de qualquer prévia.
+2. **Pergunta pelo canal:** se esta execução tiver uma ferramenta própria para perguntar ao usuário, use-a; se ela tiver limite de perguntas por chamada, divida o mesmo conjunto em chamadas seguidas, sem criar, juntar nem cortar perguntas. Use seleção múltipla quando mais de uma opção puder valer. Sem essa ferramenta, pergunte em texto, numerado (no lote, as perguntas numeradas da prévia já bastam).
+3. **Espere a resposta.** Resposta livre, "não sei" e "calcular" valem nos dois canais.
+
+## 2C. Correções depois do resultado
+
+Depois do resultado, o analista pode corrigir ou completar qualquer item (função, hipótese, pendência, resposta dada antes).
+
+1. **Registre a correção** como esclarecimento. Se ela responde ou muda a resposta de uma pendência (inclusive uma que ficou sem resposta), atualize o esclarecimento dessa pendência com a resposta nova, sem guardar a anterior (vale a última; o histórico de versões fica fora da skill), e marque a pendência `resolvida`. Se não corresponde a nenhuma pendência, crie um esclarecimento novo com `pendencia: null`.
+2. **Refaça a identificação** dos itens afetados pelas etapas 1 a 3A, como numa resposta da prévia (2A, passo 4): funções, hipóteses, grupos, `requer`, itens não contados, pendências, fronteira e cobertura. Retire o que a correção desfaz. Se ela for ambígua a ponto de mudar a contagem de formas diferentes, pergunte (2B) antes de recalcular.
+3. **Recalcule e mostre** pelas etapas 4 e 5: resultado inteiro de novo e exportação como na etapa 5 (com `saida` informado, exporte direto nesse formato; senão, pergunte de novo). Os arquivos anteriores não são sobrescritos.
 
 ## 3. Política de incerteza
 
-- **Pergunte apenas** quando a lacuna impede definir o tipo de projeto ou a fronteira, e, com `interativo=sim`, nas perguntas da prévia (2A), limitadas ao que muda a contagem. Para o resto, não pergunte: estime.
+- **Pergunte apenas** quando a lacuna impede definir o tipo de projeto ou a fronteira, e, com `interativo=sim`, nas perguntas da prévia (2A), limitadas ao que muda a contagem; depois do resultado, só diante de correção ambígua (2C). Para o resto, não pergunte: estime. O canal de toda pergunta está na seção 2B.
 - Classifique cada função como **evidência** (afirmada no pedido), **hipótese** (implicada por uma palavra ou frase, com o trecho) ou **pendência** (nem afirmada nem implicada: não conta). Veja a convenção C1 em 03 §1.
 - Uma hipótese com efeito em PF entra nos cenários mesmo quando também gera pendência de confirmação: a pendência não substitui a hipótese.
 - Verbo amplo ("gerenciar", "manter", "acompanhar", "controlar") sem as operações discriminadas: além das hipóteses que ele implica, registre a pendência "quais operações '<verbo>' abrange". Se o pedido lista as operações, não pergunte.

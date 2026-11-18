@@ -201,6 +201,8 @@ class TestPrevia(unittest.TestCase):
         self.assertIn("Opções: registradas aqui; vêm de outro sistema.", texto)
         self.assertIn("Ainda falta 1 pergunta, que vem no próximo lote.", texto)
         self.assertIn(apf.PREVIA_FECHO_PERGUNTAS, texto)
+        self.assertIn("por texto, use o número", apf.PREVIA_FECHO_PERGUNTAS)  # fecho válido nos dois canais (2B)
+        self.assertNotIn(apf.FECHO_CORRECAO, texto)
         self.assertIn(apf.AVISO_PENDENCIAS, texto)
         outras = texto.split("## Outras pendências registradas")[1]
         self.assertIn("**P4.**", outras)
