@@ -464,6 +464,13 @@ Skill instalada pelo usuário no OpenCode/OpenChamber (link para o repositório)
 |---|---------|--------|
 | D63 | **Três ajustes experimentais (consulta 38).** (1) **Opções:** pergunta sem `opcoes` no JSON vai à ferramenta com lista de opções vazia (só resposta livre); não se criam opções no transporte. (2) **Correção:** 2C passo 3 vira sequência operacional local — `check` e `render`, copiar o resultado inteiro na resposta e só depois exportar ou perguntar a exportação. Explicitação de fluxo já exigido pela etapa 5, não regra de domínio; eficácia não comprovada; a causa (redundância/comprimento) continua hipótese (O3). Mostrar só o que mudou fica para o redesenho de volume. (3) **Diretório de trabalho:** `apf.py novo` cria um diretório exclusivo (`tempfile.mkdtemp(prefix="apf-")`, portável) e imprime o caminho absoluto; criado uma vez por estimativa e reutilizado literal em todos os comandos, inclusive respostas e correções; sem apontador em arquivo de nome fixo; sem limpeza automática (O4). Nos evals, `TMPDIR` já aponta para o diretório da execução. Critérios da próxima checagem: lote com opções idênticas às do JSON (vazias quando não houver); resultado corrigido visível **antes** da pergunta de exportação, inclusive com "Nenhum"; um só diretório `apf-*` por estimativa, reutilizado nas correções, e nenhum caminho fixo no `/tmp`. 140 testes. | Usuário (sugestão do diretório), consulta 38 |
 
+**Checagem T4 da D63** (sessão `ses_e10912855ffeK84EhRAFfPkGNO`, sessão limpa, mesmas respostas da T3 reordenadas pelo lote novo): **os três critérios da D63 atendidos, e os da D61/D62 também** (1 execução: sinal funcional, não estabilidade).
+- Lote: prévia `--canal ferramenta` e chamada na mesma resposta; 7 perguntas com texto **e opções** idênticos ao JSON (lista vazia nas 4 sem `opcoes`; conferido por script). Tipo pela ferramenta; fronteira não perguntada (assumida, de novo).
+- Diretório: `apf.py novo` uma vez (`apf-qo9yh3li`), caminho literal reutilizado na resposta e na correção; nada no `/tmp`.
+- Exportação: ferramenta, múltipla; `.md` idêntico ao chat antes da legenda.
+- Correção: resultado inteiro copiado no chat (31–38 PF) **antes** da pergunta de exportação; "Nenhum" sem arquivo; anteriores intactos.
+- Diferenças frente à T2/T3 (representação, S3): mesmo mínimo (35 PF), máximo 42 em vez de 50, porque as consultas da chefia e do financeiro viraram pendência (P7) em vez de hipóteses. Na correção, o executor **renumerou os IDs** das funções (F05→F04…), o que quebra referências do analista ao resultado anterior (a T3 manteve a lacuna). Achados para a camada 2 mínima, sem correção agora.
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.
