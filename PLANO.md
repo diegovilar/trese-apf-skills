@@ -505,7 +505,11 @@ Popper da sessão: `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 em diante). Pr
 - Relações: M01, M02 (45 = 45), M03 (45 = 45), M04 (47 = 47) pelo `comparar`; **M05 ✓** (G02-r2 = 20 PF de melhoria; G03a-r1 = 14,75 PFM; multiconjunto do G03a = G02 + EE A). As linhas `r2` do `comparar` ("faltam resultados") são artefato da repetição, não pendências.
 - O S4 do G04 passou nesta execução; com N = 1 isso não prova que a limitação da iteração 1 foi superada no modo direto.
 - Leitura (consulta 47): **fase 4 concluída sem regressão grosseira detectada nos casos cobertos.** N = 1 não mede estabilidade. **G07 não coberto (lacuna declarada).** A D69 não vale para a fase 5.
-- Custo: US$ 4,50 no executor (estimativa do Claude Code); Claude 5 h 74% → 66% (semanal 87%); Codex 5 h 94% → 84% (semanal 77% → 75%). Bem abaixo da estimativa da D68.
+- Custo da rodada: US$ 4,50 no executor (estimativa do Claude Code); Claude 5 h 74% → 66% (semanal 87%); Codex 5 h 94% → 84% (semanal 77% → 75%). Bem abaixo da estimativa da D68.
+
+| # | Decisão | Origem |
+|---|---------|--------|
+| D70 | **Fase 5: ordem e desenho (consulta 47), autorizados pelo usuário.** (5a) Redigir e aprovar **antes** de rodar qualquer holdout um caso novo de descoberta de etapas (H4), pelo `general-intern` de contexto limpo, com só o pacote da D46: referências 01, 02 e 03 §§1–9, convenções C1–C4, critérios do juiz da prévia, contrato do S4 v2, teste de admissibilidade, limites de cobertura e modelo vazio de gabarito; sem `SKILL.md`, roteiro do ciclo (03 §10), exemplos de 04, casos, gabaritos ou resultados. Revisão minha e do popper; o usuário aprova a rubrica antes da transcrição para `gabaritos-iniciais.md` e `casos.py` (muda os hashes: rodadas novas, sem efeito retroativo). Depois, **uma** configuração congelada para as duas rodadas. (5b-1) H4, camada 1, N = 5: S4 ≥ 4/5 e R ≥ 4/5 separados (como a `descoberta-1`), registrando por repetição se a etapa-alvo foi perguntada e o S4+R conjunto. (5b-2) H1, H1c, H3c, N = 3: K1, K2, K3 em todas, com parada como na D68; R ≥ 2/3 por caso (contenção) e S4 ≥ 2/3 no H1; S1 e S5 complementares; S3 só relatado (a contenção de hipóteses não fica demonstrada). Um só domínio novo dá sinal de transferência, não equivalência. Cada rodada 5b ainda pede leitura de cota e o ok final do usuário. A D69 não vale aqui. | Usuário; consulta 47 |
 
 ## Evals do agente: implementação
 
