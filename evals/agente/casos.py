@@ -98,6 +98,21 @@ H2C_TEXTO = 'Precisamos preparar as nomeações dos mesários e enviar as convoc
 H3_TEXTO = 'Precisamos de um sistema para organizar as remessas de urnas do depósito às zonas eleitorais e a volta desse material. A Seção de Logística vai registrar cada remessa com a data prevista, a zona de destino e as urnas que seguirão nela. Os números de série devem ser conferidos com a relação de urnas do sistema nacional de logística, que continua responsável por esse cadastro.\n\nAntes da saída, a equipe pode corrigir a data ou a relação de urnas e cancelar uma remessa que não será mais realizada. Precisamos registrar a saída efetiva, com a data e as urnas que saíram, e depois a entrega à zona, com a data e as urnas recebidas. No retorno ao depósito, serão registradas a data e as urnas que chegaram. A devolução só deve ser considerada concluída depois da conferência do material; uma mesma remessa às vezes volta em partes, em dias diferentes. Em cada saída, entrega e devolução precisamos identificar os responsáveis por entregar e receber.\n\nTambém queremos registrar ocorrências de transporte, como avarias no trajeto e divergências na devolução, com descrição, remessa e urnas envolvidas. Ao registrar uma ocorrência, a Seção de Logística deve ser avisada. A seção precisa consultar uma lista das ocorrências recebidas, com a descrição e as urnas envolvidas.\n\nA consulta da remessa deve reunir seus dados e os registros de saída, entrega, devolução e ocorrência. A equipe também precisa imprimir essa ficha em PDF. Para organizar o trabalho, queremos um quadro por zona com as quantidades de urnas que saíram, foram entregues e retornaram, além do saldo que ainda está fora do depósito.\n\nO acesso será pela autenticação institucional que já usamos. Não estamos pedindo cadastro de usuários ou gestão de perfis. O pedido trata apenas das rotinas administrativas de transporte, não de software da urna, carga de software, votação ou apuração.'
 H3C_TEXTO = 'Precisamos de um sistema para organizar as remessas de urnas do depósito às zonas eleitorais e a volta desse material. A Seção de Logística vai registrar cada remessa com a data prevista, a zona de destino e as urnas que seguirão nela. Os números de série devem ser conferidos com a relação de urnas do sistema nacional de logística, que continua responsável por esse cadastro.\n\nAntes da saída, a equipe pode corrigir a data ou a relação de urnas e cancelar uma remessa que não será mais realizada. Precisamos registrar a saída efetiva, com a data e as urnas que saíram, e depois a entrega à zona, com a data e as urnas recebidas. No retorno ao depósito, serão registradas a data e as urnas que chegaram. A devolução só deve ser considerada concluída depois da conferência do material; uma mesma remessa às vezes volta em partes, em dias diferentes. A chegada é anotada assim que as urnas entram no depósito; outro servidor confere o material mais tarde e registra que aquele retorno foi conferido. Em cada saída, entrega e devolução precisamos identificar os responsáveis por entregar e receber. Esses responsáveis são servidores do Tribunal: usaremos a matrícula e o nome que vêm do cadastro de servidores do sistema de pessoal.\n\nTambém queremos registrar ocorrências de transporte, como avarias no trajeto e divergências na devolução, com descrição, remessa e urnas envolvidas. Ao registrar uma ocorrência, a Seção de Logística deve ser avisada. A seção precisa consultar uma lista das ocorrências recebidas, com a descrição e as urnas envolvidas. A equipe da seção analisa cada ocorrência e registra sua conclusão para dar o caso por encerrado.\n\nA consulta da remessa deve reunir seus dados e os registros de saída, entrega, devolução e ocorrência. A equipe também precisa imprimir essa ficha em PDF. Para organizar o trabalho, queremos um quadro por zona com as quantidades de urnas que saíram, foram entregues e retornaram, além do saldo que ainda está fora do depósito.\n\nO acesso será pela autenticação institucional que já usamos. Não estamos pedindo cadastro de usuários ou gestão de perfis. O pedido trata apenas das rotinas administrativas de transporte, não de software da urna, carga de software, votação ou apuração.'
 
+# Contrato de cada caso da camada 1 fixado aqui, e não no gabarito compartilhado, para não alterar
+# o julgamento histórico de G04, G07 e G08 (consulta 23, O-G04).
+NOTA_CAMADA1 = ("Variante da camada 1 (modo interativo; a execução termina na prévia). O gabarito vale integralmente: "
+                "as pendências obrigatórias dele são as do S4 (contrato v2), exigidas com `pergunta`; as pendências "
+                "proibidas valem para o R. S4_antigo: responda null.")
+NOTA_G04I = ("Variante da camada 1 (modo interativo; a execução termina na prévia). Funções, proibidas e cenários: o "
+             "gabarito do G04 vale integralmente. Contrato do S4 v2 (D43; pedido de pouco subsídio): são obrigatórias, "
+             "com `pergunta`, só as pendências das regras gerais: (1) a origem das solicitações (mantidas por este "
+             "sistema ou lidas de outro); (2) o que \"gerenciar\" abrange; (3) como o servidor é identificado e de onde "
+             "vêm os dados dele; (4) se há análise, aprovação ou decisão sobre as solicitações, e por quem. Cálculo do "
+             "valor e prestação de contas são pendências de diagnóstico (relatadas em medidas.diagnostico_presentes, não "
+             "reprovam). S4_antigo: avalie também a lista de pendências obrigatórias do gabarito do G04 (o que "
+             "\"gerenciar\" abrange; fluxo de aprovação; cálculo do valor; prestação de contas; origem dos dados do "
+             "servidor), pela regra da iteração 1.")
+
 # Pedido curto para os casos de argumentos que executam (custo baixo).
 CURTO = (
     "Sistema novo para a portaria registrar visitantes. O vigilante registra a entrada do visitante (nome, documento, "
@@ -153,6 +168,16 @@ CASOS = {
             "tipos": None, "totais": None, "previa": True, "espera": {"metodo": "estimada", "tipo_projeto": "desenvolvimento"}},
     "H3c": {"tipo": "contagem", "secao": "H3c", "args": "tipo=desenvolvimento", "subsidio": H3C_TEXTO,
             "tipos": None, "totais": None, "previa": True, "espera": {"metodo": "estimada", "tipo_projeto": "desenvolvimento"}},
+    # ---------------------------------------------------------------- G04, G07 e G08 na camada 1 (D44, consulta 23)
+    "G04i": {"tipo": "contagem", "secao": "G04", "args": "tipo=desenvolvimento", "subsidio": G04,
+             "tipos": None, "totais": None, "previa": True, "espera": {"metodo": "estimada", "tipo_projeto": "desenvolvimento"},
+             "nota_juiz": NOTA_G04I},
+    "G07i": {"tipo": "contagem", "secao": "G07", "args": "tipo=desenvolvimento", "subsidio": G07,
+             "tipos": None, "totais": None, "previa": True, "espera": {"metodo": "estimada", "tipo_projeto": "desenvolvimento"},
+             "nota_juiz": NOTA_CAMADA1},
+    "G08i": {"tipo": "contagem", "secao": "G08", "args": "tipo=desenvolvimento", "subsidio": G08,
+             "tipos": None, "totais": None, "previa": True, "espera": {"metodo": "estimada", "tipo_projeto": "desenvolvimento"},
+             "nota_juiz": NOTA_CAMADA1},
     # ---------------------------------------------------------------- metamórficos (variantes)
     "M01": {"tipo": "contagem", "secao": "G01", "args": "tipo=desenvolvimento interativo=nao", "subsidio": G01_PARAFRASE,
             "tipos": "G01", "totais": "G01", "nota_juiz": "Subsídio parafraseado do G01: o gabarito do G01 vale integralmente."},

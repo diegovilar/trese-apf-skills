@@ -37,6 +37,29 @@ Em `observacoes`, registre qualquer outro problema relevante que você notar (n�
 """
 
 
+INSTRUCOES_JUIZ_PREVIA = """Você é o juiz de uma avaliação. Um agente executou a skill `nesma-apf-estimator` (estimativa de pontos de função NESMA) no modo interativo sobre o subsídio abaixo. Nesse modo, a execução termina numa PRÉVIA: a lista de funcionalidades detectadas, sem pontos de função, e as lacunas registradas como pendências, algumas com pergunta ao analista (campo `pergunta`), apresentadas em lotes. Avalie o JSON da prévia e a resposta contra o gabarito aprovado e as convenções. Não use ferramentas, não leia arquivos e não execute comandos: tudo o que você precisa está neste texto.
+
+Critérios (responda um booleano para cada, com justificativa curta e uma citação literal do JSON ou da resposta que sustente o veredito; se não houver o que citar, use ""):
+- K3: nenhuma função listada como PROIBIDA no gabarito foi contada (em `funcoes`), nem com outro nome.
+- S1: as funções obrigatórias do gabarito estão presentes com o tipo correto, correspondendo NOME A NOME e PELO SIGNIFICADO, não só pela contagem de tipos. Aplique a rubrica do gabarito, inclusive as decomposições alternativas que ela aceita.
+- S3: o modelo por trás da prévia é coerente: toda hipótese que mudaria o total está registrada e ligada às funções; alternativas que se excluem estão no mesmo grupo; nenhuma combinação descreve uma aplicação impossível (a mesma entidade como ALI e AIE ao mesmo tempo, um arquivo sem processo que o mantenha ou leia). A prévia NÃO mostra PF nem cenários: não exija efeitos numéricos nem totais na resposta. Agrupamentos ou separações que o gabarito diz não serem obrigatórios não reprovam se ausentes.
+- S4 (só ausências): toda pendência obrigatória do gabarito aparece em `pendencias` COM `pergunta`, em qualquer situação (`aberta`, `perguntada`, `sem-resposta`) e em qualquer lote. A pergunta precisa de fato pedir o esclarecimento exigido; "pode esclarecer?" sem identificar a lacuna não basta. Avalie pelo significado, sem exigir palavras específicas; uma pergunta aberta que identifique a lacuna basta. Obrigatória só numa justificativa, em `nao_contados` ou numa pendência sem `pergunta` reprova. As pendências de diagnóstico do gabarito não reprovam se ausentes. Perguntas indevidas não são avaliadas aqui (são do critério R).
+- S4_antigo: só quando a nota da variante pedir; senão, responda null. Quando pedida, aplique a lista de pendências obrigatórias do gabarito original indicada na nota, pela regra da iteração 1: cada uma presente em `pendencias`, com ou sem `pergunta`, avaliada pelo significado. Não afeta a aprovação.
+- S5: rastreabilidade: o campo `requisito` de cada função cita ou parafraseia fielmente um trecho que EXISTE no subsídio, ou a função está ligada a uma hipótese cujo trecho existe. Trecho inventado ou distorcido reprova.
+- R (perguntas e pendências indevidas): reprova se houver ao menos uma pendência (com ou sem `pergunta`) REDUNDANTE ou PROIBIDA pelo gabarito. Redundante é a que pede ao analista que confirme ou repita algo que o subsídio afirma, ou que escolha entre alternativas das quais o texto já escolheu uma. NÃO é redundante: citar o que o texto afirma como contexto para perguntar um aspecto não respondido; perguntar um detalhe não descrito de uma etapa descrita, quando ele muda a contagem; duas perguntas complementares (que pedem informações diferentes, ex.: como a pessoa é identificada e de onde vêm os dados dela). Duas pendências são redundantes entre si só se pedem a mesma informação. Numa pergunta mista, avalie só o trecho que efetivamente pede resposta: se a parte já respondida pelo texto é só contexto, não reprova; se o analista teria de responder de novo o que o texto já diz, reprova. Na justificativa, dê os IDs e os trechos de cada ocorrência.
+
+Em `medidas` (relatadas, não reprovam): `n_perguntas` = número de pendências com `pergunta`; `genericas` = IDs das perguntas sem ligação com o processo descrito (ex.: "há outras integrações?", "há relatórios?" sem âncora no texto; uma pergunta aberta sobre uma etapa relevante NÃO é genérica); `nao_mudam_contagem` = IDs das perguntas cuja resposta não mudaria funções, tipos, hipóteses, cenários ou cobertura (campos, telas, layout); `redundantes` = IDs das redundantes ou proibidas (as mesmas do R); `diagnostico_presentes` = quais pendências de diagnóstico do gabarito apareceram, com o ID correspondente. Use listas vazias quando não houver.
+Em `observacoes`, registre qualquer outro problema relevante que você notar (não afeta os critérios).
+"""
+
+CRITERIOS = ("K3", "S1", "S3", "S4", "S5")
+CRITERIOS_PREVIA = CRITERIOS + ("R",)
+
+
+def e_previa(caso_id: str) -> bool:
+    return bool(C.CASOS[caso_id].get("previa"))
+
+
 def secao_gabarito(nome: str) -> str:
     texto = GABARITOS.read_text(encoding="utf-8")
     m = re.search(rf"^## {re.escape(nome)} ·.*?(?=^## |\Z)", texto, re.S | re.M)
@@ -51,19 +74,28 @@ def secao_convencoes() -> str:
 
 def montar_dossie(caso_id: str, invocacao: str, subsidio: str, est: Dict[str, Any], resposta: str, nota: str = "") -> str:
     c = C.CASOS[caso_id]
-    partes = [INSTRUCOES_JUIZ,
+    previa = e_previa(caso_id)
+    partes = [INSTRUCOES_JUIZ_PREVIA if previa else INSTRUCOES_JUIZ,
               "## Invocação exata\n\n" + invocacao,
               "## Subsídio completo (fonte da verdade para S5)\n\n" + subsidio,
               "## Gabarito do caso\n\n" + secao_gabarito(c.get("secao", caso_id))]
     if nota:
         partes.append("## Nota sobre esta variante\n\n" + nota)
+    rotulo_json = "JSON da prévia produzido pelo agente" if previa else "JSON canônico produzido pelo agente"
+    rotulo_resp = "Resposta do agente (a prévia mostrada ao analista)" if previa else "Resposta final do agente"
     partes += ["## Convenções\n\n" + secao_convencoes(),
-               "## JSON canônico produzido pelo agente\n\n```json\n" + json.dumps(est, ensure_ascii=False, indent=2) + "\n```",
-               "## Resposta final do agente\n\n" + resposta]
+               f"## {rotulo_json}\n\n```json\n" + json.dumps(est, ensure_ascii=False, indent=2) + "\n```",
+               f"## {rotulo_resp}\n\n" + resposta]
     return "\n\n".join(partes)
 
 
-def rodar_codex(prompt: str, saida: Path, com_schema: bool = True) -> Dict[str, Any]:
+def schema_de(caso_id: Optional[str]) -> Path:
+    if caso_id and e_previa(caso_id):
+        return AQUI / "veredito-previa.schema.json"
+    return AQUI / "veredito.schema.json"
+
+
+def rodar_codex(prompt: str, saida: Path, com_schema: bool = True, schema: Optional[Path] = None) -> Dict[str, Any]:
     cfg = CONFIG
     vazio = Path(tempfile.mkdtemp(prefix="juiz-", dir=BASE_WS if BASE_WS.exists() else None))
     ultimo = saida / "veredito_bruto.txt"
@@ -71,7 +103,7 @@ def rodar_codex(prompt: str, saida: Path, com_schema: bool = True) -> Dict[str, 
            "--ephemeral", "--skip-git-repo-check", "--sandbox", "read-only", "--json",
            "-C", str(vazio), "-o", str(ultimo)]
     if com_schema:
-        cmd += ["--output-schema", str(AQUI / "veredito.schema.json")]
+        cmd += ["--output-schema", str(schema or AQUI / "veredito.schema.json")]
     cmd.append("-")
     try:
         r = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=cfg["timeout_s"])
@@ -94,7 +126,20 @@ def rodar_codex(prompt: str, saida: Path, com_schema: bool = True) -> Dict[str, 
     return {"codigo": codigo, "texto": texto, "acoes": acoes, "stderr": (stderr or "")[-2000:]}
 
 
-def interpretar_veredito(texto: str) -> Optional[Dict[str, Any]]:
+def interpretar_veredito(texto: str, previa: bool = False) -> Optional[Dict[str, Any]]:
+    """Veredito legível ou None. Na camada 1 (prévia), R e medidas são obrigatórios: sem eles, o julgamento é inválido."""
+    v = _interpretar(texto)
+    if v is None or not previa:
+        return v
+    if not (isinstance(v.get("R"), dict) and isinstance(v["R"].get("ok"), bool) and isinstance(v.get("medidas"), dict)):
+        return None
+    s4a = v.get("S4_antigo")
+    if s4a is not None and not (isinstance(s4a, dict) and isinstance(s4a.get("ok"), bool)):
+        return None
+    return v
+
+
+def _interpretar(texto: str) -> Optional[Dict[str, Any]]:
     try:
         v = json.loads(texto)
     except json.JSONDecodeError:

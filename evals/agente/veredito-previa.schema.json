@@ -1,0 +1,39 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["K3", "S1", "S3", "S4", "S4_antigo", "S5", "R", "medidas", "observacoes"],
+  "properties": {
+    "K3": {"$ref": "#/$defs/criterio"},
+    "S1": {"$ref": "#/$defs/criterio"},
+    "S3": {"$ref": "#/$defs/criterio"},
+    "S4": {"$ref": "#/$defs/criterio"},
+    "S4_antigo": {"anyOf": [{"$ref": "#/$defs/criterio"}, {"type": "null"}]},
+    "S5": {"$ref": "#/$defs/criterio"},
+    "R": {"$ref": "#/$defs/criterio"},
+    "medidas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["n_perguntas", "genericas", "nao_mudam_contagem", "redundantes", "diagnostico_presentes"],
+      "properties": {
+        "n_perguntas": {"type": "integer"},
+        "genericas": {"type": "array", "items": {"type": "string"}},
+        "nao_mudam_contagem": {"type": "array", "items": {"type": "string"}},
+        "redundantes": {"type": "array", "items": {"type": "string"}},
+        "diagnostico_presentes": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "observacoes": {"type": "string"}
+  },
+  "$defs": {
+    "criterio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ok", "justificativa", "citacao"],
+      "properties": {
+        "ok": {"type": "boolean"},
+        "justificativa": {"type": "string"},
+        "citacao": {"type": "string"}
+      }
+    }
+  }
+}

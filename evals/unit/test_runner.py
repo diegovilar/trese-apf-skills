@@ -16,6 +16,7 @@ import casos as C  # noqa: E402
 import fixtures as fx  # noqa: E402
 import runner as R  # noqa: E402
 import verificador as V  # noqa: E402
+import juiz as J  # noqa: E402
 
 apf = V.apf
 
@@ -298,6 +299,61 @@ class TestJuizECalibracao(unittest.TestCase):
         self.assertIsNone(R.interpretar_veredito("não sei"))
         del bom["S5"]
         self.assertIsNone(R.interpretar_veredito(json.dumps(bom)))
+
+    def test_dossies_da_previa_validos_e_rastreaveis(self):
+        for did, caso, est, alvo in calibracao.dossies():
+            if did not in calibracao.CALIBRACAO_EXATA:
+                continue
+            self.assertTrue(C.CASOS[caso].get("previa"), did)
+            self.assertEqual(apf.validar_previa(est), [], did)
+            sub = C.CASOS[caso]["subsidio"]
+            for f in est["funcoes"]:
+                for parte in f["requisito"].split("(...)"):
+                    self.assertIn(parte.strip(), sub, (did, f["id"]))
+
+    def test_dossie_da_previa_usa_instrucoes_proprias(self):
+        for cid in ("H1", "H2c", "H3", "G04i", "G08i"):
+            c = C.CASOS[cid]
+            d = R.montar_dossie(cid, "/nesma-apf-estimator ...", c["subsidio"], {"x": 1}, "prévia", c.get("nota_juiz", ""))
+            self.assertIn("PRÉVIA", d)
+            self.assertIn("- R (perguntas e pendências indevidas)", d)
+            self.assertIn("## JSON da prévia produzido pelo agente", d)
+            self.assertIn(c["subsidio"][:60], d)
+            self.assertEqual(J.schema_de(cid).name, "veredito-previa.schema.json")
+        g04i = R.montar_dossie("G04i", "x", C.G04, {}, "p", C.CASOS["G04i"]["nota_juiz"])
+        self.assertIn("S4_antigo: avalie também", g04i)
+        self.assertIn("## G04 ·", g04i)
+        d = R.montar_dossie("G01", "x", C.G01, {}, "r")
+        self.assertNotIn("PRÉVIA", d)
+        self.assertEqual(J.schema_de("G01").name, "veredito.schema.json")
+
+    def test_veredito_da_previa_exige_r_e_medidas(self):
+        crit = {"ok": True, "justificativa": "", "citacao": ""}
+        bom = {k: dict(crit) for k in ("K3", "S1", "S3", "S4", "S5", "R")}
+        bom.update({"S4_antigo": None, "observacoes": "", "medidas": {"n_perguntas": 3, "genericas": [], "nao_mudam_contagem": [],
+                                                                       "redundantes": [], "diagnostico_presentes": []}})
+        self.assertIsNotNone(R.interpretar_veredito(json.dumps(bom), previa=True))
+        sem_r = dict(bom)
+        del sem_r["R"]
+        self.assertIsNone(R.interpretar_veredito(json.dumps(sem_r), previa=True))
+        self.assertIsNotNone(R.interpretar_veredito(json.dumps(sem_r)))  # fora da prévia, R não é exigido
+        sem_medidas = dict(bom)
+        del sem_medidas["medidas"]
+        self.assertIsNone(R.interpretar_veredito(json.dumps(sem_medidas), previa=True))
+        r_falso = json.loads(json.dumps(bom))
+        r_falso["R"]["ok"] = False
+        r_falso["S4_antigo"] = {"ok": False, "justificativa": "", "citacao": ""}
+        self.assertEqual(R.reprovados_do_veredito(r_falso, True), ["R", "S4_antigo"])
+        self.assertEqual(R.reprovados_do_veredito(r_falso, False), [])
+        resumo = R.resumo_tarefa("juiz-H2-r1", {"fase": "julgado", "veredito": r_falso})
+        self.assertFalse(resumo["juiz"]["R"])
+        self.assertFalse(resumo["juiz"]["S4+R"])
+        self.assertFalse(resumo["juiz"]["S4_antigo (fora da aprovação)"])
+
+    def test_schema_da_previa(self):
+        s = json.loads((AQUI.parent / "agente" / "veredito-previa.schema.json").read_text(encoding="utf-8"))
+        self.assertEqual(set(s["required"]), set(s["properties"]))
+        self.assertIn("R", s["required"])
 
     def test_secoes_dos_gabaritos_existem(self):
         for cid, c in C.CASOS.items():

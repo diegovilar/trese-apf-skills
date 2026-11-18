@@ -85,7 +85,8 @@ def hash_execucao() -> str:
 def hash_juiz() -> str:
     """O que determina o pedido ao juiz, além do dossiê de cada tarefa (registrado por tarefa)."""
     h = hashlib.sha256()
-    h.update(sha_arquivos(AQUI / "juiz.py", AQUI / "calibracao.py", AQUI / "veredito.schema.json", GABARITOS).encode())
+    h.update(sha_arquivos(AQUI / "juiz.py", AQUI / "calibracao.py", AQUI / "veredito.schema.json",
+                          AQUI / "veredito-previa.schema.json", GABARITOS).encode())
     return h.hexdigest()[:16]
 
 
@@ -149,6 +150,8 @@ def preparar(rodada: str, tipo: str, reps: int, so: Optional[List[str]]) -> None
         tarefas["sonda-juiz"] = {"tipo": "sonda-juiz", "consome": "codex"}
     elif tipo == "calibracao":
         for did, caso, _, alvo in calibracao.dossies():
+            if so and did not in so:
+                continue
             tarefas[f"calib-{did}"] = {"tipo": "calib", "dossie": did, "caso": caso, "alvo": alvo, "consome": "codex"}
     else:
         ids = so or list(C.CASOS)
@@ -269,8 +272,8 @@ def executar_juiz(rodada: str, tid: str, t: Dict[str, Any], estado: Dict[str, An
     saida.mkdir(exist_ok=True)
     dossie = dossie_da_tarefa(rodada, t, estado)
     t["hash_dossie"] = hashlib.sha256(dossie.encode()).hexdigest()[:16]
-    r = rodar_codex(dossie, saida)
-    v = interpretar_veredito(r["texto"])
+    r = rodar_codex(dossie, saida, schema=J.schema_de(t["caso"]))
+    v = interpretar_veredito(r["texto"], previa=J.e_previa(t["caso"]))
     if r["acoes"]:
         t.update({"fase": "invalido", "motivo": "juiz usou ferramentas: " + ", ".join(sorted(set(r["acoes"])))})
     elif v is None:
@@ -283,26 +286,40 @@ def executar_juiz(rodada: str, tid: str, t: Dict[str, Any], estado: Dict[str, An
 def executar_calib(rodada: str, tid: str, t: Dict[str, Any]) -> Dict[str, Any]:
     dossies = {d[0]: d for d in calibracao.dossies()}
     _, caso, est, alvo = dossies[t["dossie"]]
-    erros = apf.validar(est)
+    previa = J.e_previa(caso)
+    erros = apf.validar(est) or (apf.validar_previa(est) if previa else apf.validar_final(est))
     if erros:
         t.update({"fase": "invalido", "motivo": "dossiê de calibração inválido: " + "; ".join(erros)})
         return t
-    resposta = apf.render_md(est, apf.calcular(est))
+    resposta = apf.render_previa(est) if previa else apf.render_md(est, apf.calcular(est))
     c = C.CASOS[caso]
     prompt, _ = montar_invocacao(c)
     saida = dir_rodada(rodada) / tid
     saida.mkdir(exist_ok=True)
-    r = rodar_codex(montar_dossie(caso, prompt, c["subsidio"], est, resposta), saida)
-    v = interpretar_veredito(r["texto"])
+    r = rodar_codex(montar_dossie(caso, prompt, c["subsidio"], est, resposta, c.get("nota_juiz", "")), saida,
+                    schema=J.schema_de(caso))
+    v = interpretar_veredito(r["texto"], previa=previa)
     if r["acoes"]:
         t.update({"fase": "invalido", "motivo": "juiz usou ferramentas"})
     elif v is None:
         t.update({"fase": "invalido", "motivo": f"veredito ilegível (código {r['codigo']}): {r['stderr'][-300:]}"})
     else:
-        reprovados = sorted(k for k in ("K3", "S1", "S3", "S4", "S5") if not v[k]["ok"])
-        acertou = (not alvo and not reprovados) or (alvo and all(a in reprovados for a in alvo))
+        reprovados = reprovados_do_veredito(v, previa)
+        if t["dossie"] in calibracao.CALIBRACAO_EXATA:
+            acertou = sorted(reprovados) == sorted(alvo)
+        else:
+            acertou = (not alvo and not reprovados) or (alvo and all(a in reprovados for a in alvo))
         t.update({"fase": "julgado", "veredito": v, "reprovados": reprovados, "acertou": acertou})
     return t
+
+
+def reprovados_do_veredito(v: Dict[str, Any], previa: bool) -> List[str]:
+    """Critérios reprovados. Na prévia inclui R; S4_antigo aparece só para conferência da calibração."""
+    crit = J.CRITERIOS_PREVIA if previa else J.CRITERIOS
+    out = [k for k in crit if not v[k]["ok"]]
+    if previa and isinstance(v.get("S4_antigo"), dict) and not v["S4_antigo"]["ok"]:
+        out.append("S4_antigo")
+    return sorted(out)
 
 
 def executar_sonda_juiz(rodada: str, tid: str, t: Dict[str, Any]) -> Dict[str, Any]:
@@ -354,7 +371,14 @@ def resumo_tarefa(tid: str, t: Dict[str, Any]) -> Dict[str, Any]:
     if "criterios" in t:
         r["criterios"] = {k: v.get("ok") for k, v in t["criterios"].items()}
     if "veredito" in t:
-        r["juiz"] = {k: t["veredito"][k]["ok"] for k in ("K3", "S1", "S3", "S4", "S5")}
+        v = t["veredito"]
+        r["juiz"] = {k: v[k]["ok"] for k in J.CRITERIOS_PREVIA if isinstance(v.get(k), dict)}
+        if isinstance(v.get("S4_antigo"), dict):
+            r["juiz"]["S4_antigo (fora da aprovação)"] = v["S4_antigo"]["ok"]
+        if "R" in r["juiz"]:
+            r["juiz"]["S4+R"] = r["juiz"]["S4"] and r["juiz"]["R"]
+        if isinstance(v.get("medidas"), dict):
+            r["medidas"] = v["medidas"]
     if "acertou" in t:
         r["acertou"] = t["acertou"]
     if t.get("custo_usd") is not None:
