@@ -9,8 +9,9 @@ Uso:
     python3 apf.py render ESTIMATIVA.json --format md|txt [--out ARQUIVO] [--perfil chat|arquivo]
         (sem --out o padrão é 'chat': legenda só com os termos usados; com --out, 'arquivo': legenda completa)
     python3 apf.py render ESTIMATIVA.json --format xlsx --out ARQUIVO.xlsx
-    python3 apf.py render ESTIMATIVA.json --format previa
-        (modo interativo: funções sem PF e o lote atual de perguntas; só imprime, nunca grava)
+    python3 apf.py render ESTIMATIVA.json --format previa [--canal texto|ferramenta]
+        (modo interativo: funções sem PF e o lote atual de perguntas; só imprime, nunca grava;
+         com --canal ferramenta, as perguntas do lote não são impressas: vão pela ferramenta de perguntas)
 
 O agente monta o JSON canônico (ver references/05-saida-e-legenda.md). Este script
 valida o JSON, calcula pesos, fatores e totais com aritmética decimal exata e gera
@@ -1172,12 +1173,26 @@ PREVIA_INTRO = "Prévia sem pontos de função: confira a lista e responda no fi
 PREVIA_FECHO_PERGUNTAS = ("Responda às perguntas; por texto, use o número (ex.: \"1: sim; 3: não sei\"). Observações são "
                           "bem-vindas. \"Não sei\" é aceito: a dúvida fica registrada como pendência. Para calcular com o "
                           "que já se sabe, responda \"calcular\". Se algo na lista estiver errado ou faltando, diga também.")
+PREVIA_FECHO_FERRAMENTA = ("\"Não sei\" é aceito: a dúvida fica registrada como pendência. Para calcular com o que já se "
+                           "sabe, responda \"calcular\". Se algo na lista estiver errado ou faltando, diga também.")
+CANAIS_PREVIA = ("texto", "ferramenta")
 PREVIA_FECHO_SEM_PERGUNTAS = ("Não identifiquei perguntas adicionais. Confirma a lista para calcular? "
                               "Se algo estiver errado ou faltando, diga.")
 
 
-def render_previa(est: Dict[str, Any]) -> str:
-    """Prévia do modo interativo (D51): sem PF, sem complexidade, sem totais."""
+def _anuncio_ferramenta(k: int) -> str:
+    return ("A pergunta deste lote vem a seguir, na ferramenta de perguntas." if k == 1
+            else f"As {k} perguntas deste lote vêm a seguir, na ferramenta de perguntas.")
+
+
+def render_previa(est: Dict[str, Any], canal: str = "texto") -> str:
+    """Prévia do modo interativo (D51): sem PF, sem complexidade, sem totais.
+
+    canal 'texto': perguntas do lote numeradas na prévia. canal 'ferramenta' (D62): a prévia só anuncia o lote,
+    e as perguntas, com as mesmas opções, vão pela ferramenta de perguntas logo depois (SKILL.md, 2B).
+    """
+    if canal not in CANAIS_PREVIA:
+        raise ValueError(f"canal da prévia: {canal!r}")
     p = est["projeto"]
     melhoria = est["tipo_projeto"] == "melhoria"
     out: List[str] = [f"# Prévia da estimativa: {_md(p['titulo'])}", "", PREVIA_INTRO, ""]
@@ -1245,10 +1260,13 @@ def render_previa(est: Dict[str, Any]) -> str:
     if perguntas:
         out.append(f"## Perguntas (lote {n})")
         out.append("")
-        for i, q in enumerate(perguntas, start=1):
-            out.append(f"{i}. **({q['id']})** {_md(q['pergunta'])}")
-            if q.get("opcoes"):
-                out.append(f"   Opções: {'; '.join(_md(o) for o in q['opcoes'])}.")
+        if canal == "ferramenta":
+            out.append(_anuncio_ferramenta(len(perguntas)))
+        else:
+            for i, q in enumerate(perguntas, start=1):
+                out.append(f"{i}. **({q['id']})** {_md(q['pergunta'])}")
+                if q.get("opcoes"):
+                    out.append(f"   Opções: {'; '.join(_md(o) for o in q['opcoes'])}.")
         out.append("")
         if abertas:
             out.append(f"Ainda {'falta' if abertas == 1 else 'faltam'} {abertas} "
@@ -1265,7 +1283,10 @@ def render_previa(est: Dict[str, Any]) -> str:
     out.append("")
     out.append(f"**Aviso:** {AVISO_PENDENCIAS}")
     out.append("")
-    out.append(PREVIA_FECHO_PERGUNTAS if perguntas else PREVIA_FECHO_SEM_PERGUNTAS)
+    if not perguntas:
+        out.append(PREVIA_FECHO_SEM_PERGUNTAS)
+    else:
+        out.append(PREVIA_FECHO_FERRAMENTA if canal == "ferramenta" else PREVIA_FECHO_PERGUNTAS)
     out.append("")
     return "\n".join(out)
 
@@ -1526,6 +1547,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     sp.add_argument("--out")
     sp.add_argument("--perfil", choices=("chat", "arquivo"),
                     help="padrão: 'chat' (legenda só com os termos usados) ao imprimir; 'arquivo' (legenda completa) com --out")
+    sp.add_argument("--canal", choices=CANAIS_PREVIA,
+                    help="só com --format previa: 'texto' (padrão; perguntas numeradas na prévia) ou 'ferramenta' "
+                         "(a prévia só anuncia o lote; as perguntas vão pela ferramenta de perguntas)")
     args = ap.parse_args(argv)
     if not args.cmd:
         ap.print_help(sys.stderr)
@@ -1551,6 +1575,9 @@ def main(argv: Optional[List[str]] = None) -> int:
                 return 2
             erros = validar_previa(est)
         else:
+            if args.canal:
+                print("ERRO: --canal só vale com --format previa", file=sys.stderr)
+                return 2
             erros = validar_final(est)
         if erros:
             print("JSON INVÁLIDO:", file=sys.stderr)
@@ -1558,7 +1585,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 print(f"- {e}", file=sys.stderr)
             return 1
         if args.format == "previa":
-            sys.stdout.write(render_previa(est))
+            sys.stdout.write(render_previa(est, args.canal or "texto"))
             return 0
     calc = calcular(est)
     if args.cmd == "calc":

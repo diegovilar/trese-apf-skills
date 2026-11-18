@@ -209,6 +209,48 @@ class TestPrevia(unittest.TestCase):
         self.assertIn("**P5.**", outras)
         self.assertNotIn("**P1.**", outras)
 
+    def test_canal_ferramenta_so_anuncia_o_lote(self):
+        """D62: com ferramenta, a prévia não traz as perguntas nem o convite a responder por texto; o resto é igual."""
+        e = g04_lote1()
+        texto, ferr = apf.render_previa(e), apf.render_previa(e, "ferramenta")
+        self.assertEqual(texto, apf.render_previa(e, "texto"))
+        self.assertIn("## Perguntas (lote 1)", ferr)
+        self.assertIn("As 3 perguntas deste lote vêm a seguir, na ferramenta de perguntas.", ferr)
+        for q in e["pendencias"][:3]:
+            self.assertNotIn(q["pergunta"], ferr)
+        self.assertNotIn("Opções:", ferr)
+        self.assertNotIn(apf.PREVIA_FECHO_PERGUNTAS, ferr)
+        self.assertIn(apf.PREVIA_FECHO_FERRAMENTA, ferr)
+        self.assertIn("Ainda falta 1 pergunta, que vem no próximo lote.", ferr)
+        self.assertIn(apf.AVISO_PENDENCIAS, ferr)
+        antes = lambda t: t.split("## Perguntas")[0]
+        depois = lambda t: t.split("## Outras pendências registradas")[1].split("**Aviso:**")[0]
+        self.assertEqual(antes(texto), antes(ferr))
+        self.assertEqual(depois(texto), depois(ferr))
+        self.assertIn("A pergunta deste lote vem a seguir", apf._anuncio_ferramenta(1))
+        # sem perguntas, os dois canais são iguais
+        self.assertEqual(apf.render_previa(fx.g01(), "ferramenta"), apf.render_previa(fx.g01()))
+        with self.assertRaises(ValueError):
+            apf.render_previa(e, "chat")
+
+    def test_cli_canal(self):
+        with tempfile.TemporaryDirectory() as d:
+            j = os.path.join(d, "e.json")
+            with open(j, "w", encoding="utf-8") as fh:
+                json.dump(g04_lote1(), fh, ensure_ascii=False)
+            r = subprocess.run([sys.executable, SCRIPT, "render", j, "--format", "previa", "--canal", "ferramenta"],
+                               capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("vêm a seguir, na ferramenta de perguntas", r.stdout)
+            r = subprocess.run([sys.executable, SCRIPT, "render", j, "--format", "previa"], capture_output=True, text=True)
+            self.assertIn(apf.PREVIA_FECHO_PERGUNTAS, r.stdout)
+            ok = os.path.join(d, "ok.json")
+            with open(ok, "w", encoding="utf-8") as fh:
+                json.dump(fx.g01(), fh, ensure_ascii=False)
+            r = subprocess.run([sys.executable, SCRIPT, "render", ok, "--format", "md", "--canal", "texto"],
+                               capture_output=True, text=True)
+            self.assertEqual(r.returncode, 2)
+
     def test_segundo_lote_mostra_esclarecimentos(self):
         texto = apf.render_previa(g04_respondido())
         self.assertIn("## Perguntas (lote 2)", texto)

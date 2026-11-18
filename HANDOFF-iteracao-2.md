@@ -10,8 +10,8 @@ Melhorar a **descoberta de lacunas de domínio** em pedidos vagos (o requisito n
 
 - **Variante adotada:** modo interativo (`interativo=sim|nao`, padrão `sim`), em que a skill mostra uma **prévia** sem PF (funções em termos de negócio, com o tipo APF entre parênteses) e pergunta em lotes de até 7 só o que muda a contagem; "não sei" vira pendência; "calcular" encerra. Lacunas geradas por um **roteiro do ciclo do processo** (03 §10), nos dois modos. Esquema canônico v3 (situação e lote das perguntas, esclarecimentos com IDs conferidos). Implementação: commit `451690d` (D40–D52).
 - Depois disso: D55 (ajustes de rubrica, só para rodadas futuras) e D56 (mitigação do K2 na renderização: "parcial: motivo" e abertura curta da prévia).
-- **Etapa 3B (revisão do modelo) foi testada e abandonada** (D57, D58): corrigiu parte da representação, mas induziu hipóteses sem apoio e não atingiu o critério. O `SKILL.md` foi revertido. Configuração dos evals na `descoberta-1`: `4eb6077f21f4f68d`; depois da D61: `63a8d095f7309e80`.
-- 137 testes unitários (`python3 -m unittest discover -s evals/unit`).
+- **Etapa 3B (revisão do modelo) foi testada e abandonada** (D57, D58): corrigiu parte da representação, mas induziu hipóteses sem apoio e não atingiu o critério. O `SKILL.md` foi revertido. Configuração dos evals na `descoberta-1`: `4eb6077f21f4f68d`; depois da D62: `80cd2079ecd1407e`.
+- 139 testes unitários (`python3 -m unittest discover -s evals/unit`).
 
 ## Decisões (detalhes no `PLANO.md`)
 
@@ -26,7 +26,7 @@ Melhorar a **descoberta de lacunas de domínio** em pedidos vagos (o requisito n
 | D55–D56 | rubricas (H2/H2c aceitam consulta dos locais no registro; H3/H3c: ALI afirmado reprova S3, não K3; nota do G04i) e mitigação do K2 |
 | D57–D58 | Etapa 3B testada e abandonada; S3 vira limitação conhecida |
 | D59–D60 | S3 aceito como limitação (interativo padrão, experimental); ordem das fases restantes |
-| D61 | canal único das perguntas, exportação de seleção múltipla, correções pós-resultado (experimental) |
+| D61–D62 | canal único das perguntas, exportação de seleção múltipla, correções pós-resultado; prévia por canal (experimentais) |
 
 ## O que os resultados mostram (e o que não mostram)
 
@@ -46,7 +46,7 @@ Melhorar a **descoberta de lacunas de domínio** em pedidos vagos (o requisito n
 ## O que falta (ordem aprovada: D59, D60 no `PLANO.md`)
 
 1. ~~**S3**~~: aceito como limitação conhecida (D59); `interativo=sim` segue padrão, marcado como experimental até a fase 3.
-2. **Caminho com ferramenta de perguntas:** primeira checagem manual reprovada (lote e exportação em texto); corrigido experimentalmente na D61 (canal único 2B, exportação múltipla, correções pós-resultado 2C). Falta repetir a checagem em sessão limpa com os três critérios da D61. Achados laterais registrados no `PLANO.md` (fase 2) para a camada 2 mínima.
+2. **Caminho com ferramenta de perguntas:** primeira checagem manual reprovada (lote e exportação em texto); corrigido experimentalmente na D61 (canal único 2B, exportação múltipla, correções pós-resultado 2C); na T2, exportação ok, correção parcial (resultado não copiado), lote de novo em texto; D62 (prévia `--canal ferramenta`) a checar em sessão limpa. Achados laterais registrados no `PLANO.md` (fase 2) para a camada 2 mínima.
 3. **Camada 2 mínima** (teste parcial, turnos roteirizados, `--resume` no runner): "não sei; calcular" × modo direto; incorporação dos fatos do H2c no H2 × gabarito do H2c; percurso de dois lotes.
 4. **Regressão ampliada do modo direto**, depois da fase 3: G02, G03a, G05, M01, M02, M03a, M04, G01, G06, M03b.
 5. **Holdouts** com a variante congelada: H1, H1c, H3c (regras gerais e contenção) e ao menos um holdout novo com etapa ausente obrigatória (descoberta de etapas), rubrica aprovada pelo usuário.
