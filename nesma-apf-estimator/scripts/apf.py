@@ -4,6 +4,7 @@
 Somente biblioteca padrão; Python >= 3.8.
 
 Uso:
+    python3 apf.py novo                              # cria um diretório exclusivo para a estimativa e imprime o caminho
     python3 apf.py check  ESTIMATIVA.json
     python3 apf.py calc   ESTIMATIVA.json            # JSON com os valores calculados
     python3 apf.py render ESTIMATIVA.json --format md|txt [--out ARQUIVO] [--perfil chat|arquivo]
@@ -27,6 +28,7 @@ import io
 import json
 import re
 import sys
+import tempfile
 import zipfile
 from decimal import Decimal
 from fractions import Fraction
@@ -1538,6 +1540,7 @@ def _carregar(caminho: str) -> Any:
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(prog="apf.py", description="Calculadora da skill nesma-apf-estimator")
     sub = ap.add_subparsers(dest="cmd")
+    sub.add_parser("novo", help="cria um diretório de trabalho exclusivo para uma estimativa e imprime o caminho absoluto")
     for nome in ("check", "calc"):
         sp = sub.add_parser(nome)
         sp.add_argument("json")
@@ -1554,6 +1557,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     if not args.cmd:
         ap.print_help(sys.stderr)
         return 2
+    if args.cmd == "novo":
+        print(tempfile.mkdtemp(prefix="apf-"))
+        return 0
     try:
         est = _carregar(args.json)
     except (OSError, json.JSONDecodeError) as e:

@@ -100,7 +100,7 @@ python3 <skill>/scripts/apf.py render ARQUIVO.json --format xlsx --out ARQUIVO.x
 python3 <skill>/scripts/apf.py render ARQUIVO.json --format previa  # modo interativo: prévia sem PF, só impressa
 ```
 
-- Grave o JSON de trabalho num diretório temporário (ex.: `mktemp -d`), não no projeto do usuário.
+- Grave o JSON de trabalho no diretório criado por `apf.py novo` para a estimativa (SKILL.md, etapa 4), não no projeto do usuário.
 - Se `check` falhar, corrija o JSON e rode de novo. Nunca contorne o script calculando à mão.
 - O que se mostra ao usuário é a saída de `render --format md` **sem `--out`**, copiada integralmente para a sua mensagem, sem reescrever números nem palavras e sem reordenar linhas. A saída do comando, sozinha, não é vista pelo usuário.
 - **Perfis de renderização** (escolhidos pelo script, nunca pelo agente): sem `--out`, o perfil é `chat`, com a legenda só dos termos que aparecem no resultado. Com `--out`, o perfil é `arquivo`, com a legenda completa. Os dois perfis têm exatamente os mesmos números, seções, hipóteses, premissas e avisos; muda a legenda, e o perfil `chat` fecha com uma linha que explica como pedir correções (SKILL.md, 2C). A planilha sempre traz a legenda completa.

@@ -456,6 +456,21 @@ class TestPerfis(unittest.TestCase):
             z = zipfile.ZipFile(io.BytesIO(apf.gerar_xlsx(e, c)))
             self.assertFalse(any(apf.FECHO_CORRECAO in z.read(n).decode("utf-8") for n in z.namelist()))
 
+    def test_cli_novo_cria_diretorios_exclusivos(self):
+        with tempfile.TemporaryDirectory() as d:
+            env = dict(os.environ, TMPDIR=d)
+            caminhos = []
+            for _ in range(2):
+                r = subprocess.run([sys.executable, SCRIPT, "novo"], capture_output=True, text=True, env=env)
+                self.assertEqual(r.returncode, 0, r.stderr)
+                caminhos.append(r.stdout.strip())
+            self.assertNotEqual(caminhos[0], caminhos[1])
+            for c in caminhos:
+                self.assertTrue(os.path.isabs(c) and os.path.isdir(c))
+                self.assertTrue(os.path.basename(c).startswith("apf-"))
+                self.assertEqual(os.path.realpath(os.path.dirname(c)), os.path.realpath(d))
+                self.assertEqual(os.listdir(c), [])
+
     def test_cli_padrao_por_perfil(self):
         with tempfile.TemporaryDirectory() as d:
             ok = os.path.join(d, "ok.json")
