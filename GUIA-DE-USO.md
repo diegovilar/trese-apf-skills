@@ -14,24 +14,33 @@ Não serve para contratação, medição de entrega nem contagem detalhada. Não
 - **Python 3.8 ou superior** na máquina. Sem Python, a skill para e avisa: nada é calculado de cabeça.
 - As regras e o cálculo não dependem de internet: todo o conhecimento está na pasta da skill e a skill não pesquisa na web. Isso não quer dizer que o pedido fique na sua máquina: o agente pode usar um modelo remoto, conforme o seu ambiente.
 
-Instalação: copie a pasta `nesma-apf-estimator/` deste repositório, inteira, para o diretório de skills do seu ambiente. Exemplos: `.claude/skills/` do projeto ou `~/.claude/skills/` no Claude Code; `~/.config/opencode/skills/` no OpenCode. Um link para a pasta, em vez da cópia, também serve quando o ambiente o reconhece (é o caso do OpenCode usado nas checagens). Não altere os arquivos da pasta: os números vêm do script `scripts/apf.py`, que depende das referências como estão.
+Instalação: copie a pasta `nesma-apf-estimator/` deste repositório, inteira, para o diretório de skills do seu ambiente. Exemplos: `.claude/skills/` do projeto ou `~/.claude/skills/` no Claude Code; `~/.config/opencode/skills/` no OpenCode. Um link para a pasta, em vez da cópia, também serve quando o ambiente o reconhece. Não altere os arquivos da pasta: os números vêm do script `scripts/apf.py`, que depende das referências como estão.
 
 ## Como chamar
 
-O jeito mais simples é acionar a skill e colar o pedido, ou indicar o arquivo:
+A forma de acionar depende do ambiente: `/nesma-apf-estimator` no Claude Code; `$nesma-apf-estimator` no OpenChamber; `@nesma-apf-estimator` no OpenCode V2 (confira na documentação do seu cliente). Também dá para pedir em linguagem natural ("estime os pontos de função deste pedido: ...").
+
+### O que pôr no pedido
+
+A estimativa só é tão boa quanto o pedido. Uma frase solta, como "quero gerenciar minhas solicitações de diárias", funciona, mas gera muitas perguntas, muitas hipóteses e uma faixa larga. Antes de chamar, junte o que a área demandante já sabe, mesmo que em poucas linhas:
+
+- **quem faz o quê:** quem registra, quem analisa ou decide, quem consulta;
+- **que informações o sistema guarda** e quais ele só lê de outro sistema (RH, sistema eleitoral, financeiro);
+- **o que acontece depois** do registro e da decisão;
+- **que consultas, listas ou relatórios** são esperados, e em que formato;
+- **se o sistema é novo ou já existe**; se já existe, o que muda nele.
+
+Exemplo curto, mas com o processo descrito:
 
 ```
-/nesma-apf-estimator Como servidor, quero gerenciar minhas solicitações de diárias.
-/nesma-apf-estimator -- ./pedido.pdf
+/nesma-apf-estimator A Seção de Gestão de Pessoas precisa de um sistema novo para os pedidos de teletrabalho. O servidor registra o pedido com o período e o plano de trabalho; nome, cargo e lotação vêm do sistema de RH. A chefia imediata aprova ou devolve o pedido, com justificativa. O servidor acompanha a situação dos seus pedidos, e a Seção consulta os pedidos aprovados por unidade e emite um relatório mensal em PDF.
 ```
 
-A forma de acionar depende do ambiente: `/nesma-apf-estimator` no Claude Code; `$nesma-apf-estimator` no OpenChamber (a forma usada nas checagens manuais); no OpenCode V2, `@nesma-apf-estimator` (veja a documentação do seu cliente). Também dá para pedir em linguagem natural ("estime os pontos de função deste pedido: ...").
+O pedido também pode estar num arquivo (texto, PDF, documento): `/nesma-apf-estimator -- ./demandas/teletrabalho.pdf`.
 
-Para mudar o padrão, ponha argumentos **no início**, no formato `chave=valor`, e termine com `--` antes do pedido:
+### Argumentos
 
-```
-tipo=melhoria melhoria=nesma saida=xlsx -- ./pedido-alteracao.docx
-```
+Para mudar o padrão, ponha argumentos **no início**, no formato `chave=valor`, e termine com `--` antes do pedido.
 
 | Chave | Valores | Padrão | Quando usar |
 |---|---|---|---|
@@ -40,6 +49,26 @@ tipo=melhoria melhoria=nesma saida=xlsx -- ./pedido-alteracao.docx
 | `melhoria` | `sem-fatores`, `nesma` | `sem-fatores` | em melhoria: `sem-fatores` soma o peso cheio de cada função incluída, alterada ou excluída (PF de melhoria); `nesma` aplica os fatores de impacto da NESMA (resultado em PFM) |
 | `saida` | `md`, `txt`, `xlsx` | perguntar no fim | para exportar direto, sem a pergunta (também depois de cada correção) |
 | `interativo` | `sim`, `nao` | `sim` | `nao` calcula direto, sem a prévia e os lotes de perguntas |
+
+Exemplos:
+
+```
+/nesma-apf-estimator tipo=melhoria melhoria=nesma saida=xlsx -- ./demandas/diarias-prestacao-de-contas.docx
+```
+
+Melhoria num sistema que já existe, com os fatores de impacto da NESMA (resultado em PFM) e exportação direta em planilha. Use quando o documento descreve o que muda em cada funcionalidade existente; sem essa descrição, prefira o padrão `sem-fatores`.
+
+```
+/nesma-apf-estimator interativo=nao saida=md -- ./demandas/requisitos-sistema-de-eventos.md
+```
+
+Cálculo direto, sem a prévia e os lotes de perguntas, com o resultado salvo em Markdown. Serve quando o documento de requisitos já está fechado ou quando você quer uma primeira faixa rápida e vai tratar as pendências depois, com a área demandante.
+
+```
+/nesma-apf-estimator modo=indicativa -- ./demandas/visao-geral-portal-de-servicos.pdf
+```
+
+Ordem de grandeza de um sistema novo a partir de uma visão geral, quando ainda não há como descrever as funcionalidades.
 
 Argumento errado (chave desconhecida, valor fora da lista, falta do `--`) gera um **alerta** e nada é executado. Corrija e chame de novo. Se você pedir uma configuração em linguagem natural ("gere em planilha", "sem perguntas"), a skill mostra a chamada equivalente e pede confirmação antes de rodar.
 
@@ -69,7 +98,7 @@ Com `interativo=nao`, a skill pula a prévia e os lotes de perguntas: calcula di
 
 ## Antes de usar o número
 
-Revise sempre. As limitações abaixo foram medidas nos testes da skill (`RELATORIO-iteracao-2.md`):
+Revise sempre. Nos testes da skill, observou-se o seguinte:
 
 - **Hipóteses a mais.** A skill às vezes conta como hipótese uma função que o pedido não sustenta, como uma consulta separada para outro perfil (por exemplo, "consultar para a chefia decidir"). Confira cada hipótese que entra no máximo: o trecho citado realmente implica uma função própria?
 - **Perguntas a mais.** Algumas perguntas podem ampliar o pedido (sugerir um cálculo ou uma operação que ninguém pediu) ou repetir o que o texto já diz. Se você sabe que aquilo não faz parte do pedido, diga isso com todas as letras ("o sistema não calcula saldo"); se não sabe, responda "não sei". Também pode dizer "calcular" e deixar as restantes como pendência.
@@ -78,7 +107,7 @@ Revise sempre. As limitações abaixo foram medidas nos testes da skill (`RELATO
 - **Fronteira.** A skill às vezes assume a fronteira do sistema sem perguntar. Confira a linha "Fronteira da aplicação" no resumo.
 - Em correções, os IDs das funções podem mudar de número. Refira-se aos itens também pela descrição.
 
-O modo interativo é **experimental**: as duas checagens manuais completas (T4 e T5) atenderam aos respectivos critérios, uma vez cada, mas a estabilidade em diálogos longos não foi medida.
+O modo interativo é **experimental**: o fluxo completo (perguntas, respostas, exportação e correção) funcionou nos testes, mas o comportamento em diálogos longos ainda não foi avaliado.
 
 ## Problemas comuns
 
