@@ -290,6 +290,50 @@ class TestFinal(unittest.TestCase):
         self.assertEqual([(ln["id"], ln["tipo"]) for ln in a["linhas"]], [(ln["id"], ln["tipo"]) for ln in b["linhas"]])
 
 
+class TestEquivalenciaDeRepresentacao(unittest.TestCase):
+    """Consulta 24: grupo com uma alternativa vazia × hipótese opcional sem grupo (base da regra do juiz no S3)."""
+
+    def _base(self):
+        e = fx.base(titulo="conferência")
+        e["funcoes"] = [
+            {"id": "F01", "requisito": "x", "nome": "Remessa", "tipo": "ALI", "operacao": None, "hipotese": None, "justificativa": "x"},
+            {"id": "F02", "requisito": "x", "nome": "Registrar retorno", "tipo": "EE", "operacao": None, "hipotese": None, "justificativa": "x"},
+            {"id": "F03", "requisito": "x", "nome": "Registrar conferência", "tipo": "EE", "operacao": None, "hipotese": "H2", "justificativa": "x"},
+        ]
+        return e
+
+    def _grupo(self):
+        e = self._base()
+        e["hipoteses"] = [
+            {"id": "H1", "descricao": "conferência no registro do retorno", "trecho": "x", "grupo": "conferência"},
+            {"id": "H2", "descricao": "conferência registrada depois", "trecho": "x", "grupo": "conferência"},
+        ]
+        return e
+
+    def _opcional(self):
+        e = self._base()
+        e["hipoteses"] = [{"id": "H2", "descricao": "conferência registrada depois", "trecho": "x"}]
+        return e
+
+    def test_mesmos_cenarios(self):
+        a, b = apf.calcular(self._grupo()), apf.calcular(self._opcional())
+        self.assertEqual((a["total_min"], a["total_max"]), (b["total_min"], b["total_max"]))
+        self.assertEqual((a["total_min"], a["total_max"]), (11, 15))
+
+    def test_alternativa_vazia_com_restricao_nao_equivale(self):
+        """Se a alternativa vazia exige outra hipótese, a forma opcional perderia essa restrição."""
+        g = self._grupo()
+        g["funcoes"].append({"id": "F04", "requisito": "x", "nome": "Consultar pendentes de conferência", "tipo": "CE",
+                             "operacao": None, "hipotese": "H3", "justificativa": "x"})
+        g["hipoteses"][0]["requer"] = ["H3"]
+        g["hipoteses"].append({"id": "H3", "descricao": "consulta exigida pela conferência no retorno", "trecho": "x"})
+        o = self._opcional()
+        o["funcoes"].append(g["funcoes"][-1])
+        o["hipoteses"].append({"id": "H3", "descricao": "consulta exigida pela conferência no retorno", "trecho": "x"})
+        a, b = apf.calcular(g), apf.calcular(o)
+        self.assertNotEqual((a["total_min"], a["total_max"]), (b["total_min"], b["total_max"]))
+
+
 class TestCLIInterativo(unittest.TestCase):
     def rodar(self, *args):
         return subprocess.run([sys.executable, SCRIPT] + list(args), capture_output=True, text=True)
