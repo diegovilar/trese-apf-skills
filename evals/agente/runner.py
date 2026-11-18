@@ -532,6 +532,7 @@ def main() -> None:
     sp.add_argument("rodada")
     sp.add_argument("tipo", choices=("sondas", "calibracao", "curta", "completa"))
     sp.add_argument("--casos", help="lista separada por vírgula")
+    sp.add_argument("--reps", type=int, help="repetições (padrão: 5 na completa, 1 nas demais)")
     for nome in ("proxima", "status", "comparar"):
         sub.add_parser(nome).add_argument("rodada")
     sp = sub.add_parser("reverificar")
@@ -545,7 +546,7 @@ def main() -> None:
     sp.add_argument("tarefa")
     a = ap.parse_args()
     if a.cmd == "preparar":
-        reps = 5 if a.tipo == "completa" else 1
+        reps = a.reps or (5 if a.tipo == "completa" else 1)
         preparar(a.rodada, a.tipo, reps, a.casos.split(",") if a.casos else None)
     elif a.cmd == "proxima":
         print(json.dumps(proxima(a.rodada), ensure_ascii=False))

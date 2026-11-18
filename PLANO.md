@@ -394,6 +394,11 @@ Versão `4eb6077f21f4f68d` (commit `5f00974`, com D55 e D56). Consumo: Codex 5 h
 - `k2-previa`, sem juiz: **G07i, L02 e G04 (não interativo, saída final) com K1 e K2 ok**; A01 ok (a inválida da `curta-4` repetida); A15 ok; A05 ok depois de corrigir o verificador (falso positivo: `tem_contagem` contava 6 barras e a linha "Chaves" do alerta passou a ter 6 com `interativo=sim|nao`; agora procura linha de tabela; `reverificar` sem cota; 136 testes); A03 r1 inválida pela auditoria (`ls ../../../tmp` de dentro da pasta da skill, que resolve dentro do diretório da execução, mas o auditor recusa qualquer `..`), repetida como r2, ok. As tarefas de juiz de G07i e G04 ficaram pendentes de propósito.
 - Mitigação do K2 sem falha nesta amostra (1 repetição; sem conclusão estatística).
 
+## Iteração 2: correção experimental da representação (consultas 28 e 29)
+
+- D57 (usuário, caminho 1): **Etapa 3B** do `SKILL.md`, revisão do modelo em dois sentidos, nos dois modos, com o subsídio e os esclarecimentos como fonte: (1) das certezas para a fonte — conclusões pelas regras a partir de fatos afirmados continuam evidência; suposição que muda a contagem vira hipótese; premissa sem efeito continua premissa; contradição premissa × pendência resolvida pela fonte (se a fonte responde, sai a pendência; se não, sai ou se restringe a premissa); (2) das lacunas para o modelo — a leitura que a fonte já implica e que muda a contagem entra também como hipótese; o que a fonte nem menciona fica pendência sem PF (C1); confirmar antes de usar `sem-evidencia`. Experimento, não mecanismo validado.
+- Rodada `ajuste-1`, autorizada: H2, H3, G04i (casos de ajuste, prévia, juiz) com N = 3; controles G08i (prévia), G01 e G06 (não interativo) com N = 1 (preparados com 3 repetições; r2 e r3 dos controles ficam pendentes de propósito). Critério fixado antes: S3 ≥ 2/3 por caso de ajuste; S4 e R 3/3; nenhum K reprovado; controles com todos os critérios aplicáveis aprovados (inclusive K1, K2 e S3). Falha → registrar e consultar, sem correção automática. Resultado favorável = sinal para o próximo teste (holdouts novos), não estabilidade nem generalização. H3c, H1 e H1c seguem sem execução. `runner.py preparar` ganhou `--reps`.
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.
