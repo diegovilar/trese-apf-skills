@@ -156,6 +156,14 @@ class TestVerificacao(Base):
         (self.ws / "tmp" / "x.json").write_text("{}")
         self.assertFalse(self.rodar("A05", [], alerta)["criterios"]["K1"]["ok"])
 
+    def test_alerta_com_linha_de_chaves_nao_e_contagem(self):
+        alerta = ("ALERTA: argumentos inválidos. Nada foi executado.\n- valor desconhecido: modo=detalhada\n"
+                  "Formato: [chave=valor ...] -- <subsídio>\n"
+                  "Chaves: modo=estimada|indicativa · tipo=desenvolvimento|melhoria · melhoria=sem-fatores|nesma · "
+                  "saida=md|txt|xlsx · interativo=sim|nao\nExemplo: modo=estimada tipo=melhoria saida=xlsx -- ./pedido.pdf")
+        self.assertTrue(self.rodar("A05", [], alerta)["criterios"]["K1"]["ok"])
+        self.assertTrue(V.tem_contagem("| F01 | Curso | ALI |"))
+
     def test_alerta2_pode_ler(self):
         v = self.rodar("A13b", [("tool", ("Read", {"file_path": "pedido.md"}, "x"))], "ALERTA: argumentos inválidos. Nada foi executado.")
         self.assertTrue(v["criterios"]["K1"]["ok"])

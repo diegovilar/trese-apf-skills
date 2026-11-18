@@ -387,6 +387,13 @@ Versão `ca1eafd54650bb9c` (skill de `451690d`, juiz de `bf2184c`). Autorizada c
 - D55: H2/H2c aceitam também a consulta dos locais como parte do registro da nomeação, com fundamentação (−4 PF nas referências). H3/H3c: ALI separado **como certeza** deixa de ser proibida (K3) e reprova o S3. Nota do G04i: exigir a consulta também na alternativa local segue o exemplo 3 e não reprova; premissa que fixa o que uma pendência declara desconhecido continua sendo incoerência.
 - D56: mitigação do K2 no script (não é correção comprovada): cobertura parcial com dois-pontos ("parcial: motivo") no resumo final e na prévia; abertura da prévia encurtada para uma linha. Não se tolera diferença de maiúscula no verificador. Checagem direcionada do K2 (G07i, L02 e G04 não interativo, sem juiz), junto com A01 (repetição da inválida), A03, A05 e A15; calibração delta só de P5 e P6 (a prévia dos dossiês mudou só nessas duas linhas). Representação da incerteza (H2, H3, G04i): sem correção até nova decisão; cada falha é de natureza diferente, e o campo `efeito` foi descartado (repetiria a rota de fuga da D38).
 
+## Rodadas `calib-7` e `k2-previa` (17/11/2026)
+
+Versão `4eb6077f21f4f68d` (commit `5f00974`, com D55 e D56). Consumo: Codex 5 h 68% → 67%; Claude 5 h 73% → 70%.
+- `calib-7`: P5 e P6 acertaram (tudo aprovado) com a prévia nova.
+- `k2-previa`, sem juiz: **G07i, L02 e G04 (não interativo, saída final) com K1 e K2 ok**; A01 ok (a inválida da `curta-4` repetida); A15 ok; A05 ok depois de corrigir o verificador (falso positivo: `tem_contagem` contava 6 barras e a linha "Chaves" do alerta passou a ter 6 com `interativo=sim|nao`; agora procura linha de tabela; `reverificar` sem cota; 136 testes); A03 r1 inválida pela auditoria (`ls ../../../tmp` de dentro da pasta da skill, que resolve dentro do diretório da execução, mas o auditor recusa qualquer `..`), repetida como r2, ok. As tarefas de juiz de G07i e G04 ficaram pendentes de propósito.
+- Mitigação do K2 sem falha nesta amostra (1 repetição; sem conclusão estatística).
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.

@@ -117,7 +117,9 @@ def comeca_com_alerta(texto: str) -> bool:
 
 
 def tem_contagem(texto: str) -> bool:
-    return bool(re.search(r"\d+(,\d+)?\s*(PF|PFM)\b", texto)) or texto.count("|") >= 6
+    """Números de PF ou alguma linha de tabela Markdown (não conta barras soltas, como em 'interativo=sim|nao')."""
+    tabela = any(re.match(r"^\s*\|.*\|\s*$", l) for l in texto.splitlines())
+    return bool(re.search(r"\d+(,\d+)?\s*(PF|PFM)\b", texto)) or tabela
 
 
 def chamadas_apf(ferramentas: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
