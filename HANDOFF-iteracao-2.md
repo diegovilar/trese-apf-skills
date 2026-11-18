@@ -4,7 +4,7 @@ Para quem retomar a iteração 2. Estado em 18/11/2026, fim da sessão que fez a
 
 ## Próximo passo
 
-**T5 concluído (C1–C6 atendidos, sessão `ses_e0f8024bcffei2fNg5HrMY4Dbu`; ver PLANO.md).** Próximo: relatório da iteração 2 (`RELATORIO-iteracao-2.md`, nos moldes do da iteração 1), README/RELATORIO e o guia de uso. Popper da sessão de 18/11 (tarde): `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 a 54); numa sessão nova, abra outro e continue da **consulta 55**.
+**T5 concluído (C1–C6 atendidos, sessão `ses_e0f8024bcffei2fNg5HrMY4Dbu`; ver PLANO.md).** Relatório da iteração 2 escrito (`RELATORIO-iteracao-2.md`, revisado na consulta 55). Próximo: README e guia de uso para o analista; depois, marcar a iteração como encerrada no relatório e nos handoffs. Popper da sessão de 18/11 (tarde): `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 a 55); numa sessão nova, abra outro e continue da **consulta 56**.
 
 Feito nesta sessão (detalhes no `PLANO.md`, seções "Rodada `regressao-1`" em diante):
 - **Fase 4 (`regressao-1`)**: sem regressão grosseira nos casos cobertos (N = 1; G02 reposto pela D69; G07 lacuna declarada).
