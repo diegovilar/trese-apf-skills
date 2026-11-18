@@ -484,6 +484,29 @@ Consulta 39: fase 2 encerrada nos critérios medidos (não estabilidade); próxi
 | D68 | **Fase 4: rodada `regressao-1` (consulta 44), autorizada pelo usuário para a próxima sessão.** `preparar regressao-1 curta --casos G01,G02,G03a,G03b,G04,G05,G06,G08,M01,M02,M03a,M03b,M04,A03 --reps 1`: 14 execuções do Claude + 11 juízes (M03a, M03b e A03 sem juiz). G03b entra por exercitar EFPA com informação incompleta; A03 pela exportação xlsx depois da D64. **G07 fica de fora por orçamento: lacuna declarada**, não coberta (a `curta-4` rodou G07i, não G07). Critério fixado antes: K1, K2 (por categorias, D67), K3 e S2 (totais exatos, onde houver) **interrompem** a rodada em caso de falha, com consulta e sem continuação diagnóstica automática; também interrompem execução inválida e cota abaixo de 15%. S1, S3, S4, S5 do juiz e as relações M01–M05 devem passar; uma reprovação S não interrompe: conferir a justificativa contra fonte e rubrica e registrar como falha desta execução, limitação conhecida (ex.: S4 do G04) ou discordância fundamentada do juiz — sem repetir seletivamente nem corrigir a skill. N = 1 é diagnóstico de regressão grosseira, não estabilidade; uma reprovação isolada não demonstra regressão causada pela iteração 2 (O3). Sem nova calibração do juiz final (instruções e rubricas iguais; só a legenda dos dossiês mudou). Custo estimado: 30–40% da janela de 5 h do Claude e ~11 pontos do Codex. Casos interativos ficam fora da fase 4 (escopo). | Usuário; consulta 44 |
 | D64 | **Legenda enxuta nos arquivos.** Os perfis `chat` e `arquivo` passam a ter a mesma legenda: só os termos que aparecem no resultado, com a definição completa (revoga a legenda completa da consulta 8: documento autônomo não exige explicar categorias ausentes). O `arquivo` é o `chat` sem a linha de correção. A aba *Legenda* do xlsx usa o perfil `planilha`: os mesmos termos mais os das colunas fixas da planilha (operação, fator, entrada nos cenários). 140 testes (perfis, CLI, xlsx). | Usuário; consulta 39 (B2 isolado) |
 
+## Rodada `regressao-1` (fase 4, D68; consultas 45 e 46, 18/11/2026)
+
+Popper da sessão: `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 em diante). Pré-voo (consulta 45, sem objeção): 154 testes, HEAD `6bea406`, `config_hash` `5be257e4fb57843d`. Risco anotado: o runner não aplica a parada da D68 (`executar` retorna normalmente com `fase: invalido`); conferir `fase`, `criterios` e `juiz` antes de cada `proxima`.
+
+| # | Decisão | Origem |
+|---|---------|--------|
+| D69 | **Reposição de execução invalidada por `..` (consulta 46).** `exec-G02-r1` foi invalidada pela auditoria (`ls -R scripts tmp ../../../tmp` a partir da cópia da skill; o destino real é o `tmp` do próprio workspace, único apontamento do trace; snapshot e cópia da skill íntegros). Registrada como invalidação pela política de auditoria, não como falha da skill; os 20 PF dela não contam como evidência. Usuário autorizou repor o G02 (`repetir` → `exec-G02-r2`, executada com o juiz logo em seguida, fora da ordem do `proxima`) e, **só nesta rodada**, repor uma vez sem parar outra execução invalidada apenas por `..` com destino comprovado dentro do workspace; qualquer outra invalidação ou reincidência no mesmo caso para. M05 conferida pelos mesmos predicados do `comparar` sobre G02-r2 × G03a-r1 (o comparador pareia por número de repetição e não segue `repetida_por`). | Usuário; consulta 46 |
+
+**Resultado (config `5be257e4fb57843d`, N = 1): nenhuma reprovação.** 15 execuções do Claude (14 válidas + G02-r1 inválida) e 12 juízes, todos concluídos; a regra de reincidência da D69 não foi usada.
+
+| Caso | Verificador | Juiz |
+|---|---|---|
+| G01, G02 (r2), G03a, G05, G06, M01, M02, M04 | K1, K2, S1 pré-filtro, S2 ✓ (K4 ✓ em G02, G03a) | K3, S1, S3, S4, S5 ✓ |
+| G03b, G04 | K1, K2, cobertura ✓ (K4 ✓ em G03b) | K3, S1, S3, S4, S5 ✓ |
+| G08 | K1, K2 ✓ | K3, S1, S3, S4, S5 ✓ |
+| M03a, M03b | K1, K2, S1 pré-filtro, S2 ✓ | sem juiz |
+| A03 | K1, K2, config (xlsx) ✓ | sem juiz |
+
+- Relações: M01, M02 (45 = 45), M03 (45 = 45), M04 (47 = 47) pelo `comparar`; **M05 ✓** (G02-r2 = 20 PF de melhoria; G03a-r1 = 14,75 PFM; multiconjunto do G03a = G02 + EE A). As linhas `r2` do `comparar` ("faltam resultados") são artefato da repetição, não pendências.
+- O S4 do G04 passou nesta execução; com N = 1 isso não prova que a limitação da iteração 1 foi superada no modo direto.
+- Leitura: sem sinal de regressão grosseira do modo direto na versão atual. N = 1 não mede estabilidade. **G07 não coberto (lacuna declarada).**
+- Custo: US$ 4,50 no executor (estimativa do Claude Code); Claude 5 h 74% → 66% (semanal 87%); Codex 5 h 94% → 84% (semanal 77% → 75%). Bem abaixo da estimativa da D68.
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.
