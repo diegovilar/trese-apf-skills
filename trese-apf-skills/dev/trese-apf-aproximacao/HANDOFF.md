@@ -6,10 +6,12 @@ Para retomar o trabalho em outra sessão (humana ou de agente). Leia também o `
 
 ## Onde estamos
 
-**Iteração 2 encerrada em 18/11/2026, sem aprovação integral** (`RELATORIO-iteracao-2.md`; estado em `HANDOFF-iteracao-2.md`). A iteração 1 foi encerrada em 17/11/2026 como versão inicial (`38f562b`; `RELATORIO-iteracao-1.md`). Fases 4 e 5 concluídas em 18/11 (D68–D71). T5, relatório e documentação de uso concluídos. **O usuário decidiu parar aqui (D72): nenhuma rodada de eval nem trabalho novo está autorizado.** Em 19/11/2026 o repositório foi reorganizado como plugin (D73), sem mudança de comportamento da skill. Deste arquivo valem as regras de operação, os comandos, a arquitetura e as armadilhas abaixo.
+**Iteração 2 encerrada em 18/11/2026, sem aprovação integral** (`RELATORIO-iteracao-2.md`; estado em `HANDOFF-iteracao-2.md`). A iteração 1 foi encerrada em 17/11/2026 como versão inicial (`38f562b`; `RELATORIO-iteracao-1.md`). Fases 4 e 5 concluídas em 18/11 (D68–D71). T5, relatório e documentação de uso concluídos. **O usuário decidiu parar aqui (D72)**; depois autorizou só a exportação em .docx (D74, concluída). Nenhuma rodada de eval está autorizada. Em 19/11/2026 o repositório foi reorganizado como plugin (D73), sem mudança de comportamento da skill. Deste arquivo valem as regras de operação, os comandos, a arquitetura e as armadilhas abaixo.
 
-- Testes unitários: `python3 -m unittest discover -s evals/unit` (160 passando).
-- `config_hash` atual dos evals: `04952bbacbc44c3f` (D73; antes da reorganização, `87654cd6ba3cf1a0`). Nenhuma rodada existente continua nem migra com ele.
+**Exportação em .docx (D74), concluída em 19/11/2026, sem rodada de eval.** Popper da série "docx": `ses_e0a298d28ffeKKy4NgmnwsRt0S` (consultas 1 e 2). Topo novo em md/txt/xlsx/docx, `gerar_docx` e `--format docx`, verificador, documentação, versão 0.2.0; 178 testes. Modelo final em `../../skills/trese-apf-aproximacao/assets/modelo.docx`, normalizado de `modelo/esqueleto.docx` (a versão **editada pelo usuário** no LibreOffice, fonte do modelo; `modelo/gerar_esqueleto.py` gera o esqueleto em branco original). Para mudar o visual: o usuário edita `modelo/esqueleto.docx`, roda-se `python3 modelo/normalizar.py modelo/esqueleto.docx <novo>`, troca-se o modelo e confere-se um .docx gerado com `soffice --headless --convert-to pdf`; isso muda o `config_hash`. **`config_hash` atual: `1e1f675cfb424493`.**
+
+- Testes unitários: `python3 -m unittest discover -s evals/unit` (178 passando).
+- `config_hash` dos evals: `04952bbacbc44c3f` até a D73 (antes da reorganização, `87654cd6ba3cf1a0`); depois da D74, `1e1f675cfb424493`. Nenhuma rodada existente continua nem migra. O verificador só reconhece o título atual: execuções anteriores à D74 se reverificam no checkout correspondente.
 - Histórico das rodadas (iteração 1: curta-3, fumaça, completa-1 a -5, calib-1 a -3, diag-1, k2-aviso; iteração 2: calib-4 a -8, curta-4, k2-previa, ajuste-1, descoberta-1, sonda-c2, camada2-1, camada2-2; checagens manuais T1–T4 no OpenCode): `PLANO.md`.
 - Poppers: iteração 1, `ses_e15628079ffehR54kQzwIQFPNZ` (consultas 9 a 18); iteração 2, `ses_e141aaae0ffeuGbrEAhpELk1I3` (consultas 19 a 31), `ses_e119daa1effePIY2FtgGWuHA2q` (consultas 32 a 44) e `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 a 57). A série histórica termina na consulta 57. A reorganização (D73) usou uma série própria: popper `ses_e0a651291ffeBJ1VAAs77IuTHp`, "reorganização, consulta N". Numa sessão nova, abra outro popper e registre as consultas com a série e a sessão, sem renumerar as anteriores.
 
@@ -78,8 +80,8 @@ python3 evals/agente/runner.py limpar-sessoes <rodada>    # camada 2: guarda e a
 
 ## Para começar a próxima sessão
 
-Não há trabalho autorizado (D72). Se o usuário autorizar algo novo (piloto, iteração 3 ou rodada de eval), antes:
+Depois da D74, não há trabalho autorizado. Se o usuário autorizar algo novo (piloto, iteração 3 ou rodada de eval), antes:
 
 1. abra um popper e mande na abertura o objetivo, o `PLANO.md`, este arquivo e o `AGENTS.md` da raiz;
-2. a partir deste diretório, confira `python3 -m unittest discover -s evals/unit` (160 testes), `git log --oneline | head -3` e o `config_hash` (`python3 -c "import sys; sys.path.insert(0,'evals/agente'); import runner; print(runner.config_hash())"`): deve dar `04952bbacbc44c3f` enquanto a skill e os arquivos de execução e juiz não mudarem;
+2. a partir deste diretório, confira `python3 -m unittest discover -s evals/unit` (todos passando; contagem atual em “Onde estamos”), `git log --oneline | head -3` e o `config_hash` (`python3 -c "import sys; sys.path.insert(0,'evals/agente'); import runner; print(runner.config_hash())"`): deve dar o valor registrado em “Onde estamos” enquanto a skill e os arquivos de execução e juiz não mudarem;
 3. qualquer rodada nova é preparada do zero (`preparar`); as anteriores à D73 não continuam.

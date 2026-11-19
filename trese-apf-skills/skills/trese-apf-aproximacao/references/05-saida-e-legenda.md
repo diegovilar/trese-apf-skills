@@ -1,6 +1,6 @@
 # 05 · JSON canônico, script e saídas
 
-O agente **não** calcula pesos, fatores nem totais e **não** escreve a tabela final à mão. Ele monta o JSON canônico, e o script `scripts/apf.py` valida, calcula e gera as saídas `.md`, `.txt` e `.xlsx`. Assim, os três formatos mostram sempre os mesmos números.
+O agente **não** calcula pesos, fatores nem totais e **não** escreve a tabela final à mão. Ele monta o JSON canônico, e o script `scripts/apf.py` valida, calcula e gera as saídas `.md`, `.txt`, `.xlsx` e `.docx`. Assim, todos os formatos mostram sempre os mesmos números.
 
 ## 1. Esquema (versão 3)
 
@@ -97,17 +97,18 @@ python3 <skill>/scripts/apf.py render ARQUIVO.json --format md    # imprime a ta
 python3 <skill>/scripts/apf.py render ARQUIVO.json --format txt --out ARQUIVO.txt
 python3 <skill>/scripts/apf.py render ARQUIVO.json --format md  --out ARQUIVO.md
 python3 <skill>/scripts/apf.py render ARQUIVO.json --format xlsx --out ARQUIVO.xlsx
+python3 <skill>/scripts/apf.py render ARQUIVO.json --format docx --out ARQUIVO.docx
 python3 <skill>/scripts/apf.py render ARQUIVO.json --format previa  # modo interativo: prévia sem PF, só impressa
 ```
 
 - Grave o JSON de trabalho no diretório criado por `apf.py novo` para a estimativa (SKILL.md, etapa 4), não no projeto do usuário.
 - Se `check` falhar, corrija o JSON e rode de novo. Nunca contorne o script calculando à mão.
 - O que se mostra ao usuário é a saída de `render --format md` **sem `--out`**, copiada integralmente para a sua mensagem, sem reescrever números nem palavras e sem reordenar linhas. A saída do comando, sozinha, não é vista pelo usuário.
-- **Perfis de renderização** (escolhidos pelo script, nunca pelo agente): sem `--out`, o perfil é `chat`; com `--out`, `arquivo`. Os dois têm exatamente o mesmo conteúdo, inclusive a legenda, só com os termos que aparecem no resultado e a definição completa de cada um; só o `chat` fecha com uma linha que explica como pedir correções (SKILL.md, 2C). A aba *Legenda* da planilha traz também os termos das colunas fixas dela (operação, fator e entrada nos cenários).
+- **Perfis de renderização** (escolhidos pelo script, nunca pelo agente): sem `--out`, o perfil é `chat`; com `--out`, `arquivo`. Os dois têm o mesmo conteúdo, inclusive a legenda, só com os termos que aparecem no resultado e a definição completa de cada um. Diferenças: o `arquivo` traz, depois do Objeto, os campos a preencher Responsável e Participantes; só o `chat` fecha com uma linha que explica como pedir correções (SKILL.md, 2C). A aba *Legenda* da planilha traz também os termos das colunas fixas dela (operação, fator e entrada nos cenários).
 
 ## 3. Conteúdo das saídas
 
-As três saídas têm as mesmas seções, nesta ordem:
+As saídas têm as mesmas seções, nesta ordem, depois do título fixo **CÁLCULO DE TAMANHO FUNCIONAL APROXIMADO** e da identificação: **Objeto** (o título do projeto, `projeto.titulo`) e, só nos arquivos, **Responsável** `[NOME DA UNIDADE]` e **Participantes** `[LISTA DE UNIDADES OU SERVIDORES PARTICIPANTES]`, campos fixos que o usuário preenche no arquivo exportado. Não os preencha nem os retire.
 
 1. **Resumo executivo:** tipo de projeto, regime (em melhoria), método, fronteira, origem do subsídio, data, total (ou faixa) com a unidade, rótulo de estimativa híbrida (`nesma`) e aviso da indicativa.
 2. **Memória de cálculo:** ID, requisito/história, função, tipo, operação, complexidade, PF (e, no `nesma`, PF base, fator e PFM), base (evidência ou hipótese) e justificativa técnica, com a linha de total.
@@ -123,6 +124,7 @@ As três saídas têm as mesmas seções, nesta ordem:
 Particularidades:
 
 - **`.txt`:** tabela de colunas alinhadas só com os campos curtos e, abaixo, um detalhamento por função com requisito e justificativa.
+- **`.docx`:** gerado a partir do modelo `assets/modelo.docx` (cabeçalho, rodapé, página e estilos); o script troca só o corpo. Identificação e resumo em tabelas sem cabeçalho; a memória de cálculo em tabela com cabeçalho repetido a cada página. Sem o modelo, o script sai com código 2 e não grava nada.
 - **`.xlsx`:** abas *Resumo*, *Memória de cálculo*, *Hipóteses e cenários* (se houver), *Premissas e pendências* e *Legenda*. Os valores de cada linha são gravados; os totais são **fórmulas** (`SUMPRODUCT` sobre as colunas de valor e de "entra no cenário"), com o valor já calculado gravado junto, para leitores que não recalculam.
 
 ## 4. Nome e local dos arquivos exportados

@@ -1,6 +1,6 @@
 ---
 name: trese-apf-aproximacao
-description: Calcula o tamanho funcional (Análise de Pontos de Função, contagem estimada ou indicativa da NESMA) de um pedido de desenvolvimento ou melhoria de sistema, para a análise de viabilidade de projetos de TI da equipe interna do TRE/SE. Use quando o usuário pedir estimativa de pontos de função, APF, PF, contagem NESMA ou tamanho funcional de um pedido, história de usuário ou documento de requisitos, anexado ou no prompt. Funciona offline e gera a saída em .md, .txt ou .xlsx.
+description: Calcula o tamanho funcional (Análise de Pontos de Função, contagem estimada ou indicativa da NESMA) de um pedido de desenvolvimento ou melhoria de sistema, para a análise de viabilidade de projetos de TI da equipe interna do TRE/SE. Use quando o usuário pedir estimativa de pontos de função, APF, PF, contagem NESMA ou tamanho funcional de um pedido, história de usuário ou documento de requisitos, anexado ou no prompt. Funciona offline e gera a saída em .md, .txt, .xlsx ou .docx.
 ---
 
 # trese-apf-aproximacao
@@ -37,7 +37,7 @@ A invocação é o texto que acompanha o acionamento da skill (por exemplo, depo
 | `modo` | `estimada` \| `indicativa` | `estimada` |
 | `tipo` | `desenvolvimento` \| `melhoria` | inferido do subsídio (seção 2, etapa 1) |
 | `melhoria` | `sem-fatores` \| `nesma` (só em projeto de melhoria) | `sem-fatores` |
-| `saida` | `md` \| `txt` \| `xlsx` | perguntar depois de imprimir o resultado |
+| `saida` | `md` \| `txt` \| `xlsx` \| `docx` | perguntar depois de imprimir o resultado |
 | `interativo` | `sim` \| `nao` | `sim` (prévia e perguntas antes do cálculo, seção 2A) |
 
 **Sinônimos** (lista fechada; nada fora dela é aceito):
@@ -53,6 +53,7 @@ A invocação é o texto que acompanha o acionamento da skill (por exemplo, depo
 | `md` | `markdown` |
 | `txt` | `texto`, `text` |
 | `xlsx` | `excel`, `planilha` |
+| `docx` | `word` |
 | `sim` (valor de `interativo`) | `s`, `true`, `1`, `on`, `yes`, `verdadeiro` |
 | `nao` (valor de `interativo`) | `n`, `false`, `0`, `off`, `no`, `falso` |
 
@@ -80,7 +81,7 @@ ALERTA: argumentos inválidos. Nada foi executado.
 - <problema 1>: <token ou trecho>
 - <problema 2>: ...
 Formato: [chave=valor ...] -- <subsídio>
-Chaves: modo=estimada|indicativa · tipo=desenvolvimento|melhoria · melhoria=sem-fatores|nesma · saida=md|txt|xlsx · interativo=sim|nao
+Chaves: modo=estimada|indicativa · tipo=desenvolvimento|melhoria · melhoria=sem-fatores|nesma · saida=md|txt|xlsx|docx · interativo=sim|nao
 Exemplo: modo=estimada tipo=melhoria saida=xlsx -- ./pedido.pdf
 ```
 
@@ -109,8 +110,8 @@ Sem pedido explícito de configuração, trate a mensagem inteira como subsídio
 **Etapa 5: memória de cálculo e premissas.** Rode `apf.py render --format md`, sem `--out` (o script usa o perfil de chat, com a legenda só dos termos que aparecem no resultado e a linha de correção no fim), e **copie a saída inteira para a sua resposta**, exatamente como o script a imprimiu: resumo executivo, memória de cálculo, hipóteses e cenários, premissas, itens não contados, pendências e legenda. A saída de um comando não chega ao usuário por si só (fica recolhida no resultado da ferramenta); só o que está na sua mensagem é lido. Não resuma, não reescreva números nem palavras (nem para "corrigir" a concordância) e não diga "veja acima". A única exceção é a frase final de orientação (na etapa 5, como pedir correção; na prévia, como responder): pode ser adaptada ao canal, desde que diga o mesmo; nunca a omita. Depois:
 
 - se `saida` foi informado, exporte nesse formato (antes ou depois de mostrar a tabela; o que não pode faltar é a tabela na sua mensagem);
-- senão, pergunte pelo canal (2B), com seleção múltipla: "Quer exportar? `.md`, `.txt`, `.xlsx` ou nenhum." As opções são `.md`, `.txt`, `.xlsx` e "Nenhum", que não se combina com as outras. Exporte cada formato escolhido, todos do mesmo JSON; com "Nenhum", não exporte;
-- exporte com `apf.py render --format <fmt> --out <arquivo>` (nome e local: 05 §4) e informe o caminho. O script nunca sobrescreve: se sair com código 3, use o próximo sufixo `-2`, `-3`….
+- senão, pergunte pelo canal (2B), com seleção múltipla: "Quer exportar? `.md`, `.txt`, `.xlsx`, `.docx` ou nenhum." As opções são `.md`, `.txt`, `.xlsx`, `.docx` e "Nenhum", que não se combina com as outras. Exporte cada formato escolhido, todos do mesmo JSON; com "Nenhum", não exporte;
+- exporte com `apf.py render --format <fmt> --out <arquivo>` (nome e local: 05 §4) e informe o caminho. Os arquivos trazem campos a preencher (Responsável e Participantes); avise o usuário. O script nunca sobrescreve: se sair com código 3, use o próximo sufixo `-2`, `-3`….
 
 ## 2A. Modo interativo (`interativo=sim`, padrão)
 

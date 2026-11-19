@@ -10,6 +10,7 @@ Uso:
     python3 apf.py render ESTIMATIVA.json --format md|txt [--out ARQUIVO] [--perfil chat|arquivo]
         (sem --out o padrão é 'chat', que fecha com a linha de correção; com --out, 'arquivo'; os dois com a legenda só dos termos usados)
     python3 apf.py render ESTIMATIVA.json --format xlsx --out ARQUIVO.xlsx
+    python3 apf.py render ESTIMATIVA.json --format docx --out ARQUIVO.docx   (usa assets/modelo.docx)
     python3 apf.py render ESTIMATIVA.json --format previa [--canal texto|ferramenta]
         (modo interativo: funções sem PF e o lote atual de perguntas; só imprime, nunca grava;
          com --canal ferramenta, as perguntas do lote não são impressas: vão pela ferramenta de perguntas)
@@ -26,11 +27,14 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import os
 import re
 import sys
 import tempfile
+import posixpath
 import zipfile
 from decimal import Decimal
+from xml.etree import ElementTree
 from fractions import Fraction
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -79,6 +83,13 @@ FECHO_CORRECAO = ("Para solicitar recálculo, informe o item (ID ou descrição)
                   "exportar novamente.")
 AVISO_PENDENCIAS = ("A lista de pendências não é exaustiva. Revise os requisitos e fluxos específicos do domínio "
                     "antes de usar a estimativa na análise de viabilidade.")
+# Topo dos documentos (D74): título fixo e identificação. Objeto vem de projeto.titulo; Responsável e
+# Participantes são campos fixos que o usuário preenche no arquivo exportado (não aparecem no chat).
+TITULO_DOCUMENTO = "CÁLCULO DE TAMANHO FUNCIONAL APROXIMADO"
+CAMPOS_A_PREENCHER = [
+    ("Responsável", "[NOME DA UNIDADE]"),
+    ("Participantes", "[LISTA DE UNIDADES OU SERVIDORES PARTICIPANTES]"),
+]
 CATEGORIAS_NAO_CONTADOS = {
     "absorvido": "absorvido no processo elementar",
     "dado-de-codigo": "dado de código",
@@ -810,6 +821,14 @@ def texto_total(calc: Dict[str, Any]) -> str:
     return texto
 
 
+def identificacao(est: Dict[str, Any], perfil: str = "arquivo") -> List[Tuple[str, str, bool]]:
+    """Linhas (rótulo, valor, a_preencher) logo abaixo do título. Os campos a preencher só nos arquivos."""
+    linhas = [("Objeto", str(est["projeto"]["titulo"]), False)]
+    if perfil != "chat":
+        linhas += [(r, v, True) for r, v in CAMPOS_A_PREENCHER]
+    return linhas
+
+
 def linhas_resumo_extra(est: Dict[str, Any], calc: Dict[str, Any]) -> List[Tuple[str, str]]:
     """Pares (rótulo, texto) que todo resumo executivo mostra depois do total."""
     pares: List[Tuple[str, str]] = []
@@ -938,7 +957,10 @@ def render_md(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo"
     nesma = calc["unidade"] == "PFM"
     melhoria = est["tipo_projeto"] == "melhoria"
     out: List[str] = []
-    out.append(f"# Estimativa de tamanho funcional: {_md(p['titulo'])}")
+    out.append(f"# {TITULO_DOCUMENTO}")
+    out.append("")
+    for rotulo, valor, _ in identificacao(est, perfil):
+        out.append(f"- **{rotulo}:** {_md(valor)}")
     out.append("")
     out.append("## Resumo executivo")
     out.append("")
@@ -1075,9 +1097,10 @@ def render_txt(est: Dict[str, Any], calc: Dict[str, Any], perfil: str = "arquivo
     nesma = calc["unidade"] == "PFM"
     melhoria = est["tipo_projeto"] == "melhoria"
     out: List[str] = []
-    titulo = f"ESTIMATIVA DE TAMANHO FUNCIONAL: {_md(p['titulo'])}"
-    out += [titulo, "=" * len(titulo), ""]
-    out += ["RESUMO EXECUTIVO", ""]
+    out += [TITULO_DOCUMENTO, "=" * len(TITULO_DOCUMENTO), ""]
+    for rotulo, valor, _ in identificacao(est, perfil):
+        out += _quebrar(f"{rotulo}: {_md(valor)}", recuo="  ")
+    out += ["", "RESUMO EXECUTIVO", ""]
     metodo = "NESMA estimada" if est["metodo"] == "estimada" else "NESMA indicativa"
     pares = [("Tipo de projeto", est["tipo_projeto"])]
     if melhoria:
@@ -1312,15 +1335,16 @@ def _col(n: int) -> str:
     return letras
 
 
-# Estilos: 0 padrão; 1 cabeçalho; 2 texto com quebra; 3 número 0,00; 4 negrito; 5 negrito 0,00; 6 número inteiro
+# Estilos: 0 padrão; 1 cabeçalho; 2 texto com quebra; 3 número 0,00; 4 negrito; 5 negrito 0,00; 6 número inteiro;
+# 7 título do documento; 8 campo a preencher (fundo amarelo)
 _STYLES = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
 <numFmts count="1"><numFmt numFmtId="164" formatCode="0.00"/></numFmts>
-<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>
-<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD9E1F2"/><bgColor indexed="64"/></patternFill></fill></fills>
+<fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="14"/><name val="Calibri"/></font></fonts>
+<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD9E1F2"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFFF00"/><bgColor indexed="64"/></patternFill></fill></fills>
 <borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
 <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-<cellXfs count="7">
+<cellXfs count="9">
 <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="top"/></xf>
 <xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>
 <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>
@@ -1328,6 +1352,8 @@ _STYLES = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>
 <xf numFmtId="164" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyNumberFormat="1" applyAlignment="1"><alignment vertical="top"/></xf>
 <xf numFmtId="1" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyAlignment="1"><alignment vertical="top"/></xf>
+<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment vertical="top"/></xf>
+<xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>
 </cellXfs>
 <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
 </styleSheet>"""
@@ -1423,7 +1449,10 @@ def gerar_xlsx(est: Dict[str, Any], calc: Dict[str, Any]) -> bytes:
     ref_mem = "'Memória de cálculo'!"
     # --- Resumo
     res = _Planilha("Resumo", [28, 90], congelar=False)
-    res.add([_s("Estimativa de tamanho funcional", 4), _s(p["titulo"], 4)])
+    res.add([_s(TITULO_DOCUMENTO, 7)])
+    res.add([])
+    for rotulo, valor, a_preencher in identificacao(est, "arquivo"):
+        res.add([_s(rotulo, 4), _s(valor, 8 if a_preencher else 2)])
     res.add([])
     metodo = "NESMA estimada" if est["metodo"] == "estimada" else "NESMA indicativa"
     pares = [("Tipo de projeto", est["tipo_projeto"])]
@@ -1520,6 +1549,268 @@ def gerar_xlsx(est: Dict[str, Any], calc: Dict[str, Any]) -> bytes:
     return buf.getvalue()
 
 
+# --------------------------------------------------------------------------- docx (modelo + corpo gerado)
+
+# Modelo único (D74): cabeçalho, rodapé, página e estilos vêm de assets/modelo.docx; o script troca só o corpo.
+MODELO_DOCX = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, "assets", "modelo.docx")
+ESTILOS_DOCX = ("APFTitulo", "APFSecao", "APFTexto", "APFItem", "APFAviso", "APFLegenda", "APFRotulo", "APFCelula",
+                "APFCelulaNumero", "APFCabecalhoTabela", "APFTermo", "APFCampo")
+_NS_W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+_NS_R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+_DOCX_INVALIDO = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\ufffe\uffff]")
+_SURROGATE = re.compile("[\ud800-\udfff]")
+_COR_BORDA = "A6A6A6"
+_COR_ROTULO = "F2F2F2"
+_COR_CABECALHO = "D9E1F2"
+
+
+class ErroModelo(Exception):
+    pass
+
+
+def _ler_modelo(caminho: str) -> Tuple[List[Tuple[zipfile.ZipInfo, bytes]], str, str, str, int]:
+    """Lê e valida o modelo. Devolve (partes na ordem original, início do document.xml até <w:body>,
+    sectPr final, fim do documento, largura útil da página em twips)."""
+    try:
+        with zipfile.ZipFile(caminho) as z:
+            partes = [(info, z.read(info.filename)) for info in z.infolist()]
+    except FileNotFoundError:
+        raise ErroModelo(f"modelo do .docx não encontrado: {caminho}")
+    except (OSError, zipfile.BadZipFile, KeyError) as e:
+        raise ErroModelo(f"modelo do .docx ilegível ({caminho}): {e}")
+    nomes = {info.filename: dados for info, dados in partes}
+    for obrigatoria in ("[Content_Types].xml", "_rels/.rels", "word/document.xml", "word/styles.xml",
+                        "word/_rels/document.xml.rels"):
+        if obrigatoria not in nomes:
+            raise ErroModelo(f"modelo do .docx sem a parte {obrigatoria}")
+    # Todo XML do pacote bem formado (só leitura: o pacote é copiado byte a byte, nunca reserializado).
+    xmls = {}
+    for nome, dados in nomes.items():
+        if nome.endswith(".xml") or nome.endswith(".rels"):
+            try:
+                xmls[nome] = ElementTree.fromstring(dados)
+            except ElementTree.ParseError as e:
+                raise ErroModelo(f"modelo do .docx com XML inválido em {nome}: {e}")
+    # Relações internas apontam para partes existentes; a principal aponta para word/document.xml.
+    rel_ns = "{http://schemas.openxmlformats.org/package/2006/relationships}Relationship"
+    alvos_doc = {}
+    for nome, raiz in xmls.items():
+        if not nome.endswith(".rels"):
+            continue
+        base = posixpath.dirname(posixpath.dirname(nome))  # word/_rels/x.rels -> word
+        for rel in raiz.iter(rel_ns):
+            if rel.get("TargetMode") == "External":
+                continue
+            alvo = rel.get("Target", "")
+            caminho = alvo.lstrip("/") if alvo.startswith("/") else posixpath.normpath(posixpath.join(base, alvo))
+            if caminho not in nomes:
+                raise ErroModelo(f"modelo do .docx: {nome} aponta para {alvo}, que não está no pacote")
+            if nome == "word/_rels/document.xml.rels":
+                alvos_doc[rel.get("Id")] = caminho
+    principais = [r.get("Target", "").lstrip("/") for r in xmls["_rels/.rels"].iter(rel_ns)]
+    if "word/document.xml" not in principais:
+        raise ErroModelo("modelo do .docx: _rels/.rels não aponta para word/document.xml")
+    try:
+        doc = nomes["word/document.xml"].decode("utf-8")
+        estilos = nomes["word/styles.xml"].decode("utf-8")
+    except UnicodeDecodeError:
+        raise ErroModelo("modelo do .docx com XML fora de UTF-8")
+    if f'xmlns:w="{_NS_W}"' not in doc or f'xmlns:r="{_NS_R}"' not in doc:
+        raise ErroModelo("modelo do .docx: document.xml sem os prefixos w: e r: esperados")
+    m = re.search(r"<w:body>(.*)</w:body>", doc, re.S)
+    if not m or m.group(1).count("<w:sectPr") != 1:
+        raise ErroModelo("modelo do .docx: o corpo precisa ter exatamente uma seção (um w:sectPr)")
+    ms = re.search(r"<w:sectPr\b.*</w:sectPr>\s*$", m.group(1), re.S)
+    if not ms:
+        raise ErroModelo("modelo do .docx: w:sectPr não está no fim do corpo")
+    faltando = [e for e in ESTILOS_DOCX if f'w:styleId="{e}"' not in estilos]
+    if faltando:
+        raise ErroModelo("modelo do .docx sem os estilos: " + ", ".join(faltando))
+    sect = ms.group(0).strip()
+    for rid in re.findall(r'r:id="([^"]+)"', sect):
+        if rid not in alvos_doc:
+            raise ErroModelo(f"modelo do .docx: a seção referencia {rid}, ausente de document.xml.rels")
+    larg = re.search(r'<w:pgSz\b[^>]*\bw:w="(\d+)"', sect)
+    esq = re.search(r'<w:pgMar\b[^>]*\bw:left="(\d+)"', sect)
+    dir_ = re.search(r'<w:pgMar\b[^>]*\bw:right="(\d+)"', sect)
+    if not (larg and esq and dir_):
+        raise ErroModelo("modelo do .docx sem tamanho de página ou margens")
+    util = int(larg.group(1)) - int(esq.group(1)) - int(dir_.group(1))
+    if util < 5000:
+        raise ErroModelo("modelo do .docx: área útil da página estreita demais")
+    return partes, doc[:m.start(1)], sect, doc[m.end(1):], util
+
+
+def _x(texto: Any) -> str:
+    """Texto para w:t: quebras e espaços seguidos viram um espaço (como no md), sem aparar as pontas (o rótulo
+    "Termo: " precisa do espaço final); caracteres inválidos em XML removidos; sem truncar."""
+    s = "" if texto is None else str(texto)
+    s = re.sub(r"\s+", " ", s)
+    s = _SURROGATE.sub("\ufffd", _DOCX_INVALIDO.sub("", s))
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def _r(texto: Any, estilo: Optional[str] = None, negrito: bool = False) -> str:
+    rpr = ""
+    if estilo or negrito:
+        rpr = "<w:rPr>" + (f'<w:rStyle w:val="{estilo}"/>' if estilo else "") + ("<w:b/><w:bCs/>" if negrito else "") + "</w:rPr>"
+    return f'<w:r>{rpr}<w:t xml:space="preserve">{_x(texto)}</w:t></w:r>'
+
+
+def _p(runs: str, estilo: str) -> str:
+    return f'<w:p><w:pPr><w:pStyle w:val="{estilo}"/></w:pPr>{runs}</w:p>'
+
+
+def _item(rotulo: str, texto: Any, estilo: str = "APFItem") -> str:
+    return _p(_r(rotulo, "APFTermo") + "<w:r><w:tab/></w:r>" + _r(texto), estilo)
+
+
+def _tc(runs: str, largura: int, estilo: str, fundo: Optional[str] = None) -> str:
+    shd = f'<w:shd w:val="clear" w:color="auto" w:fill="{fundo}"/>' if fundo else ""
+    return f'<w:tc><w:tcPr><w:tcW w:w="{largura}" w:type="dxa"/>{shd}</w:tcPr>{_p(runs, estilo)}</w:tc>'
+
+
+def _tbl(linhas: List[str], larguras: List[int]) -> str:
+    bordas = "".join(f'<w:{b} w:val="single" w:sz="4" w:space="0" w:color="{_COR_BORDA}"/>'
+                     for b in ("top", "left", "bottom", "right", "insideH", "insideV"))
+    grade = "".join(f'<w:gridCol w:w="{w}"/>' for w in larguras)
+    return (f'<w:tbl><w:tblPr><w:tblW w:w="{sum(larguras)}" w:type="dxa"/><w:tblBorders>{bordas}</w:tblBorders>'
+            '<w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="40" w:type="dxa"/><w:left w:w="85" w:type="dxa"/>'
+            '<w:bottom w:w="40" w:type="dxa"/><w:right w:w="85" w:type="dxa"/></w:tblCellMar>'
+            f'<w:tblLook w:val="0000"/></w:tblPr><w:tblGrid>{grade}</w:tblGrid>{"".join(linhas)}</w:tbl>'
+            '<w:p><w:pPr><w:pStyle w:val="APFTexto"/></w:pPr></w:p>')
+
+
+def _larguras(pesos: List[int], util: int) -> List[int]:
+    """Larguras proporcionais aos pesos; a última coluna fica com o resto (soma exata = util)."""
+    total = sum(pesos)
+    larg = [util * p // total for p in pesos[:-1]]
+    return larg + [util - sum(larg)]
+
+
+def _tabela_rotulada(pares: List[Tuple[str, str]], util: int) -> str:
+    """Duas colunas sem cabeçalho: rótulo sombreado, valor. Valor como XML de runs já pronto."""
+    larg = [min(3000, util // 4), util - min(3000, util // 4)]
+    return _tbl([f"<w:tr><w:trPr><w:cantSplit/></w:trPr>{_tc(_r(r), larg[0], 'APFRotulo', _COR_ROTULO)}"
+                 f"{_tc(v, larg[1], 'APFCelula')}</w:tr>" for r, v in pares], larg)
+
+
+def _tabela_dados(cab: List[str], linhas: List[List[str]], larg: List[int], numericas: Tuple[int, ...] = ()) -> str:
+    """Linha de cabeçalho repetida a cada página; células como XML de runs já pronto."""
+    trs = ["<w:tr><w:trPr><w:tblHeader/><w:cantSplit/></w:trPr>"
+           + "".join(_tc(_r(c), larg[i], "APFCabecalhoTabela", _COR_CABECALHO) for i, c in enumerate(cab)) + "</w:tr>"]
+    for ln in linhas:
+        trs.append("<w:tr>" + "".join(_tc(c, larg[i], "APFCelulaNumero" if i in numericas else "APFCelula")
+                                       for i, c in enumerate(ln)) + "</w:tr>")
+    return _tbl(trs, larg)
+
+
+def _corpo_docx(est: Dict[str, Any], calc: Dict[str, Any], util: int) -> str:
+    p = est["projeto"]
+    casas = _casas(calc)
+    nesma = calc["unidade"] == "PFM"
+    melhoria = est["tipo_projeto"] == "melhoria"
+    u = calc["unidade"]
+    b: List[str] = [_p(_r(TITULO_DOCUMENTO), "APFTitulo")]
+    b.append(_tabela_rotulada([(r, _r(v, "APFCampo") if campo else _r(v)) for r, v, campo in identificacao(est, "arquivo")],
+                              util))
+
+    b.append(_p(_r("Resumo executivo"), "APFSecao"))
+    metodo = "NESMA estimada" if est["metodo"] == "estimada" else "NESMA indicativa"
+    pares = [("Tipo de projeto", _r(est["tipo_projeto"]))]
+    if melhoria:
+        pares.append(("Regime de melhoria", _r(est["regime_melhoria"])))
+    pares += [("Método", _r(metodo)), ("Fronteira da aplicação", _r(p["fronteira"])),
+              ("Origem do subsídio", _r(p["origem_subsidio"])), ("Data", _r(p["data"])),
+              ("Total", _r(texto_total(calc), negrito=True))]
+    pares += [(k, _r(v)) for k, v in linhas_resumo_extra(est, calc)]
+    b.append(_tabela_rotulada(pares, util))
+
+    b.append(_p(_r("Memória de cálculo"), "APFSecao"))
+    if nesma:
+        cab = ["ID", "Requisito / História", "Função identificada", "Tipo", "Operação (I/A/E)", "Complexidade",
+               "PF base", "Fator", "PFM", "Base", "Justificativa técnica"]
+        pesos = [600, 1700, 1750, 600, 1150, 1500, 700, 1100, 1100, 1000, 3370]
+        numericas: Tuple[int, ...] = (6, 7, 8)
+    else:
+        cab = ["ID", "Requisito / História", "Função identificada", "Tipo", "Operação (I/A/E)", "Complexidade",
+               "PF", "Base", "Justificativa técnica"]
+        pesos = [600, 2300, 2300, 600, 1150, 1500, 700, 1100, 4320]
+        numericas = (6,)
+    funcoes = {f["id"]: f for f in est["funcoes"]}
+    linhas = []
+    for ln in calc["linhas"]:
+        f = funcoes[ln["id"]]
+        linha = [ln["id"], f["requisito"], f["nome"], ln["tipo"], ln["operacao"] or "—", ln["complexidade"], num(ln["peso"])]
+        if nesma:
+            linha += [_faixa(ln["fator_min"], ln["fator_max"], 2), _faixa(ln["valor_min"], ln["valor_max"], 2)]
+        just = f["justificativa"]
+        if nesma and ln["origem_fator"] == "faixa":
+            just += " Faixa de fator: " + f["efpa"]["faixa"]["justificativa"]
+        linhas.append([_r(c) for c in linha + [_base(f), just]])
+    total = [_r("")] * len(cab)
+    total[1] = _r("Total", negrito=True)
+    total[cab.index("PFM" if nesma else "PF")] = _r(_faixa(calc["total_min"], calc["total_max"], casas), negrito=True)
+    linhas.append(total)
+    b.append(_tabela_dados(cab, linhas, _larguras(pesos, util), numericas))
+
+    hipoteses = est.get("hipoteses", [])
+    if hipoteses:
+        b.append(_p(_r("Hipóteses e cenários"), "APFSecao"))
+        linhas = []
+        for h in hipoteses:
+            ef = calc["efeito_hipoteses"][h["id"]]
+            linhas.append([_r(c) for c in (h["id"], _desc_hip(h), h.get("trecho") or "—", h.get("grupo") or "—",
+                                           ", ".join(h.get("requer") or []) or "—",
+                                           f"+{_faixa(ef['min'], ef['max'], casas)} {u}")])
+        b.append(_tabela_dados(["ID", "Hipótese", "Trecho do pedido", "Alternativas (grupo)", "Exige", "Efeito"], linhas,
+                               _larguras([600, 4500, 4500, 1800, 900, 2270], util), (5,)))
+        ativ_min = ", ".join(calc["hipoteses_cenario_min"]) or "nenhuma"
+        ativ_max = ", ".join(calc["hipoteses_cenario_max"]) or "nenhuma"
+        b.append(_p(_r("Cenário mínimo: ", "APFTermo") + _r(f"{num(calc['total_min'], casas)} {u} (hipóteses: {ativ_min})"), "APFTexto"))
+        b.append(_p(_r("Cenário máximo: ", "APFTermo") + _r(f"{num(calc['total_max'], casas)} {u} (hipóteses: {ativ_max})"), "APFTexto"))
+
+    def secao(titulo: str, itens: List[Dict[str, Any]], vazio: str) -> None:
+        b.append(_p(_r(titulo), "APFSecao"))
+        if not itens:
+            b.append(_p(_r(vazio), "APFTexto"))
+        for item in itens:
+            b.append(_item(f"{item['id']}.", item["descricao"]))
+
+    secao("Premissas assumidas", est.get("premissas", []), "Nenhuma.")
+    b.append(_p(_r("Itens não contados"), "APFSecao"))
+    nao = est.get("nao_contados", [])
+    if not nao:
+        b.append(_p(_r("Nenhum."), "APFTexto"))
+    else:
+        b.append(_tabela_dados(["Item", "Categoria", "Justificativa"],
+                               [[_r(i["item"]), _r(CATEGORIAS_NAO_CONTADOS[i["categoria"]]), _r(_just_nc(i))] for i in nao],
+                               _larguras([4000, 3000, 7570], util)))
+    if est.get("esclarecimentos"):
+        b.append(_p(_r("Esclarecimentos do analista"), "APFSecao"))
+        for e in est["esclarecimentos"]:
+            b.append(_item(f"{e['id']}.", _texto_escl(e)))
+    secao("Dúvidas de requisito e pendências", _pendencias_visiveis(est), "Nenhuma.")
+    # No .docx, "antes" vai em destaque (modelo da equipe, D74); o texto é o mesmo dos outros formatos.
+    antes, depois = AVISO_PENDENCIAS.split(" antes ", 1)
+    b.append(_p(_r("Aviso: ", "APFTermo") + _r(antes + " ") + _r("antes", "APFTermo") + _r(" " + depois), "APFAviso"))
+    b.append(_p(_r("Legenda"), "APFSecao"))
+    for termo, desc in legenda(est, calc, "arquivo"):
+        b.append(_p(_r(termo + ": ", "APFTermo") + _r(desc), "APFLegenda"))
+    return "".join(b)
+
+
+def gerar_docx(est: Dict[str, Any], calc: Dict[str, Any], modelo: Optional[str] = None) -> bytes:
+    """Documento .docx: o modelo com o corpo trocado. Gerado em memória; erro de modelo levanta ErroModelo."""
+    partes, inicio, sect, fim, util = _ler_modelo(modelo or MODELO_DOCX)
+    documento = (inicio + _corpo_docx(est, calc, util) + sect + fim).encode("utf-8")
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        for info, dados in partes:
+            z.writestr(info, documento if info.filename == "word/document.xml" else dados)
+    return buf.getvalue()
+
+
 # --------------------------------------------------------------------------- CLI
 
 def _para_json(obj: Any) -> Any:
@@ -1546,7 +1837,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         sp.add_argument("json")
     sp = sub.add_parser("render")
     sp.add_argument("json")
-    sp.add_argument("--format", required=True, choices=("md", "txt", "xlsx", "previa"))
+    sp.add_argument("--format", required=True, choices=("md", "txt", "xlsx", "docx", "previa"))
     sp.add_argument("--out")
     sp.add_argument("--perfil", choices=("chat", "arquivo"),
                     help="padrão: 'chat' ao imprimir (fecha com a linha de correção); 'arquivo' com --out")
@@ -1597,11 +1888,18 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.cmd == "calc":
         print(json.dumps(_para_json(calc), ensure_ascii=False, indent=2))
         return 0
-    if args.format == "xlsx":
+    if args.format in ("xlsx", "docx"):
         if not args.out:
-            print("ERRO: --out é obrigatório para xlsx", file=sys.stderr)
+            print(f"ERRO: --out é obrigatório para {args.format}", file=sys.stderr)
             return 2
-        dados = gerar_xlsx(est, calc)
+        if args.format == "xlsx":
+            dados = gerar_xlsx(est, calc)
+        else:
+            try:
+                dados = gerar_docx(est, calc)
+            except ErroModelo as e:
+                print(f"ERRO: {e}. Nada foi gravado.", file=sys.stderr)
+                return 2
     else:
         perfil = args.perfil or ("arquivo" if args.out else "chat")
         texto = render_md(est, calc, perfil) if args.format == "md" else render_txt(est, calc, perfil)

@@ -25,6 +25,15 @@ import fixtures as fx  # noqa: E402
 D = Decimal
 
 
+def chat_para_arquivo(est, chat):
+    """D74: o arquivo é o chat sem a linha de correção e com os campos a preencher depois do Objeto."""
+    objeto = f"- **Objeto:** {apf._md(est['projeto']['titulo'])}\n"
+    campos = "".join(f"- **{r}:** {v}\n" for r, v in apf.CAMPOS_A_PREENCHER)
+    sem_fecho = chat.replace("\n" + apf.FECHO_CORRECAO + "\n", "")
+    assert sem_fecho.count(objeto) == 1
+    return sem_fecho.replace(objeto, objeto + campos)
+
+
 class TestGabaritos(unittest.TestCase):
     def total(self, est):
         self.assertEqual(apf.validar(est), [])
@@ -440,8 +449,12 @@ class TestPerfis(unittest.TestCase):
         for e in (fx.g01(), fx.g02(), fx.g03a(), fx.g03b(), fx.g04(), fx.g05(), fx.g06()):
             c = apf.calcular(e)
             chat, arq = apf.render_md(e, c, "chat"), apf.render_md(e, c, "arquivo")
-            # D64: arquivo = chat sem a linha de correção (mesma legenda, só termos usados, definição completa)
-            self.assertEqual(chat.replace("\n" + apf.FECHO_CORRECAO + "\n", ""), arq)
+            # D64: mesma legenda, só termos usados, definição completa; D74: arquivo = chat sem a linha de correção,
+            # com os campos a preencher
+            self.assertEqual(chat_para_arquivo(e, chat), arq)
+            self.assertTrue(chat.startswith(f"# {apf.TITULO_DOCUMENTO}\n"))
+            for _, v in apf.CAMPOS_A_PREENCHER:
+                self.assertNotIn(v, chat)
             self.assertEqual(apf.legenda(e, c, "arquivo"), apf.legenda(e, c, "chat"))
             for t, d in apf.legenda(e, c, "planilha"):
                 self.assertIn((t, d), apf.LEGENDA)
@@ -488,7 +501,7 @@ class TestPerfis(unittest.TestCase):
             with open(saida, encoding="utf-8") as fh:
                 arq = fh.read()
             self.assertNotIn("**PFM:**", arq)  # D64: legenda só com os termos usados também no arquivo
-            self.assertEqual(r.stdout.replace("\n" + apf.FECHO_CORRECAO + "\n", ""), arq)
+            self.assertEqual(chat_para_arquivo(fx.g01(), r.stdout), arq)
 
 
 class TestXlsx(unittest.TestCase):

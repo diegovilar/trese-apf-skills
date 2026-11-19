@@ -63,7 +63,7 @@ Para mudar o padrão, ponha argumentos **no início**, no formato `chave=valor`,
 | `modo` | `estimada`, `indicativa` | `estimada` | `indicativa` só em desenvolvimento, para uma ordem de grandeza grosseira: conta só os arquivos lógicos (na pesquisa da NESMA, desviou até cerca de 50% da contagem detalhada em alguns casos; não é limite garantido de erro) |
 | `tipo` | `desenvolvimento`, `melhoria` | inferido do pedido | quando o pedido não deixa claro se o sistema é novo ou já existe |
 | `melhoria` | `sem-fatores`, `nesma` | `sem-fatores` | em melhoria: `sem-fatores` soma o peso cheio de cada função incluída, alterada ou excluída (PF de melhoria); `nesma` aplica os fatores de impacto da NESMA (resultado em PFM) |
-| `saida` | `md`, `txt`, `xlsx` | perguntar no fim | para exportar direto, sem a pergunta (também depois de cada correção) |
+| `saida` | `md`, `txt`, `xlsx`, `docx` | perguntar no fim | para exportar direto, sem a pergunta (também depois de cada correção) |
 | `interativo` | `sim`, `nao` | `sim` | `nao` calcula direto, sem a prévia e os lotes de perguntas |
 
 Exemplos:
@@ -99,7 +99,7 @@ Argumento errado (chave desconhecida, valor fora da lista, falta do `--`) gera u
 
    Cada resposta vira um esclarecimento, que aparece no resultado. Respostas podem abrir um novo lote de perguntas.
 4. **Resultado.** A skill mostra a estimativa completa: resumo com o intervalo, memória de cálculo por função, hipóteses e cenários, premissas, itens não contados, esclarecimentos, pendências e legenda.
-5. **Exportação.** A skill pergunta se você quer o resultado em `.md`, `.txt`, `.xlsx` (pode escolher mais de um) ou nenhum. Os arquivos vão para o diretório de trabalho atual, com o nome `estimativa-apf-<título>-<data>.<ext>`. Um arquivo existente nunca é sobrescrito: o novo ganha o sufixo `-2`, `-3`...
+5. **Exportação.** A skill pergunta se você quer o resultado em `.md`, `.txt`, `.xlsx`, `.docx` (pode escolher mais de um) ou nenhum. Os arquivos começam pelo título e pela identificação: o Objeto vem preenchido; **Responsável** e **Participantes** vêm como campos entre colchetes, para você preencher. O `.docx` sai com o cabeçalho, o rodapé e os estilos do modelo da equipe e pode ser salvo como PDF no editor. Os arquivos vão para o diretório de trabalho atual, com o nome `estimativa-apf-<título>-<data>.<ext>`. Um arquivo existente nunca é sobrescrito: o novo ganha o sufixo `-2`, `-3`...
 6. **Correções.** Depois do resultado, peça a correção informando o item (ID ou descrição) e o que muda, por exemplo: "Correção: não existe cancelamento; o servidor só altera a solicitação enquanto não houver decisão da chefia." A skill atualiza o esclarecimento, refaz a identificação, mostra o resultado inteiro de novo e pergunta outra vez sobre a exportação (com `saida=` na chamada, reexporta direto). Os arquivos anteriores continuam como estavam (e ficam desatualizados). Se a correção for ambígua, ela pergunta antes de recalcular.
 
 Com `interativo=nao`, a skill pula a prévia e os lotes de perguntas: calcula direto e põe todas as lacunas na lista de pendências. Ainda pergunta tipo e fronteira, se for indispensável, e oferece a exportação.

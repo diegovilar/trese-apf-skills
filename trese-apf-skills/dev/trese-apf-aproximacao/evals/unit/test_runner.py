@@ -1,4 +1,5 @@
 """Testes do runner e do verificador dos evals do agente, sem chamar Claude nem Codex (traces simulados)."""
+import io
 import json
 import os
 import shutil
@@ -6,6 +7,7 @@ import sys
 import tempfile
 import time
 import unittest
+import zipfile
 from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
@@ -138,6 +140,45 @@ class TestVerificacao(Base):
         v = self.rodar("G01", [("tool", ("Bash", {"command": "python3 s/apf.py check e.json"}, "OK"))], md)
         self.assertFalse(v["tem_json"])
         self.assertIn("render", v["criterios"]["K2"]["motivo"])
+
+    def _exporta_docx(self, dados):
+        est, calc, md = self._g01()
+        (self.ws / "estimativa-apf-g01.docx").write_bytes(dados(est, calc))
+        eventos = self._execucao_valida(est, md) + [
+            ("tool", ("Bash", {"command": "python3 s/apf.py render tmp/d/e.json --format docx --out estimativa-apf-g01.docx"}, "ok"))]
+        return self.rodar("G01", eventos + [("texto", md)], "Arquivo exportado", c=dict(C.resolver("G01"), exporta="docx"))
+
+    def test_exportacao_docx_identica(self):
+        v = self._exporta_docx(apf.gerar_docx)
+        self.assertTrue(v["criterios"]["K2"]["exportacao_identica"])
+        self.assertTrue(v["criterios"]["K2"]["ok"])
+
+    def test_exportacao_docx_adulterada_reprova(self):
+        def adulterado(est, calc):
+            entrada = zipfile.ZipFile(io.BytesIO(apf.gerar_docx(est, calc)))
+            buf = io.BytesIO()
+            with zipfile.ZipFile(buf, "w") as z:
+                for info in entrada.infolist():
+                    dados = entrada.read(info.filename)
+                    if info.filename == "word/document.xml":
+                        dados = dados.replace(b"45", b"46")
+                    z.writestr(info, dados)
+            return buf.getvalue()
+        v = self._exporta_docx(adulterado)
+        self.assertFalse(v["criterios"]["K2"]["exportacao_identica"])
+        self.assertFalse(v["criterios"]["K2"]["ok"])
+
+    def test_exportacao_docx_corrompida_reprova_sem_excecao(self):
+        v = self._exporta_docx(lambda est, calc: b"nao e zip")
+        self.assertFalse(v["criterios"]["K2"]["exportacao_identica"])
+        self.assertIn("motivo_exportacao", v["criterios"]["K2"])
+        self.assertFalse(v["criterios"]["K2"]["ok"])
+
+    def test_exportacao_docx_nao_pedida_reprova(self):
+        est, calc, md = self._g01()
+        (self.ws / "estimativa-apf-g01.docx").write_bytes(apf.gerar_docx(est, calc))
+        v = self.rodar("G01", self._execucao_valida(est, md) + [("texto", md)], "Quer exportar?")
+        self.assertFalse(v["criterios"]["K2"]["nada_exportado"])
 
     def test_exportacao_xlsx_identica(self):
         est, calc, md = self._g01()

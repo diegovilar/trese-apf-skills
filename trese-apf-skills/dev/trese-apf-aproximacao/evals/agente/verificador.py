@@ -167,9 +167,25 @@ def multiconjunto(est: Dict[str, Any]) -> List[Tuple[str, Optional[str]]]:
     return sorted(((f["tipo"], f.get("operacao")) for f in est["funcoes"]), key=lambda x: (x[0], x[1] or ""))
 
 
-def conteudo_xlsx(dados: bytes) -> Dict[str, bytes]:
-    with zipfile.ZipFile(io.BytesIO(dados)) as z:
-        return {n: z.read(n) for n in z.namelist() if n.startswith("xl/")}
+def conteudo_xlsx(dados: bytes) -> Optional[Dict[str, bytes]]:
+    """Partes xl/ do pacote; None se o arquivo não for um zip legível."""
+    try:
+        with zipfile.ZipFile(io.BytesIO(dados)) as z:
+            return {n: z.read(n) for n in z.namelist() if n.startswith("xl/")}
+    except (zipfile.BadZipFile, KeyError, OSError, EOFError):
+        return None
+
+
+def conteudo_docx(dados: bytes) -> Optional[Dict[str, bytes]]:
+    """Todas as partes do pacote (modelo e corpo), sem as datas do zip; None se ilegível."""
+    try:
+        with zipfile.ZipFile(io.BytesIO(dados)) as z:
+            return {n: z.read(n) for n in z.namelist()}
+    except (zipfile.BadZipFile, KeyError, OSError, EOFError):
+        return None
+
+
+EXTENSOES_EXPORTADAS = (".md", ".txt", ".xlsx", ".docx")
 
 
 # --------------------------------------------------------------------------- temporários e auditoria
@@ -324,11 +340,13 @@ def recuperar_json(snap: Path, tr: Dict[str, Any], formato: str = "md") -> Tuple
     """Escolhe o JSON canônico pelo CONTEÚDO: o render confiável dele precisa ser igual à saída do
     `apf.py render --format md` (ou `--format previa`) registrada no trace. Ambiguidade (dois JSONs
     diferentes que batem) para."""
-    titulo = "# Prévia da estimativa" if formato == "previa" else "# Estimativa de tamanho funcional"
+    # Só o título atual (D74): execuções anteriores se reverificam no checkout correspondente, porque o render
+    # comparado abaixo também é o atual.
+    titulos = ("# Prévia da estimativa",) if formato == "previa" else ("# " + apf.TITULO_DOCUMENTO,)
     renders = [f["saida"] for f in chamadas_apf(tr["ferramentas"])
                if " render " in f" {f['entrada'].get('command', '')} " and f"--format {formato}" in f["entrada"].get("command", "")]
     # A saída pode vir precedida por outros comandos encadeados (echo, check): exige-se CONTER o render.
-    renders = [compacto(r) for r in renders if r and titulo in r]
+    renders = [compacto(r) for r in renders if r and any(t in r for t in titulos)]
     if not renders:
         return None, f"o trace não tem saída de 'apf.py render --format {formato}'"
     alvo = renders[-1]
@@ -431,14 +449,18 @@ def verificar_snapshot(c: Dict[str, Any], saida: Path) -> Dict[str, Any]:
     md = apf.render_md(est, calc, "chat")  # o que o agente deve mostrar na resposta
     k2: Dict[str, Any] = k2_por_categorias(md, texto)
     exporta = c.get("exporta")
-    exportados = [p for p in arquivos_criados(arquivos) if Path(p).suffix in (".md", ".txt", ".xlsx") and not p.startswith("tmp/")]
+    exportados = [p for p in arquivos_criados(arquivos) if Path(p).suffix in EXTENSOES_EXPORTADAS and not p.startswith("tmp/")]
     if exporta:
         alvo = [p for p in exportados if p.endswith("." + exporta)]
         k2["exportou"] = len(alvo) == 1
         if alvo:
             dados = (arquivos / alvo[0]).read_bytes()
-            if exporta == "xlsx":
-                k2["exportacao_identica"] = conteudo_xlsx(dados) == conteudo_xlsx(apf.gerar_xlsx(est, calc))
+            if exporta in ("xlsx", "docx"):
+                ler, gerar = (conteudo_xlsx, apf.gerar_xlsx) if exporta == "xlsx" else (conteudo_docx, apf.gerar_docx)
+                obtido = ler(dados)
+                k2["exportacao_identica"] = obtido is not None and obtido == ler(gerar(est, calc))
+                if obtido is None:
+                    k2["motivo_exportacao"] = f"o .{exporta} exportado não é um pacote zip legível"
             else:  # arquivos escritos pelo script: comparação estrita (sem relaxar espaços)
                 confiavel = apf.render_md(est, calc, "arquivo") if exporta == "md" else apf.render_txt(est, calc, "arquivo")
                 k2["exportacao_identica"] = normalizar(dados.decode("utf-8")) == normalizar(confiavel)
@@ -475,8 +497,8 @@ def _verificar_previa(c: Dict[str, Any], v: Dict[str, Any], snap: Path, tr: Dict
     """Execução com interativo=sim que deve terminar na prévia (D51, D52): JSON válido, prévia do script
     copiada literalmente, nenhum resultado numérico e nada exportado antes da confirmação."""
     crit = v["criterios"]
-    finais = [x for x in cmds if " render " in f" {x} " and re.search(r"--format\s+(md|txt|xlsx)\b", x)]
-    exportados = [p for p in arquivos_criados(arquivos) if Path(p).suffix in (".md", ".txt", ".xlsx")]
+    finais = [x for x in cmds if " render " in f" {x} " and re.search(r"--format\s+(md|txt|xlsx|docx)\b", x)]
+    exportados = [p for p in arquivos_criados(arquivos) if Path(p).suffix in EXTENSOES_EXPORTADAS]
     k1 = {"sem_alerta": not comeca_com_alerta(texto),
           "check": any(" check " in f" {x} " for x in cmds),
           "previa": any(" render " in f" {x} " and "--format previa" in x for x in cmds),
