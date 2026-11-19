@@ -1,16 +1,18 @@
 # T5 — checagem manual final do modo interativo (fase 6, D71)
 
-Checagem manual, no OpenCode/OpenChamber, do caminho completo do modo interativo com a skill congelada (`nesma-apf-estimator/` sem mudanças desde `0c5a3b3`). Uma execução: **sinal funcional, não estabilidade**. Um sucesso aqui não apaga as reprovações da fase 5. Critérios e respostas fixados antes da execução; a sessão é lida depois pelo banco do OpenCode.
+> Registro histórico: referências de caminhos podem refletir a estrutura anterior à reorganização de 19/11/2026; veja o mapa na D73 do `PLANO.md`.
+
+Checagem manual, no OpenCode/OpenChamber, do caminho completo do modo interativo com a skill congelada (`trese-apf-aproximacao/` sem mudanças desde `0c5a3b3`). Uma execução: **sinal funcional, não estabilidade**. Um sucesso aqui não apaga as reprovações da fase 5. Critérios e respostas fixados antes da execução; a sessão é lida depois pelo banco do OpenCode.
 
 ## Preparação
 
 - Sessão **nova e limpa**, modelo `claude-sonnet-5-5` (variante high), como no T1–T4.
-- Conferir que a skill instalada é o link para este repositório e que nada nela mudou desde `0c5a3b3` (`git diff 0c5a3b3 -- nesma-apf-estimator` vazio).
+- Conferir que a skill instalada é o link para este repositório e que nada nela mudou desde `0c5a3b3` (`git diff 0c5a3b3 -- trese-apf-aproximacao` vazio).
 - Não mexer no repositório durante a sessão.
 
 ## Roteiro
 
-1. Enviar: `$nesma-apf-estimator -- Como servidor, quero gerenciar minhas solicitações de diárias`
+1. Enviar: `$trese-apf-aproximacao -- Como servidor, quero gerenciar minhas solicitações de diárias`
 2. Tipo do projeto (se perguntado): opção **Desenvolvimento (novo)**. Fronteira (se perguntada): responder só "sistema novo de diárias" (os dados do RH ficam reservados para a pergunta de identificação).
 3. Lote de perguntas: responder **por assunto**. Se uma pergunta juntar dois assuntos, combinar as respostas. Assunto não listado: **Não sei**.
 

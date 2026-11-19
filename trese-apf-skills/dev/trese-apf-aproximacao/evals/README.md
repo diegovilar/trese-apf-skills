@@ -1,4 +1,6 @@
-# Evals da skill `nesma-apf-estimator`
+# Evals da skill `trese-apf-aproximacao`
+
+Comandos e caminhos relativos a `trese-apf-skills/dev/trese-apf-aproximacao/`; a skill avaliada fica em `trese-apf-skills/skills/trese-apf-aproximacao/` (D73).
 
 Três camadas, separadas:
 
@@ -8,11 +10,11 @@ Três camadas, separadas:
 | Interoperabilidade | o `.xlsx` abre e os valores lidos batem | manual + openpyxl/LibreOffice | ver `PLANO.md` (D28) |
 | Agente | a skill executada de verdade por um modelo, sobre os gabaritos aprovados | `evals/agente/` | runner abaixo |
 
-Gabaritos aprovados: `evals/gabaritos-iniciais.md` (revisão 4 no G04; G07, holdout, aprovado em 17/11/2026).
+Gabaritos aprovados: `evals/gabaritos-iniciais.md` (revisão 4 no G04; G07, holdout, aprovado em 17/11/2026). Os gabaritos entram no hash do juiz e ficam byte a byte: as referências de caminhos dentro deles seguem a estrutura anterior à D73.
 
 ## Estrutura do código (após a consulta 7 ao popper)
 
-`execucao.py` (o que o executor recebe; hash de execução), `juiz.py` (o que o juiz recebe; hash do juiz e do dossiê), `verificador.py` (critérios automáticos sobre snapshots congelados; mudar exige só `runner.py reverificar <rodada>`), `runner.py` (orquestração e estado). Como retomar uma rodada: `HANDOFF.md` na raiz.
+`execucao.py` (o que o executor recebe; hash de execução), `juiz.py` (o que o juiz recebe; hash do juiz e do dossiê), `verificador.py` (critérios automáticos sobre snapshots congelados; mudar exige só `runner.py reverificar <rodada>`), `runner.py` (orquestração e estado). Como retomar uma rodada: `HANDOFF.md`, neste diretório de desenvolvimento.
 
 ## Evals do agente (desenho revisado após a consulta 6 ao popper)
 
@@ -27,7 +29,7 @@ Gabaritos aprovados: `evals/gabaritos-iniciais.md` (revisão 4 no G04; G07, hold
 - Claude Code headless: `claude -p "<invocação>" --model <sonnet 5.5> --effort high --output-format stream-json --verbose --no-session-persistence --setting-sources project --tools Read,Write,Edit,Glob,Grep,Bash --permission-prompts none`, com `cwd` num diretório temporário novo.
 - **Sem `--bare`:** esse modo ignora o login OAuth e exige chave de API, o que fugiria da cota monitorada. A sondagem confirma qual credencial e modalidade de consumo estão em uso e se a skill do projeto é descoberta. O perfil validado fica registrado e fixo; não há fallback silencioso.
 - `--setting-sources project` evita carregar hooks, plugins e configurações do usuário. A sondagem verifica também se o CLAUDE.md global do usuário entra no contexto e, se entrar, registra isso.
-- A cópia da skill vai para `.claude/skills/nesma-apf-estimator/` no diretório temporário. O hash dela é conferido antes e depois de cada execução: se mudou, a execução é inválida.
+- A cópia da skill vai para `.claude/skills/trese-apf-aproximacao/` no diretório temporário. O hash dela é conferido antes e depois de cada execução: se mudou, a execução é inválida.
 - **Isolamento por auditoria.** `--tools` restringe as ferramentas disponíveis, mas não confina o Bash. Por isso o runner audita o trace: qualquer leitura, comando ou caminho fora do diretório temporário (exceto o interpretador Python), e qualquer acesso à rede, torna a execução **contaminada** (inválida). Os gabaritos ficam fora do diretório temporário. O que se mede é o **acesso observável**.
 
 ### Juiz

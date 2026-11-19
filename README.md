@@ -1,49 +1,80 @@
-# skill-apf — `nesma-apf-estimator`
+# trese-apf-skills
 
-Skill de agente que estima o tamanho funcional (Análise de Pontos de Função, contagem **estimada** ou **indicativa** da NESMA) de pedidos de desenvolvimento ou melhoria de sistemas, como insumo da análise de viabilidade da equipe interna de TI do TRE/SE. Uso interno, sem distribuição.
+Skills de agente para Análise de Pontos de Função (APF) em projetos de TI do TRE/SE, empacotadas como o plugin [`trese-apf-skills`](trese-apf-skills/README.md). Uso interno, sem distribuição.
 
-A estimativa é **preliminar**: não serve para contratação nem medição, e todo resultado precisa da revisão de um analista.
+| Skill | Para quê | Estado |
+|---|---|---|
+| [`trese-apf-aproximacao`](trese-apf-skills/skills/trese-apf-aproximacao/README.md) | estimativa preliminar de tamanho funcional (contagem estimada ou indicativa da NESMA) de pedidos de desenvolvimento ou melhoria, para a análise de viabilidade | experimental |
 
-## Para usar
+Como usar cada skill, ler o resultado e revisá-lo: README da skill (link na tabela).
 
-Leia o **[guia de uso](GUIA-DE-USO.md)**: instalação, como chamar, as perguntas da prévia, como ler o resultado e o que revisar antes de usar o número.
+## Requisitos
 
-Em resumo: copie a pasta `nesma-apf-estimator/` para o diretório de skills do seu ambiente (Claude Code, OpenCode), tenha Python 3.8+ e chame a skill com um pedido que descreva o processo: quem registra, quem decide, o que o sistema guarda ou lê de outro sistema e que consultas são esperadas. No Claude Code:
+- Um ambiente de agente que carregue skills: VS Code (chat com plugins de agente), Claude Code, OpenCode ou equivalente.
+- **Python 3.8 ou superior** na máquina: os cálculos são feitos por script, nunca pelo modelo.
+- Acesso a este repositório, <https://github.com/diegovilar/trese-apf-skills>.
 
+## Instalação
+
+Três caminhos; escolha um.
+
+### VS Code, como marketplace de plugins
+
+O repositório é um marketplace de plugins (`marketplace.json` na raiz) com um plugin, `trese-apf-skills`, que traz todas as skills.
+
+1. Abra o editor de customizações do chat (comando **Chat: Open Customizations**), vá em **Browse**, abra o menu de fontes e escolha **Configure Marketplaces** → **Add Marketplace**. Informe `diegovilar/trese-apf-skills`.
+2. Volte a **Browse**, escolha esse marketplace e instale o plugin `trese-apf-skills`.
+
+Outra forma de adicionar o marketplace: abrir o link `vscode://chat-plugin/add-marketplace?ref=diegovilar%2Ftrese-apf-skills`. Os plugins de agente precisam estar habilitados (`chat.plugins.enabled`). Para atualizar, use **Chat: Update Plugins**. Detalhes: [Agent plugins in VS Code](https://code.visualstudio.com/docs/copilot/customization/agent-plugins).
+
+O `marketplace.json` serve ao VS Code; os outros ambientes usam um dos caminhos abaixo.
+
+### Utilitário `skills`
+
+O [`skills`](https://github.com/vercel-labs/skills) (Node.js 22.20 ou superior) instala skills de um repositório em vários agentes. Ele encontra as skills deste repositório pelo `skills.sh.json` da raiz.
+
+```bash
+# listar as skills disponíveis, sem instalar
+npx skills add diegovilar/trese-apf-skills --list
+
+# instalar todas, no projeto atual, escolhendo os agentes interativamente
+npx skills add diegovilar/trese-apf-skills --skill '*'
+
+# instalar uma skill, para o usuário (todos os projetos), num agente específico
+npx skills add diegovilar/trese-apf-skills --skill trese-apf-aproximacao -g -a claude-code
 ```
-/nesma-apf-estimator A Seção de Gestão de Pessoas precisa de um sistema novo para os pedidos de teletrabalho. O servidor registra o pedido com o período e o plano de trabalho; nome, cargo e lotação vêm do sistema de RH. A chefia imediata aprova ou devolve o pedido, com justificativa. O servidor acompanha a situação dos seus pedidos, e a Seção consulta os pedidos aprovados por unidade e emite um relatório mensal em PDF.
-```
 
-Com argumentos, antes de `--`:
+Por padrão a instalação é no projeto atual; `-g` instala para o usuário. Para atualizar: `npx skills update`. Nomes dos agentes e diretórios de cada um: [documentação do `skills`](https://github.com/vercel-labs/skills/blob/HEAD/docs/commands.md).
 
-```
-/nesma-apf-estimator tipo=melhoria melhoria=nesma saida=xlsx -- ./demandas/diarias-prestacao-de-contas.docx
-/nesma-apf-estimator interativo=nao saida=md -- ./demandas/requisitos-sistema-de-eventos.md
-```
+### Cópia manual
 
-O primeiro estima uma melhoria com os fatores de impacto da NESMA e exporta em planilha; o segundo calcula direto, sem a prévia e os lotes de perguntas, e salva em Markdown. Outros ambientes acionam skills de outro jeito; veja o guia.
+Copie a pasta da skill, inteira, de `trese-apf-skills/skills/<skill>/` para o diretório de skills do seu ambiente. Exemplos:
 
-## Estado
+| Ambiente | Projeto | Usuário |
+|---|---|---|
+| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
+| OpenCode | `.opencode/skills/` | `~/.config/opencode/skills/` |
 
-Em uso experimental. O modo interativo (padrão), com prévia e perguntas antes do cálculo, funcionou nos testes, mas o comportamento em diálogos longos ainda não foi avaliado. Nos testes, a skill às vezes contou hipóteses que o pedido não sustenta e fez perguntas que ampliam o pedido; uma lacuna perguntada nem sempre virou alternativa nos cenários; e a lista de pendências não é exaustiva. Por isso, todo resultado passa pela revisão descrita no guia.
+Para outros ambientes, veja a documentação de cada um. Um link simbólico para a pasta, em vez da cópia, também serve quando o ambiente o reconhece. Não altere os arquivos da skill.
 
-## Conteúdo do repositório
+## Estrutura do repositório
 
 | Caminho | O que é |
 |---|---|
-| `nesma-apf-estimator/` | a skill: `SKILL.md`, `references/` (regras e convenções de contagem) e `scripts/apf.py` (validação, cálculo e exportação em md, txt e xlsx; só biblioteca padrão) |
-| `GUIA-DE-USO.md` | guia para o analista |
-| `evals/` | testes do script e avaliações do agente com casos de referência ([evals/README.md](evals/README.md)) |
-| `RELATORIO-*.md`, `PLANO.md`, `HANDOFF*.md` | histórico do desenvolvimento: decisões, resultados das avaliações e como retomar o trabalho |
+| `marketplace.json` | marketplace de plugins do VS Code |
+| `skills.sh.json` | onde o utilitário `skills` procura as skills |
+| `trese-apf-skills/` | o plugin: `plugin.json`, `CHANGELOG.md`, [`README.md`](trese-apf-skills/README.md) |
+| `trese-apf-skills/skills/<skill>/` | cada skill, como é instalada |
+| `trese-apf-skills/dev/<skill>/` | desenvolvimento de cada skill: plano, handoff, relatórios e evals |
+| `AGENTS.md`, `CLAUDE.md` | convenções para quem (pessoa ou agente) trabalha no repositório |
 
-## Testes
+## Desenvolvimento
 
-```
+Convenções do repositório: [`AGENTS.md`](AGENTS.md). Cada skill tem o seu diretório de desenvolvimento, com um `HANDOFF.md` que diz como retomar o trabalho. Para a `trese-apf-aproximacao`, os testes do script e do runner dos evals rodam assim:
+
+```bash
+cd trese-apf-skills/dev/trese-apf-aproximacao
 python3 -m unittest discover -s evals/unit
 ```
 
-Testes do script: esquema, aritmética, fatores, cenários, renderização, planilha e linha de comando. As avaliações do agente executam a skill com um modelo sobre casos de referência; ver `evals/README.md`.
-
-## Fontes
-
-Roteiro de Métricas de Software do SISP 3.0 (referência técnica subsidiária), NESMA *Early Function Point Analysis* e sua tradução, e NESMA *APF para Melhoria de Software* 2.2.1 (fatores EFPA).
+As avaliações do agente (executam a skill com um modelo sobre casos de referência) estão descritas em `trese-apf-skills/dev/trese-apf-aproximacao/evals/README.md`.

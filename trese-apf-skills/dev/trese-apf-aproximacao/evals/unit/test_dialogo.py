@@ -99,7 +99,7 @@ class TestContinuidade(unittest.TestCase):
         fora = Path(tempfile.mkdtemp(prefix="apf-herdado-", dir="/tmp")).resolve()
         saida1, saida2 = Path(tempfile.mkdtemp(prefix="saida-t1-")), Path(tempfile.mkdtemp(prefix="saida-t2-"))
         try:
-            h = V.sha_arvore(ws / ".claude" / "skills" / "nesma-apf-estimator")
+            h = V.sha_arvore(ws / ".claude" / "skills" / "trese-apf-aproximacao")
             (fora / "e.json").write_text("{\"v\": 1}", encoding="utf-8")
             m1 = V.congelar(ws, saida1, time.time() - 5, time.time() + 1, h)
             self.assertIn(str(fora), m1["temporarios"].values())
@@ -219,7 +219,7 @@ class TestJuizDoDialogo(unittest.TestCase):
 
     def test_dossie(self):
         inv, msgs = R.mensagens_do_dialogo("D2b", 2)
-        self.assertIn("/nesma-apf-estimator tipo=desenvolvimento -- ./pedido.md", inv)
+        self.assertIn("/trese-apf-aproximacao tipo=desenvolvimento -- ./pedido.md", inv)
         self.assertEqual(msgs, [C.D2B_FATOS])
         d = J.montar_dossie_dialogo(inv, C.H2_TEXTO, msgs, "H2c", {"x": 1}, "resp", C.NOTA_D2B)
         self.assertIn(J.INSTRUCOES_DIALOGO, d)

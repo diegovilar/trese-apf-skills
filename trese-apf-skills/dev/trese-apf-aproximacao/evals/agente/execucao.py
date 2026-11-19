@@ -12,7 +12,8 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 AQUI = Path(__file__).resolve().parent
-SKILL = AQUI.parent.parent / "nesma-apf-estimator"
+DEV = AQUI.parent.parent                             # trese-apf-skills/dev/<skill>
+SKILL = DEV.parent.parent / "skills" / DEV.name       # trese-apf-skills/skills/<skill>
 BASE_WS = Path("/tmp/apf-evals")
 
 CONFIG = {
@@ -29,7 +30,7 @@ CONFIG = {
     "timeout_s": 1200,
 }
 
-PROMPT_SONDA_SKILL = "/nesma-apf-estimator modo=detalhada -- ./pedido.md"
+PROMPT_SONDA_SKILL = "/trese-apf-aproximacao modo=detalhada -- ./pedido.md"
 PROMPT_SONDA_CONTEXTO = ("Responda só com uma lista. 1) Quais arquivos de instrução (CLAUDE.md, AGENTS.md ou semelhantes) ou "
                          "memórias foram carregados no seu contexto? Dê os caminhos ou diga 'nenhum'. 2) Quais skills estão "
                          "disponíveis? 3) Quais ferramentas você tem? Não use nenhuma ferramenta.")
@@ -41,23 +42,23 @@ def montar_invocacao(c: Dict[str, Any]) -> Tuple[str, bool]:
     if t in ("nl_confirma", "nl_executa"):
         return c["prosa"], c.get("subsidio") is not None
     if c.get("arquivo_inexistente"):
-        return f"/nesma-apf-estimator -- {c['arquivo_inexistente']}", False
+        return f"/trese-apf-aproximacao -- {c['arquivo_inexistente']}", False
     args = c.get("args")
     if c.get("inline"):
         if args is None:
-            return f"/nesma-apf-estimator {c['subsidio']}", False
-        return f"/nesma-apf-estimator {args} -- {c['subsidio']}".replace("  ", " "), False
+            return f"/trese-apf-aproximacao {c['subsidio']}", False
+        return f"/trese-apf-aproximacao {args} -- {c['subsidio']}".replace("  ", " "), False
     if args is None:
-        return "/nesma-apf-estimator ./pedido.md", True
+        return "/trese-apf-aproximacao ./pedido.md", True
     if c.get("sem_delimitador"):
-        return f"/nesma-apf-estimator {args} ./pedido.md", True
-    return f"/nesma-apf-estimator {args} -- ./pedido.md", True
+        return f"/trese-apf-aproximacao {args} ./pedido.md", True
+    return f"/trese-apf-aproximacao {args} -- ./pedido.md", True
 
 
 def preparar_ws(nome: str, subsidio: Optional[str]) -> Path:
     BASE_WS.mkdir(parents=True, exist_ok=True)
     ws = Path(tempfile.mkdtemp(prefix=f"{nome}-", dir=BASE_WS)).resolve()
-    shutil.copytree(SKILL, ws / ".claude" / "skills" / "nesma-apf-estimator",
+    shutil.copytree(SKILL, ws / ".claude" / "skills" / "trese-apf-aproximacao",
                     ignore=shutil.ignore_patterns("__pycache__"))
     (ws / "tmp").mkdir()
     if subsidio is not None:

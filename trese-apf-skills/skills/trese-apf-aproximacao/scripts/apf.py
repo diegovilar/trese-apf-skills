@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Calculadora e renderizador da skill nesma-apf-estimator.
+"""Calculadora e renderizador da skill trese-apf-aproximacao.
 
 Somente biblioteca padrão; Python >= 3.8.
 
@@ -1538,7 +1538,7 @@ def _carregar(caminho: str) -> Any:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    ap = argparse.ArgumentParser(prog="apf.py", description="Calculadora da skill nesma-apf-estimator")
+    ap = argparse.ArgumentParser(prog="apf.py", description="Calculadora da skill trese-apf-aproximacao")
     sub = ap.add_subparsers(dest="cmd")
     sub.add_parser("novo", help="cria um diretório de trabalho exclusivo para uma estimativa e imprime o caminho absoluto")
     for nome in ("check", "calc"):

@@ -24,7 +24,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 AQUI = Path(__file__).resolve().parent
-SKILL = AQUI.parent.parent / "nesma-apf-estimator"
+DEV = AQUI.parent.parent                             # trese-apf-skills/dev/<skill>
+SKILL = DEV.parent.parent / "skills" / DEV.name       # trese-apf-skills/skills/<skill>
 sys.path.insert(0, str(SKILL / "scripts"))
 import apf  # noqa: E402  (cópia confiável, do repositório)
 
@@ -275,7 +276,7 @@ def congelar(ws: Path, saida: Path, desde: float, ate: float, hash_skill_antes: 
     (snap / "ws").mkdir(parents=True)
     manifesto: Dict[str, Any] = {"ws_original": str(ws), "desde": desde, "ate": ate, "arquivos": {},
                                  "temporarios": {}, "skill_intacta": None}
-    skill = ws / ".claude" / "skills" / "nesma-apf-estimator"
+    skill = ws / ".claude" / "skills" / "trese-apf-aproximacao"
     manifesto["skill_intacta"] = skill.exists() and sha_arvore(skill) == hash_skill_antes
     for p in ws.rglob("*"):
         rel = p.relative_to(ws)

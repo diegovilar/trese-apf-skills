@@ -25,7 +25,7 @@ CONFIG = {
 PROMPT_SONDA = "Responda apenas com a palavra OK. Não use ferramentas."
 
 
-INSTRUCOES_JUIZ = """Você é o juiz de uma avaliação. Um agente executou a skill `nesma-apf-estimator` (estimativa de pontos de função NESMA) sobre o subsídio abaixo. Avalie o resultado dele contra o gabarito aprovado e as convenções. Não use ferramentas, não leia arquivos e não execute comandos: tudo o que você precisa está neste texto.
+INSTRUCOES_JUIZ = """Você é o juiz de uma avaliação. Um agente executou a skill `trese-apf-aproximacao` (estimativa de pontos de função NESMA) sobre o subsídio abaixo. Avalie o resultado dele contra o gabarito aprovado e as convenções. Não use ferramentas, não leia arquivos e não execute comandos: tudo o que você precisa está neste texto.
 
 Critérios (responda um booleano para cada, com justificativa curta e uma citação literal do JSON ou da resposta que sustente o veredito; se não houver o que citar, use ""):
 - K3: nenhuma função listada como PROIBIDA no gabarito foi contada (em `funcoes`), nem com outro nome.
@@ -37,7 +37,7 @@ Em `observacoes`, registre qualquer outro problema relevante que você notar (n�
 """
 
 
-INSTRUCOES_JUIZ_PREVIA = """Você é o juiz de uma avaliação. Um agente executou a skill `nesma-apf-estimator` (estimativa de pontos de função NESMA) no modo interativo sobre o subsídio abaixo. Nesse modo, a execução termina numa PRÉVIA: a lista de funcionalidades detectadas, sem pontos de função, e as lacunas registradas como pendências, algumas com pergunta ao analista (campo `pergunta`), apresentadas em lotes. Avalie o JSON da prévia e a resposta contra o gabarito aprovado e as convenções. Não use ferramentas, não leia arquivos e não execute comandos: tudo o que você precisa está neste texto.
+INSTRUCOES_JUIZ_PREVIA = """Você é o juiz de uma avaliação. Um agente executou a skill `trese-apf-aproximacao` (estimativa de pontos de função NESMA) no modo interativo sobre o subsídio abaixo. Nesse modo, a execução termina numa PRÉVIA: a lista de funcionalidades detectadas, sem pontos de função, e as lacunas registradas como pendências, algumas com pergunta ao analista (campo `pergunta`), apresentadas em lotes. Avalie o JSON da prévia e a resposta contra o gabarito aprovado e as convenções. Não use ferramentas, não leia arquivos e não execute comandos: tudo o que você precisa está neste texto.
 
 Critérios (responda um booleano para cada, com justificativa curta e uma citação literal do JSON ou da resposta que sustente o veredito; se não houver o que citar, use ""):
 - K3: nenhuma função listada como PROIBIDA no gabarito foi contada (em `funcoes`), nem com outro nome.

@@ -1,11 +1,11 @@
 ---
-name: nesma-apf-estimator
-description: Estima o tamanho funcional (Análise de Pontos de Função, contagem estimada ou indicativa da NESMA) de um pedido de desenvolvimento ou melhoria de sistema, para a análise de viabilidade de projetos de TI da equipe interna do TRE/SE. Use quando o usuário pedir estimativa de pontos de função, APF, PF, contagem NESMA ou tamanho funcional de um pedido, história de usuário ou documento de requisitos, anexado ou no prompt. Funciona offline e gera a saída em .md, .txt ou .xlsx.
+name: trese-apf-aproximacao
+description: Calcula o tamanho funcional (Análise de Pontos de Função, contagem estimada ou indicativa da NESMA) de um pedido de desenvolvimento ou melhoria de sistema, para a análise de viabilidade de projetos de TI da equipe interna do TRE/SE. Use quando o usuário pedir estimativa de pontos de função, APF, PF, contagem NESMA ou tamanho funcional de um pedido, história de usuário ou documento de requisitos, anexado ou no prompt. Funciona offline e gera a saída em .md, .txt ou .xlsx.
 ---
 
-# nesma-apf-estimator
+# trese-apf-aproximacao
 
-Estimativa **preliminar** de tamanho funcional para análise de viabilidade. Não é medição nem contagem detalhada e não serve para contratação. Os subsídios são incompletos por natureza: a skill estima com o que há, deixa explícito o que assumiu e lista o que falta.
+Cálculo **preliminar** de tamanho funcional para análise de viabilidade. Não é medição nem contagem detalhada e não serve para contratação. Os subsídios são incompletos por natureza: a skill estima com o que há, deixa explícito o que assumiu e lista o que falta.
 
 Funciona **offline**: todo o conhecimento necessário está em `references/`. Não pesquise na web nem use regra de contagem que não esteja nesses arquivos. Se o caso não estiver coberto, declare a limitação (03 §9) em vez de improvisar.
 
@@ -18,7 +18,7 @@ Funciona **offline**: todo o conhecimento necessário está em `references/`. N�
 
 ## 1. Argumentos
 
-A invocação é o texto que acompanha o acionamento da skill (por exemplo, depois de `/nesma-apf-estimator`).
+A invocação é o texto que acompanha o acionamento da skill (por exemplo, depois de `/trese-apf-aproximacao`).
 
 **Gramática**
 

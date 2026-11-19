@@ -1,4 +1,6 @@
-# Relatório final — iteração 2 da skill `nesma-apf-estimator`
+# Relatório final — iteração 2 da skill `trese-apf-aproximacao`
+
+> Registro histórico: referências de caminhos podem refletir a estrutura anterior à reorganização de 19/11/2026; veja o mapa na D73 do `PLANO.md`.
 
 18/11/2026. Iteração **encerrada** por decisão do usuário (D71), **sem aprovação integral**: o alvo da iteração teve sinal favorável, mas a contenção (perguntas e hipóteses indevidas) não foi demonstrada e há limitações conhecidas (ver "Resultado dos evals"). Skill congelada no estado do commit `0c5a3b3`. Detalhes, decisões (D40–D71) e todas as rodadas em `PLANO.md`; relatório anterior em `RELATORIO-iteracao-1.md`. Documentação de uso: `README.md` e `GUIA-DE-USO.md`.
 
@@ -18,7 +20,7 @@ Melhorar a **descoberta de lacunas de domínio** em pedidos vagos: o critério n
 
 | Arquivo | Tamanho |
 |---|---:|
-| `nesma-apf-estimator/SKILL.md` | 19,3 kB |
+| `trese-apf-aproximacao/SKILL.md` | 19,3 kB |
 | `references/01-fundamentos-e-identificacao.md` | 12,3 kB |
 | `references/02-regras-nesma.md` | 8,6 kB |
 | `references/03-casos-de-borda-e-convencoes.md` | 15,6 kB |

@@ -1,0 +1,7 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "trese-apf-skills",
+  "description": "Skills para cálculos de APF para projetos do TRE/SE",
+  "version": "0.1.0",
+  "license": "UNLICENSED"
+}

@@ -1,4 +1,2 @@
 __pycache__/
 *.pyc
-# Resultados brutos dos evals do agente (traces grandes); o resumo de cada rodada vai para o PLANO.md.
-evals/agente/resultados/

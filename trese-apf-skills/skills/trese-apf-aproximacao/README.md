@@ -1,4 +1,4 @@
-# Guia de uso — skill `nesma-apf-estimator`
+# Skill `trese-apf-aproximacao`
 
 Para o analista de TI do TRE/SE que precisa de uma estimativa de tamanho funcional na análise de viabilidade de um pedido de sistema. Não é preciso saber Análise de Pontos de Função para usar a skill, mas é preciso revisar o que ela entrega (ver "Antes de usar o número").
 
@@ -8,17 +8,17 @@ A skill faz uma **estimativa preliminar** de pontos de função (PF) pelo métod
 
 Não serve para contratação, medição de entrega nem contagem detalhada. Não aplica fórmulas contratuais do SISP. O resultado é insumo de viabilidade, sempre revisado por um analista.
 
-## Requisitos e instalação
+## Requisitos
 
-- Um ambiente de agente que carregue skills (Claude Code, OpenCode ou equivalente).
+- Um ambiente de agente que carregue skills (Claude Code, OpenCode, VS Code ou equivalente), com a skill instalada. Instalação: veja o README do repositório, <https://github.com/diegovilar/trese-apf-skills>.
 - **Python 3.8 ou superior** na máquina. Sem Python, a skill para e avisa: nada é calculado de cabeça.
 - As regras e o cálculo não dependem de internet: todo o conhecimento está na pasta da skill e a skill não pesquisa na web. Isso não quer dizer que o pedido fique na sua máquina: o agente pode usar um modelo remoto, conforme o seu ambiente.
 
-Instalação: copie a pasta `nesma-apf-estimator/` deste repositório, inteira, para o diretório de skills do seu ambiente. Exemplos: `.claude/skills/` do projeto ou `~/.claude/skills/` no Claude Code; `~/.config/opencode/skills/` no OpenCode. Um link para a pasta, em vez da cópia, também serve quando o ambiente o reconhece. Não altere os arquivos da pasta: os números vêm do script `scripts/apf.py`, que depende das referências como estão.
+Não altere os arquivos da pasta da skill: os números vêm do script `scripts/apf.py`, que depende das referências como estão.
 
 ## Como chamar
 
-A forma de acionar depende do ambiente: `/nesma-apf-estimator` no Claude Code; `$nesma-apf-estimator` no OpenChamber; `@nesma-apf-estimator` no OpenCode V2 (confira na documentação do seu cliente). Também dá para pedir em linguagem natural ("estime os pontos de função deste pedido: ...").
+A forma de acionar depende do ambiente: `/trese-apf-aproximacao` no Claude Code; `$trese-apf-aproximacao` no OpenChamber; `@trese-apf-aproximacao` no OpenCode V2 (confira na documentação do seu cliente). Também dá para pedir em linguagem natural ("estime os pontos de função deste pedido: ...").
 
 ### O que pôr no pedido
 
@@ -33,10 +33,26 @@ A estimativa só é tão boa quanto o pedido. Uma frase solta, como "quero geren
 Exemplo curto, mas com o processo descrito:
 
 ```
-/nesma-apf-estimator A Seção de Gestão de Pessoas precisa de um sistema novo para os pedidos de teletrabalho. O servidor registra o pedido com o período e o plano de trabalho; nome, cargo e lotação vêm do sistema de RH. A chefia imediata aprova ou devolve o pedido, com justificativa. O servidor acompanha a situação dos seus pedidos, e a Seção consulta os pedidos aprovados por unidade e emite um relatório mensal em PDF.
+/trese-apf-aproximacao
+
+A Seção de Gestão de Pessoas precisa de um sistema novo para os pedidos de teletrabalho.
+
+O servidor registra o pedido com o período e o plano de trabalho; nome, cargo
+e lotação vêm do sistema de RH.
+
+A chefia imediata aprova ou devolve o pedido, com justificativa.
+
+O servidor acompanha a situação dos seus pedidos, e a Seção consulta os pedidos aprovados
+por unidade e emite um relatório mensal em PDF.
 ```
 
-O pedido também pode estar num arquivo (texto, PDF, documento): `/nesma-apf-estimator -- ./demandas/teletrabalho.pdf`.
+O pedido também pode estar num arquivo:
+
+```
+/trese-apf-aproximacao -- ./demandas/teletrabalho.txt
+```
+
+OBS: Qualquer modelo consegue entender arquivos de texto. O suporte a arquivos binários (.doc, .pdf, .xlsx, etc.), entretanto, varia de modelo a modelo.
 
 ### Argumentos
 
@@ -53,19 +69,19 @@ Para mudar o padrão, ponha argumentos **no início**, no formato `chave=valor`,
 Exemplos:
 
 ```
-/nesma-apf-estimator tipo=melhoria melhoria=nesma saida=xlsx -- ./demandas/diarias-prestacao-de-contas.docx
+/trese-apf-aproximacao tipo=melhoria melhoria=nesma saida=xlsx -- ./demandas/diarias-prestacao-de-contas.docx
 ```
 
 Melhoria num sistema que já existe, com os fatores de impacto da NESMA (resultado em PFM) e exportação direta em planilha. Use quando o documento descreve o que muda em cada funcionalidade existente; sem essa descrição, prefira o padrão `sem-fatores`.
 
 ```
-/nesma-apf-estimator interativo=nao saida=md -- ./demandas/requisitos-sistema-de-eventos.md
+/trese-apf-aproximacao interativo=nao saida=md -- ./demandas/requisitos-sistema-de-eventos.md
 ```
 
 Cálculo direto, sem a prévia e os lotes de perguntas, com o resultado salvo em Markdown. Serve quando o documento de requisitos já está fechado ou quando você quer uma primeira faixa rápida e vai tratar as pendências depois, com a área demandante.
 
 ```
-/nesma-apf-estimator modo=indicativa -- ./demandas/visao-geral-portal-de-servicos.pdf
+/trese-apf-aproximacao modo=indicativa -- ./demandas/visao-geral-portal-de-servicos.pdf
 ```
 
 Ordem de grandeza de um sistema novo a partir de uma visão geral, quando ainda não há como descrever as funcionalidades.
@@ -107,7 +123,9 @@ Revise sempre. Nos testes da skill, observou-se o seguinte:
 - **Fronteira.** A skill às vezes assume a fronteira do sistema sem perguntar. Confira a linha "Fronteira da aplicação" no resumo.
 - Em correções, os IDs das funções podem mudar de número. Refira-se aos itens também pela descrição.
 
-O modo interativo é **experimental**: o fluxo completo (perguntas, respostas, exportação e correção) funcionou nos testes, mas o comportamento em diálogos longos ainda não foi avaliado.
+## Estado
+
+O modo interativo (padrão) é **experimental**: o fluxo completo (perguntas, respostas, exportação e correção) funcionou nos testes, mas o comportamento em diálogos longos ainda não foi avaliado. As limitações observadas estão na seção anterior; por isso, todo resultado passa pela revisão.
 
 ## Problemas comuns
 
@@ -119,3 +137,7 @@ O modo interativo é **experimental**: o fluxo completo (perguntas, respostas, e
 | o resultado não mostra a tabela, só um resumo | peça para mostrar o resultado completo do script; a skill deve copiá-lo inteiro |
 | quero substituir um arquivo exportado | apague-o você mesmo ou peça explicitamente; por padrão a skill cria `-2`, `-3`... |
 | o pedido é de data warehouse, IA, app multiplataforma, portal estático | fora da cobertura: a skill conta só a parte transacional e declara o resto como limitação |
+
+## Fontes
+
+Roteiro de Métricas de Software do SISP 3.0 (referência técnica subsidiária), NESMA *Early Function Point Analysis* e sua tradução, e NESMA *APF para Melhoria de Software* 2.2.1 (fatores EFPA).

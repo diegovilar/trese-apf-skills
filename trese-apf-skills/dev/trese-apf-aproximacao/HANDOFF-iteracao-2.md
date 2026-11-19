@@ -1,4 +1,6 @@
-# Handoff — iteração 2 da skill `nesma-apf-estimator` (encerrada)
+# Handoff — iteração 2 da skill `trese-apf-aproximacao` (encerrada)
+
+> Registro histórico: referências de caminhos podem refletir a estrutura anterior à reorganização de 19/11/2026; veja o mapa na D73 do `PLANO.md`.
 
 Para quem retomar a iteração 2. Estado em 18/11/2026, fim da sessão que fez as consultas 32 a 44 ao popper. O histórico completo (decisões D40–D68, rodadas, consultas) está no `PLANO.md`; as seções desta sessão começam em "Plano de continuação da iteração 2 (consultas 32 a 34)". Regras de operação, comandos e armadilhas: `HANDOFF.md`.
 

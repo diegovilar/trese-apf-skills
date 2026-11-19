@@ -1,6 +1,8 @@
-# Plano — skill `nesma-apf-estimator`
+# Plano — skill `trese-apf-aproximacao`
 
-Estado: **iteração 2, desenho** (decisões D40–D45; ver "Iteração 2: decisões de desenho"). A iteração 1 foi encerrada como versão inicial (ver "Encerramento da iteração 1"). Etapas 1 a 5 concluídas: fontes, gabaritos, esquema e cálculo, references/ e SKILL.md, renderizadores e exportador (61 testes unitários; xlsx validado com openpyxl, LibreOffice e Excel).
+> Registro histórico: as seções abaixo descrevem o estado de quando foram escritas, e referências de caminhos podem refletir a estrutura anterior à reorganização de 19/11/2026 (mapa na D73, no fim de "Rodada `regressao-1`").
+
+Estado atual (19/11/2026): **iteração 2 encerrada sem aprovação integral** (D71); **parar aqui** (D72): nenhuma rodada de eval nem trabalho novo autorizado. Repositório reorganizado como plugin `trese-apf-skills` (D73): skill em `trese-apf-skills/skills/trese-apf-aproximacao/`, desenvolvimento em `trese-apf-skills/dev/trese-apf-aproximacao/`. Retomada: `HANDOFF.md`.
 Especificação original do usuário: instruções coladas na sessão de 17/11/2026 (Fases 1–3 e critérios de finalização).
 
 ## Contexto de uso
@@ -67,7 +69,7 @@ A skill serve para a **estimativa preliminar** de tamanho funcional em pedidos d
 **Estrutura**
 
 ```text
-nesma-apf-estimator/
+trese-apf-aproximacao/
 ├── SKILL.md                      gatilho, leitura obrigatória, argumentos, fluxo, incerteza, saída
 ├── references/
 │   ├── 01-fundamentos-e-identificacao.md
@@ -556,6 +558,21 @@ Popper da sessão: `ses_e0fdc0bfbffeasgGVovR3zMH6f` (consultas 45 em diante). Pr
 |---|---------|--------|
 | D72 | **Parar aqui (consulta 57).** Recomendação levada ao usuário: piloto curto em paralelo ao fluxo habitual (tempo de revisão, hipóteses retiradas, perguntas inúteis, lacunas acrescentadas), com política de dados confirmada antes e casos de ajuste separados dos de avaliação, antes de decidir uma iteração 3. O usuário escolheu **parar**: a skill fica como está, com o guia e o relatório. Piloto e iteração 3 ficam como opções futuras, sem autorização. | Usuário; consulta 57 |
 
+**Reorganização em plugin (19/11/2026; reorganização, consulta 1 ao popper `ses_e0a651291ffeBJ1VAAs77IuTHp`).** O repositório passou a ser o plugin `trese-apf-skills`, que pode reunir várias skills de APF (commit da reorganização, sobre `1a99556`, o último da estrutura antiga). A skill foi renomeada de `nesma-apf-estimator` para `trese-apf-aproximacao`.
+
+| Antes | Depois |
+|---|---|
+| `nesma-apf-estimator/` | `trese-apf-skills/skills/trese-apf-aproximacao/` |
+| `GUIA-DE-USO.md` | `trese-apf-skills/skills/trese-apf-aproximacao/README.md` (agora dentro da árvore da skill) |
+| `README.md` (raiz) | `README.md` (raiz, novo: repositório e instalação), `trese-apf-skills/README.md` (plugin) |
+| `evals/` | `trese-apf-skills/dev/trese-apf-aproximacao/evals/` |
+| `PLANO.md`, `HANDOFF*.md`, `RELATORIO-*.md` | `trese-apf-skills/dev/trese-apf-aproximacao/` |
+| — | `marketplace.json` (VS Code), `trese-apf-skills/plugin.json`, `trese-apf-skills/CHANGELOG.md`, `skills.sh.json`, `AGENTS.md`, `CLAUDE.md` |
+
+| # | Decisão | Origem |
+|---|---------|--------|
+| D73 | **Reorganização em plugin.** (a) Resultados brutos em `evals/agente/resultados/` ficam como estão, com o nome antigo (traces, dossiês, `estado.json`): são registro. (b) Documentos históricos (este plano, relatórios, `HANDOFF-iteracao-2.md`, `T5-roteiro.md`) não são reescritos; ganham uma nota de registro histórico. Documentos operacionais (`HANDOFF.md`, `evals/README.md`, docstrings) foram atualizados. `gabaritos-iniciais.md` e `casos.py` ficam byte a byte (entram nos hashes do juiz e da execução). (c) Código dos evals: `SKILL` deriva de `dev/<skill>` → `skills/<skill>`. A migração (`reverificar --migrar-de`) passou a comparar o repositório inteiro com uma lista de caminhos completos (antes, com o diff restrito a `dev/<skill>`, uma mudança na skill distribuída passaria como compatível), com `--no-renames` (um arquivo protegido movido para caminho permitido aparece pela origem) e `-z` (consulta 2); migração a partir de `1a99556` ou de commit anterior não é suportada. (d) `config_hash`: `87654cd6ba3cf1a0` em `1a99556` (antes da reorganização) → `04952bbacbc44c3f` depois (mudam `execucao.py` e a árvore da skill, que ganhou o `README.md`). Rodadas antigas não continuam nem migram; `status` e `comparar` (em cópia) continuam legíveis. (e) `skills.sh.json` declara `./trese-apf-skills/skills` para o utilitário `skills` (sem ele, a descoberta dependia da busca recursiva). | Usuário; reorganização, consultas 1 e 2 |
+
 ## Evals do agente: implementação
 
 - D29: desenho revisado (`evals/README.md`), casos L01/L02 e calibração do juiz aprovados pelo usuário.
@@ -585,4 +602,4 @@ Harness Claude Code (`claude -p`); executor Sonnet 5.5, esforço high; juiz Code
 - Script nunca sobrescreve arquivo (código 3).
 - 61 testes unitários passando.
 
-Local da skill: `nesma-apf-estimator/` na raiz deste repositório (decisão da sessão, revogável).
+Local da skill: `trese-apf-aproximacao/` na raiz deste repositório (decisão da sessão, revogável).

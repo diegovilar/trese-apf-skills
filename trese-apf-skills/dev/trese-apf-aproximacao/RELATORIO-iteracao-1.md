@@ -1,4 +1,6 @@
-# Relatório final — iteração 1 da skill `nesma-apf-estimator`
+# Relatório final — iteração 1 da skill `trese-apf-aproximacao`
+
+> Registro histórico: referências de caminhos podem refletir a estrutura anterior à reorganização de 19/11/2026; veja o mapa na D73 do `PLANO.md`.
 
 17/11/2026. Versão inicial, encerrada por decisão do usuário com um critério de aceitação **não atendido** (ver "Resultado dos evals"). Detalhes e decisões em `PLANO.md`; próxima iteração em `HANDOFF-iteracao-2.md`.
 
@@ -10,7 +12,7 @@ Estimativa preliminar de tamanho funcional (NESMA estimada; indicativa por argum
 
 | Arquivo | Tamanho |
 |---|---:|
-| `nesma-apf-estimator/SKILL.md` | 12,1 kB |
+| `trese-apf-aproximacao/SKILL.md` | 12,1 kB |
 | `references/01-fundamentos-e-identificacao.md` | 12,3 kB |
 | `references/02-regras-nesma.md` | 8,6 kB |
 | `references/03-casos-de-borda-e-convencoes.md` | 12,8 kB |

@@ -7,7 +7,8 @@ import unittest
 from decimal import Decimal
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
-SKILL = os.path.join(AQUI, "..", "..", "nesma-apf-estimator")
+DEV = os.path.dirname(os.path.dirname(AQUI))  # trese-apf-skills/dev/<skill>
+SKILL = os.path.join(os.path.dirname(os.path.dirname(DEV)), "skills", os.path.basename(DEV))
 sys.path.insert(0, os.path.join(SKILL, "scripts"))
 sys.path.insert(0, AQUI)
 

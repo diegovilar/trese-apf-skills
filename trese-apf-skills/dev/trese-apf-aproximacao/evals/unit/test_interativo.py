@@ -8,7 +8,8 @@ import tempfile
 import unittest
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
-SCRIPT = os.path.join(AQUI, "..", "..", "nesma-apf-estimator", "scripts", "apf.py")
+DEV = os.path.dirname(os.path.dirname(AQUI))  # trese-apf-skills/dev/<skill>
+SCRIPT = os.path.join(os.path.dirname(os.path.dirname(DEV)), "skills", os.path.basename(DEV), "scripts", "apf.py")
 sys.path.insert(0, os.path.dirname(SCRIPT))
 sys.path.insert(0, AQUI)
 

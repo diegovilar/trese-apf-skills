@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Runner dos evals do agente da skill nesma-apf-estimator.
+"""Runner dos evals do agente da skill trese-apf-aproximacao.
+
+Comandos a partir de trese-apf-skills/dev/trese-apf-aproximacao/.
 
 Uma tarefa por chamada. Tarefas que consomem cota: executor (Claude) e juiz (Codex).
 O orquestrador lê a cota antes de cada uma e só então chama `executar`.
@@ -34,8 +36,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 AQUI = Path(__file__).resolve().parent
-RAIZ = AQUI.parent.parent
-SKILL = RAIZ / "nesma-apf-estimator"
+RAIZ = AQUI.parent.parent                            # trese-apf-skills/dev/<skill> (desenvolvimento)
+SKILL = RAIZ.parent.parent / "skills" / RAIZ.name     # trese-apf-skills/skills/<skill> (distribuída)
 GABARITOS = RAIZ / "evals" / "gabaritos-iniciais.md"
 RESULTADOS = AQUI / "resultados"
 BASE_WS = Path("/tmp/apf-evals")
@@ -248,7 +250,7 @@ def executar_exec(rodada: str, tid: str, t: Dict[str, Any], estado: Optional[Dic
     else:
         prompt, precisa_arquivo = montar_invocacao(c)
         ws = preparar_ws(tid, c["subsidio"] if precisa_arquivo else None)
-    hash_antes = sha_arvore(ws / ".claude" / "skills" / "nesma-apf-estimator")
+    hash_antes = sha_arvore(ws / ".claude" / "skills" / "trese-apf-aproximacao")
     desde = dt.datetime.now().timestamp() - 1
     t.update({"ws": str(ws), "prompt": prompt, "inicio": agora(), "hash_skill": hash_antes})
     if t.get("dialogo"):
@@ -480,8 +482,35 @@ def resumo_tarefa(tid: str, t: Dict[str, Any]) -> Dict[str, Any]:
 
 # execucao.py e juiz.py NÃO entram: mudá-los altera o que executor e juiz recebem (rodada nova).
 # (Na migração da curta-3 eles foram aceitos uma única vez, por serem extração idêntica do runner; ver PLANO.md.)
+# Caminhos relativos a RAIZ (dev/<skill>); terminados em "/" valem para o diretório inteiro. O diff é feito no
+# repositório inteiro (D73): qualquer outro arquivo mudado, inclusive a skill distribuída em skills/<skill>/, recusa.
 PERMITIDOS_NA_MIGRACAO = ("evals/agente/runner.py", "evals/agente/verificador.py", "evals/unit/", "PLANO.md",
-                          "evals/README.md", "HANDOFF.md", ".gitignore")
+                          "evals/README.md", "HANDOFF.md", "evals/.gitignore")
+PERMITIDOS_NA_MIGRACAO_RAIZ_GIT = (".gitignore",)
+
+
+def raiz_git(cwd: Path = RAIZ) -> Path:
+    return Path(subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=cwd, capture_output=True, text=True,
+                               check=True).stdout.strip()).resolve()
+
+
+def mudados_desde(commit: str, topo: Path) -> List[str]:
+    """Arquivos mudados (ou novos, não ignorados) no repositório inteiro desde o commit, relativos à raiz do Git."""
+    # --no-renames: um rename lista origem e destino (sem isso, mover um arquivo protegido para um caminho
+    # permitido apareceria só pelo destino). -z: nomes com espaço ou acento chegam intactos.
+    mudados = subprocess.run(["git", "diff", "--name-only", "--no-renames", "-z", commit], cwd=topo,
+                             capture_output=True, text=True, check=True).stdout.split("\0")
+    mudados += subprocess.run(["git", "ls-files", "--others", "--exclude-standard", "-z"], cwd=topo,
+                              capture_output=True, text=True, check=True).stdout.split("\0")
+    return [m for m in mudados if m]
+
+
+def proibidos_na_migracao(mudados: List[str], prefixo_dev: str) -> List[str]:
+    """prefixo_dev: RAIZ relativo à raiz do Git, em formato posix (ex.: trese-apf-skills/dev/trese-apf-aproximacao)."""
+    arquivos = {f"{prefixo_dev}/{p}" for p in PERMITIDOS_NA_MIGRACAO if not p.endswith("/")}
+    arquivos |= set(PERMITIDOS_NA_MIGRACAO_RAIZ_GIT)
+    dirs = tuple(f"{prefixo_dev}/{p}" for p in PERMITIDOS_NA_MIGRACAO if p.endswith("/"))
+    return [m for m in mudados if m not in arquivos and not m.startswith(dirs)]
 
 
 def reverificar(rodada: str, migrar_de: Optional[str]) -> None:
@@ -493,11 +522,9 @@ def reverificar(rodada: str, migrar_de: Optional[str]) -> None:
         if not migrar_de:
             sys.exit("os hashes de execução/juiz mudaram: informe --migrar-de <commit>; a migração só é aceita "
                      "se, desde esse commit, mudaram apenas arquivos que não afetam executor nem juiz")
-        mudados = subprocess.run(["git", "diff", "--name-only", migrar_de, "--", "."], cwd=RAIZ,
-                                 capture_output=True, text=True, check=True).stdout.split()
-        mudados += subprocess.run(["git", "ls-files", "--others", "--exclude-standard"], cwd=RAIZ,
-                                  capture_output=True, text=True, check=True).stdout.split()
-        proibidos = [m for m in mudados if not m.startswith(PERMITIDOS_NA_MIGRACAO)]
+        topo = raiz_git()
+        mudados = mudados_desde(migrar_de, topo)
+        proibidos = proibidos_na_migracao(mudados, RAIZ.relative_to(topo).as_posix())
         if proibidos:
             sys.exit("migração recusada: mudaram arquivos que afetam execução ou juiz: " + ", ".join(proibidos))
         estado.setdefault("migracoes", []).append({"de_commit": migrar_de, "config_hash_antigo": estado["config_hash"],

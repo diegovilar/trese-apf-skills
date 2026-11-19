@@ -1,0 +1,12 @@
+{
+  "name": "trese-apf-vs-marketplace",
+  "description": "Marketplace para VSCode com skills de APF do TRE/SE",
+  "plugins": [
+    {
+      "name": "trese-apf-skills",
+      "description": "Skills para cálculos de APF para projetos do TRE/SE",
+      "version": "0.1.0",
+      "source": "./trese-apf-skills"
+    }
+  ]
+}

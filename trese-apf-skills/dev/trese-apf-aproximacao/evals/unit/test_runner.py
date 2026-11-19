@@ -29,7 +29,7 @@ class Base(unittest.TestCase):
     def setUp(self):
         self.desde = time.time() - 1
         self.ws = R.preparar_ws("teste", C.CURTO)
-        self.hash = V.sha_arvore(self.ws / ".claude" / "skills" / "nesma-apf-estimator")
+        self.hash = V.sha_arvore(self.ws / ".claude" / "skills" / "trese-apf-aproximacao")
         self.saida = Path(tempfile.mkdtemp(prefix="saida-teste-"))
 
     def tearDown(self):
@@ -57,19 +57,19 @@ class Base(unittest.TestCase):
 class TestInvocacao(unittest.TestCase):
     def test_todas_as_invocacoes(self):
         esperado = {
-            "G01": ("/nesma-apf-estimator tipo=desenvolvimento interativo=nao -- ./pedido.md", True),
-            "A04": ("/nesma-apf-estimator ./pedido.md", True),
-            "A06": ("/nesma-apf-estimator modo indicativa -- ./pedido.md", True),
-            "A11": ("/nesma-apf-estimator modo=indicativa ./pedido.md", True),
-            "A12": ("/nesma-apf-estimator -- ./nao-existe.pdf", False),
+            "G01": ("/trese-apf-aproximacao tipo=desenvolvimento interativo=nao -- ./pedido.md", True),
+            "A04": ("/trese-apf-aproximacao ./pedido.md", True),
+            "A06": ("/trese-apf-aproximacao modo indicativa -- ./pedido.md", True),
+            "A11": ("/trese-apf-aproximacao modo=indicativa ./pedido.md", True),
+            "A12": ("/trese-apf-aproximacao -- ./nao-existe.pdf", False),
         }
         for cid, (prompt, arq) in esperado.items():
             self.assertEqual(R.montar_invocacao(C.resolver(cid)), (prompt, arq), cid)
         p, arq = R.montar_invocacao(C.resolver("A15"))
-        self.assertTrue(p.startswith("/nesma-apf-estimator interativo=nao -- tipo=SEI"))
+        self.assertTrue(p.startswith("/trese-apf-aproximacao interativo=nao -- tipo=SEI"))
         self.assertFalse(arq)
         p, _ = R.montar_invocacao(C.resolver("A14"))
-        self.assertTrue(p.startswith("/nesma-apf-estimator Sistema novo"))
+        self.assertTrue(p.startswith("/trese-apf-aproximacao Sistema novo"))
         p, arq = R.montar_invocacao(C.resolver("L01"))
         self.assertFalse(p.startswith("/"))
         self.assertTrue(arq)
@@ -169,7 +169,7 @@ class TestVerificacao(Base):
         self.assertTrue(v["criterios"]["K1"]["ok"])
 
     def test_skill_modificada_invalida(self):
-        (self.ws / ".claude" / "skills" / "nesma-apf-estimator" / "SKILL.md").write_text("adulterado")
+        (self.ws / ".claude" / "skills" / "trese-apf-aproximacao" / "SKILL.md").write_text("adulterado")
         self.assertIn("modificada", self.rodar("A05", [], "ALERTA")["invalido"])
 
     def test_contaminada_invalida(self):
@@ -293,7 +293,7 @@ class TestJuizECalibracao(unittest.TestCase):
 
     def test_dossie_autocontido(self):
         for cid in ("G01", "G03a", "G03b", "G04", "G07", "G08", "M01"):
-            d = R.montar_dossie(cid, "/nesma-apf-estimator ...", C.CASOS[cid]["subsidio"], {"x": 1}, "resposta",
+            d = R.montar_dossie(cid, "/trese-apf-aproximacao ...", C.CASOS[cid]["subsidio"], {"x": 1}, "resposta",
                                 C.CASOS[cid].get("nota_juiz", ""))
             self.assertIn("## Gabarito do caso", d)
             self.assertIn("Total aceito" if cid not in ("G03b", "G04", "G07", "G08") else "rubrica", d)
@@ -322,7 +322,7 @@ class TestJuizECalibracao(unittest.TestCase):
     def test_dossie_da_previa_usa_instrucoes_proprias(self):
         for cid in ("H1", "H2c", "H3", "G04i", "G08i"):
             c = C.CASOS[cid]
-            d = R.montar_dossie(cid, "/nesma-apf-estimator ...", c["subsidio"], {"x": 1}, "prévia", c.get("nota_juiz", ""))
+            d = R.montar_dossie(cid, "/trese-apf-aproximacao ...", c["subsidio"], {"x": 1}, "prévia", c.get("nota_juiz", ""))
             self.assertIn("PRÉVIA", d)
             self.assertIn("- R (perguntas e pendências indevidas)", d)
             self.assertIn("## JSON da prévia produzido pelo agente", d)
@@ -421,3 +421,84 @@ class TestPreparacaoEHashes(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestCaminhos(unittest.TestCase):
+    """D73: a skill distribuída fica em trese-apf-skills/skills/<skill>; o desenvolvimento, em dev/<skill>."""
+
+    def test_modulos_resolvem_dev_e_skill_independente_do_cwd(self):
+        import execucao as E
+        cwd = os.getcwd()
+        try:
+            os.chdir(tempfile.gettempdir())
+            for skill in (R.SKILL, E.SKILL, V.SKILL):
+                self.assertTrue((skill / "SKILL.md").is_file(), skill)
+                self.assertEqual(skill.parent.name, "skills")
+                self.assertEqual(skill.name, R.RAIZ.name)
+            self.assertTrue((R.RAIZ / "evals" / "agente" / "runner.py").is_file())
+            self.assertEqual(R.RAIZ.parent.name, "dev")
+            self.assertTrue(R.GABARITOS.is_file())
+        finally:
+            os.chdir(cwd)
+
+
+class TestMigracao(unittest.TestCase):
+    """O diff da migração cobre o repositório inteiro, inclusive a skill distribuída (D73)."""
+
+    PREFIXO = "trese-apf-skills/dev/x"
+    ARQUIVOS = ["trese-apf-skills/dev/x/evals/agente/verificador.py", "trese-apf-skills/dev/x/evals/agente/execucao.py",
+                "trese-apf-skills/dev/x/evals/gabaritos-iniciais.md", "trese-apf-skills/dev/x/PLANO.md",
+                "trese-apf-skills/skills/x/scripts/apf.py", "trese-apf-skills/skills/x/README.md", ".gitignore"]
+
+    def setUp(self):
+        import subprocess
+        self.sp = subprocess
+        self.topo = Path(tempfile.mkdtemp(prefix="git-migracao-")).resolve()
+        for a in self.ARQUIVOS:
+            (self.topo / a).parent.mkdir(parents=True, exist_ok=True)
+            (self.topo / a).write_text("v1\n")
+        g = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"]
+        self.sp.run(["git", "init", "-q"], cwd=self.topo, check=True)
+        self.sp.run(["git", "add", "-A"], cwd=self.topo, check=True)
+        self.sp.run(g + ["commit", "-q", "-m", "base"], cwd=self.topo, check=True)
+        self.base = self.sp.run(["git", "rev-parse", "HEAD"], cwd=self.topo, capture_output=True, text=True,
+                                check=True).stdout.strip()
+
+    def tearDown(self):
+        shutil.rmtree(self.topo, ignore_errors=True)
+
+    def proibidos(self, *mudar):
+        for a in mudar:
+            (self.topo / a).parent.mkdir(parents=True, exist_ok=True)
+            (self.topo / a).write_text("v2\n")
+        return R.proibidos_na_migracao(R.mudados_desde(self.base, self.topo), self.PREFIXO)
+
+    def test_aceita_verificador_plano_e_gitignore(self):
+        self.assertEqual(self.proibidos("trese-apf-skills/dev/x/evals/agente/verificador.py",
+                                        "trese-apf-skills/dev/x/PLANO.md", ".gitignore",
+                                        "trese-apf-skills/dev/x/evals/unit/test_novo.py"), [])
+
+    def test_recusa_skill_distribuida_execucao_e_gabaritos(self):
+        for a in ("trese-apf-skills/skills/x/scripts/apf.py", "trese-apf-skills/skills/x/README.md",
+                  "trese-apf-skills/dev/x/evals/agente/execucao.py",
+                  "trese-apf-skills/dev/x/evals/gabaritos-iniciais.md",
+                  "trese-apf-skills/skills/x/references/novo.md"):
+            with self.subTest(a=a):
+                self.assertEqual(self.proibidos(a), [a])
+                self.sp.run(["git", "checkout", "-q", "--", "."], cwd=self.topo, check=True)
+                self.sp.run(["git", "clean", "-qfd"], cwd=self.topo, check=True)
+
+    def test_recusa_mover_arquivo_protegido_para_caminho_permitido(self):
+        g = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"]
+        (self.topo / "trese-apf-skills/dev/x/evals/unit").mkdir(parents=True)
+        self.sp.run(["git", "mv", "trese-apf-skills/skills/x/README.md", "trese-apf-skills/dev/x/evals/unit/README.md"],
+                    cwd=self.topo, check=True)
+        self.sp.run(g + ["commit", "-q", "-m", "mover"], cwd=self.topo, check=True)
+        self.assertEqual(self.proibidos(), ["trese-apf-skills/skills/x/README.md"])
+
+    def test_nome_com_espaco(self):
+        self.assertEqual(self.proibidos("trese-apf-skills/skills/x/references/com espaço.md"),
+                         ["trese-apf-skills/skills/x/references/com espaço.md"])
+
+    def test_raiz_git_do_repositorio(self):
+        self.assertEqual(R.RAIZ.relative_to(R.raiz_git()).as_posix(), "trese-apf-skills/dev/trese-apf-aproximacao")
