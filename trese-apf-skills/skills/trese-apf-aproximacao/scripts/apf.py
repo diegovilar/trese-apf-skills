@@ -1791,9 +1791,7 @@ def _corpo_docx(est: Dict[str, Any], calc: Dict[str, Any], util: int) -> str:
         for e in est["esclarecimentos"]:
             b.append(_item(f"{e['id']}.", _texto_escl(e)))
     secao("Dúvidas de requisito e pendências", _pendencias_visiveis(est), "Nenhuma.")
-    # No .docx, "antes" vai em destaque (modelo da equipe, D74); o texto é o mesmo dos outros formatos.
-    antes, depois = AVISO_PENDENCIAS.split(" antes ", 1)
-    b.append(_p(_r("Aviso: ", "APFTermo") + _r(antes + " ") + _r("antes", "APFTermo") + _r(" " + depois), "APFAviso"))
+    b.append(_p(_r("Aviso: ", "APFTermo") + _r(AVISO_PENDENCIAS), "APFAviso"))
     b.append(_p(_r("Legenda"), "APFSecao"))
     for termo, desc in legenda(est, calc, "arquivo"):
         b.append(_p(_r(termo + ": ", "APFTermo") + _r(desc), "APFLegenda"))
